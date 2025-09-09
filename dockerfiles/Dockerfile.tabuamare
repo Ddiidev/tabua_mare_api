@@ -1,0 +1,54 @@
+FROM ubuntu:20.04
+
+# Evitar interações durante instalação de pacotes
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instalar dependências
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    libssl-dev \
+    libpq-dev \
+    libsqlite3-dev \
+    postgresql \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Faz o clone do repositório via SSH
+WORKDIR /tmp
+RUN # Clone Vlang
+RUN git clone https://github.com/vlang/v && \
+    cd v && \
+    make && \
+    ./v symlink
+
+# Verificar a instalação
+RUN v --version
+
+# Criar diretório para a aplicação
+WORKDIR /app
+
+# Copiar arquivos do projeto
+COPY . .
+
+# Copiar explicitamente o start.sh e torná-lo executável
+COPY start.sh ./start.sh
+RUN chmod +x start.sh
+
+# Instalar dependências do projeto
+RUN v install
+# RUN v install https://github.com/ken0x0a/v-dotenv
+# RUN v install https://github.com/Ddiidev/recaptcha
+
+# Copiar o arquivo .env.local (será substituído pelo volume)
+COPY .env .env
+
+# Compilar o projeto
+RUN v -prod . -o TabuaMareAPI
+
+# Expor a porta que a aplicação usa
+EXPOSE 4048
+
+# Comando para iniciar a aplicação
+CMD ["./start.sh"]

@@ -1,0 +1,83 @@
+services:
+  # Instâncias da aplicação MaisFoco
+  tabua-mare1:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.tabuamare
+    image: tabua-mare-app:latest
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      - PORT=4048
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 128M
+    network_mode: host
+    container_name: tabua-mare-app1
+    volumes:
+      - ./.env:/app/.env
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  tabua-mare2:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.tabuamare
+    image: tabua-mare-app:latest
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      - PORT=4049
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 128M
+    network_mode: host
+    container_name: tabua-mare-app2
+    volumes:
+      - ./.env:/app/.env
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  # Nginx como balanceador de carga
+  nginx:
+    image: nginx:latest
+    container_name: tabua-mare-nginx
+    restart: always
+    depends_on:
+      - tabua-mare1
+      - tabua-mare2
+    network_mode: host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.15'
+          memory: 100M
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  # Cloudflare Tunnel
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: tabua-mare-cloudflare-tunnel
+    restart: always
+    depends_on:
+      - nginx
+    command: tunnel --no-autoupdate run --token $CLOUDFLARE_TUNNEL_TOKEN
+    network_mode: host
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: 64M
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
