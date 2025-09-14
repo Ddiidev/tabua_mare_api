@@ -5,5 +5,5 @@ import shareds.web_ctx
 
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WebCtx) veb.Result {
-	return ctx.ok('funcionou!')
+	return ctx.ok('funcionou! on port ${app.port}')
 }
