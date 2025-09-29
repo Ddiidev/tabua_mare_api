@@ -47,8 +47,8 @@ pub fn (app &APIController) get_harbors_by_ids(mut ctx web_ctx.WsCtx, ids types.
 pub fn (api &APIController) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id int, month int, days types.IntArr) veb.Result {
 	mut pool_conn := api.pool_conn
 
-	result := repo_tabua_mare.get_tabua_mare_by_month_days(mut pool_conn, harbor_id,
-		month, days.ints()) or { return ctx.ok('error: ${err}') }
+	result := repo_tabua_mare.get_tabua_mare_by_month_days(mut pool_conn, harbor_id, month,
+		days.ints()) or { return ctx.ok('error: ${err}') }
 
 	return ctx.json(result)
 }

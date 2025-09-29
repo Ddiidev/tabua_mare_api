@@ -8,7 +8,7 @@ import shareds.types
 import repository.data_mare
 import repository.tabua_mare.dto
 
-// get_tabua_mare_by_month_days Retorna os dados da tábua da maré de um determinado porto, mês e dias
+// get_tabua_mare_by_month_days Retorna os dados da tábua de maré de um determinado porto, mês e dias
 pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id int, month int, days []int) !types.ResultValues[dto.DTOTabuaMare] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB

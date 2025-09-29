@@ -54,6 +54,11 @@ pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 	return $veb.html('./pages/playground.html')
 }
 
+@['/apoiar']
+pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
+	return $veb.html('./pages/apoiar.html')
+}
+
 @['/ping'; get]
 pub fn (app &App) ping(mut ctx web_ctx.WsCtx) veb.Result {
 	return ctx.ok('pong')

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="cyan">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apoiar - Tábua de Marés API</title>
+    <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css">
+    <link rel="stylesheet" href="/pages/assets/custom-pico.css">
+    <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet">
+    <style>
+        body,
+        h1,
+        h2,
+        h3,
+        p,
+        a {
+            font-family: 'Spectral', serif;
+        }
+
+        .button-yellow {
+            background-color: #f9c74f;
+            border-color: #f9c74f;
+        }
+
+        .button-yellow:hover {
+            background-color: #f8b500;
+            border-color: #f8b500;
+        }
+
+        .donation-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+        }
+
+        .donation-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 2rem 0;
+            justify-content: center;
+        }
+
+        .donation-option {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            background-color: var(--card-background-color);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-align: center;
+        }
+
+        .donation-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .pix-container {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background-color: var(--card-background-color);
+            border-radius: 8px;
+        }
+
+        .pix-key {
+            font-family: monospace;
+            padding: 0.5rem 1rem;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            margin: 1rem 0;
+            display: inline-block;
+        }
+
+        .thank-you {
+            margin-top: 3rem;
+            text-align: center;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body v-scope>
+    <!-- Header -->
+    <header class="container-fluid" style="padding: 0.5rem 0; margin-bottom: 5%;">
+        <nav class="container">
+            <ul>
+                <li>
+                    <a href="/" class="contrast">
+                        <img src="/pages/assets/favicon-192x192.png" alt="Tábua de Marés" width="32" height="32"
+                            style="border-radius: 50%;">
+                        <strong>Tábua de Marés</strong>
+                    </a>
+                </li>
+            </ul>
+            <ul>
+                <li><a href="/" class="contrast">Início</a></li>
+                <li><a href="/docs" class="contrast">Documentação</a></li>
+                <li><a href="/playground" class="contrast">Playground</a></li>
+                <li><a href="/#contact" class="contrast">Contato</a></li>
+                <li><a href="/apoiar" class="contrast" style="color: #f9c74f;">Apoiar</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <section>
+            <hgroup>
+                <h1>Apoie este Projeto</h1>
+                <p>Ajude a manter a API de Tábua de Marés gratuita e em constante evolução</p>
+            </hgroup>
+
+            <div class="donation-container">
+                <p>
+                    A API de Tábua de Marés é um projeto independente, desenvolvido com paixão para democratizar o acesso facilitado a esses dados.
+                </p>
+                <p>
+                    Além de permitir outros devs a construir sus próprias soluções, sem precisar pagar nada por isso.
+                </p>
+                <p>
+                    Todos os dados oferecidos como API pode ser encontrados facilmente no formato de pdf na página oficial da marinha do Brasil <a href="https://www.marinha.mil.br/cppb/tabuas_de_mare" target="_blank">https://www.marinha.mil.br/cppb/tabuas_de_mare</a>, especificamente aqui: <a href="https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa" target="_blank">https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa</a>
+                </p>
+
+                <div class="pix-container">
+                    <h3>Faça uma transferência via PIX</h3>
+                    <p>Chave PIX (e-mail):</p>
+                    <div class="pix-key">contato@@devtu.qzz.io</div>
+                    <p>Envie qualquer valor que desejar</p>
+
+                    <!-- QR Code PIX -->
+                    <div style="margin: 1.5rem 0;">
+                        <p><strong>Ou escaneie o QR Code:</strong></p>
+                        <img src="/pages/assets/qrCodePix.svg" alt="QR Code PIX"
+                            style="max-width: 200px; height: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background-color: white;">
+                    </div>
+
+                    <p>
+                        <small>Após a transferência, envie um e-mail para contato@@devtu.qzz.io informando sua
+                            contribuição para receber um agradecimento especial.</small>
+                    </p>
+                </div>
+
+                <div class="thank-you">
+                    <p>Muito obrigado pelo seu apoio! 🙏</p>
+                    <a href="/" role="button" class="outline">Voltar para a página inicial</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    @app.footer()
+
+    <script>
+        const { createApp } = PetiteVue;
+
+        createApp({
+            pixValue: null
+        }).mount();
+    </script>
+</body>
+
+</html>
