@@ -48,6 +48,7 @@ RUN chmod +x start.sh
 
 # Instalar dependências do projeto (via v)
 RUN v install
+RUN v install https://github.com/ken0x0a/v-dotenv
 
 # Compilar o projeto em modo de produção
 RUN v -prod . -o TabuaMareAPI
