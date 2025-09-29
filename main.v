@@ -22,11 +22,11 @@ fn main() {
 	port := os.args[1].int()
 	env := conf_env.load_env()
 	mut app := &App{
-		env: shared env
+		env: env
 	}
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
-		env:       shared env
+		env:       env
 	}
 
 	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
