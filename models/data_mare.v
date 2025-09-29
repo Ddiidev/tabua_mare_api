@@ -11,7 +11,7 @@ pub mut:
 	card                        string
 	data_collection_institution string
 	geo_location                GeoLocation
-	mean_level                  string
+	mean_level                  f32
 	months                      []MonthData
 }
 

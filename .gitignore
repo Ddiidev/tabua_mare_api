@@ -22,3 +22,10 @@ bin/
 # vweb and database
 *.db
 *.js
+
+# Ignore files
+*.txt
+*.json
+
+/.qodo
+/.trae

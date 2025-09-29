@@ -2,6 +2,6 @@ module web_ctx
 
 import veb
 
-pub struct WebCtx {
+pub struct WsCtx {
 	veb.Context
 }

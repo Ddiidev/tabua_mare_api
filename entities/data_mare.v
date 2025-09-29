@@ -10,7 +10,7 @@ pub mut:
 	timezone                    string        @[sql_type: 'VARCHAR(20)']
 	card                        string        @[sql_type: 'VARCHAR(20)']
 	data_collection_institution string        @[sql_type: 'VARCHAR(10)']
-	geo_location                []GeoLocation @[fkey: 'data_mare_id']
-	mean_level                  string        @[sql_type: 'VARCHAR(12)']
-	months                      []MonthData   @[fkey: 'data_mare_id']
+	geo_location                []GeoLocation @[fkey: 'data_mare_id'; sql: '-']
+	mean_level                  f32           @[sql_type: 'REAL']
+	months                      []MonthData   @[fkey: 'data_mare_id'; sql: '-']
 }

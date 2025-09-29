@@ -7,5 +7,5 @@ pub mut:
 	data_mare_id int
 	month_name   string
 	month        int
-	days         []DayData @[fkey: 'month_data_id']
+	days         []DayData @[fkey: 'month_data_id'; sql: '-']
 }
