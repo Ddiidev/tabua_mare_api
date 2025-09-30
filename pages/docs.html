@@ -15,34 +15,25 @@
 	<link href="https://fonts.googleapis.com/css2?family=Spectral&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Kode+Mono&display=swap" rel="stylesheet">
 	<style>
-			body, h1, h2, h3, p, a {
-				font-family: Spectral, serif;
-			}
-			pre, code {
-				font-family: Kode Mono, monospace !important;
-			}
+		body,
+		h1,
+		h2,
+		h3,
+		p,
+		a {
+			font-family: Spectral, serif;
+		}
+
+		pre,
+		code {
+			font-family: Kode Mono, monospace !important;
+		}
 	</style>
 </head>
 
 <body v-scope>
-	<!-- Header -->
-    <header class="container-fluid" style="padding: 0.5rem 0; margin-bottom: 5%;">
-        <nav class="container">
-            <ul>
-                <li>
-                    <a href="/" class="contrast">
-                        <img src="/pages/assets/favicon-192x192.png" alt="Tábua de Marés" width="32" height="32" style="border-radius: 50%;">
-                        <strong>Tábua de Marés</strong>
-                    </a>
-                </li>
-            </ul>
-            <ul>
-                <li><a href="/" class="contrast">Início</a></li>
-                <li><a href="/docs" class="contrast">Documentação</a></li>
-                <li><a href="/playground" class="contrast">Playground</a></li>
-            </ul>
-        </nav>
-    </header>
+    <!-- Header -->
+    ${ app.navbar('/docs') }
 
 	<!-- Docs Header -->
 	<section class="docs-hero">

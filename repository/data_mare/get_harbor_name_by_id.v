@@ -27,14 +27,15 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.Re
 		select from entities.GeoLocation where data_mare_id in ids
 	}!
 
-	return types.ResultValues[dto.DTODataMareGetHarbor]{
-		data:  harbors.map(dto.DTODataMareGetHarbor{
-			id:           it.id
-			card:         it.card
-			state:        it.state
-			timezone:     it.timezone
-			harbor_name:  it.harbor_name
-			geo_location: geo_location.filter(it.data_mare_id == it.id).map(dto.GeoLocation{
+	mut data_harbors := []dto.DTODataMareGetHarbor{}
+	for harbor in harbors {
+		data_harbors << dto.DTODataMareGetHarbor{
+			id:           harbor.id
+			card:         harbor.card
+			state:        harbor.state
+			timezone:     harbor.timezone
+			harbor_name:  harbor.harbor_name
+			geo_location: geo_location.filter(it.data_mare_id == harbor.id).map(dto.GeoLocation{
 				lat:           it.lat
 				lng:           it.lng
 				decimal_lat:   it.decimal_lat
@@ -42,8 +43,11 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.Re
 				lat_direction: it.lat_direction
 				lng_direction: it.lng_direction
 			})
-			mean_level:   it.mean_level
-		})
-		total: harbors.len
+		}
+	}
+
+	return types.ResultValues[dto.DTODataMareGetHarbor]{
+		data:  data_harbors
+		total: data_harbors.len
 	}
 }

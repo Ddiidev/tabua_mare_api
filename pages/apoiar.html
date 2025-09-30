@@ -87,26 +87,7 @@
 
 <body v-scope>
     <!-- Header -->
-    <header class="container-fluid" style="padding: 0.5rem 0; margin-bottom: 5%;">
-        <nav class="container">
-            <ul>
-                <li>
-                    <a href="/" class="contrast">
-                        <img src="/pages/assets/favicon-192x192.png" alt="Tábua de Marés" width="32" height="32"
-                            style="border-radius: 50%;">
-                        <strong>Tábua de Marés</strong>
-                    </a>
-                </li>
-            </ul>
-            <ul>
-                <li><a href="/" class="contrast">Início</a></li>
-                <li><a href="/docs" class="contrast">Documentação</a></li>
-                <li><a href="/playground" class="contrast">Playground</a></li>
-                <li><a href="/#contact" class="contrast">Contato</a></li>
-                <li><a href="/apoiar" class="contrast" style="color: #f9c74f;">Apoiar</a></li>
-            </ul>
-        </nav>
-    </header>
+    ${ app.navbar('/apoiar') }
 
     <!-- Main Content -->
     <main class="container">
@@ -118,13 +99,18 @@
 
             <div class="donation-container">
                 <p>
-                    A API de Tábua de Marés é um projeto independente, desenvolvido com paixão para democratizar o acesso facilitado a esses dados.
+                    A API de Tábua de Marés é um projeto independente, desenvolvido com paixão para democratizar o
+                    acesso facilitado a esses dados.
                 </p>
                 <p>
                     Além de permitir outros devs a construir sus próprias soluções, sem precisar pagar nada por isso.
                 </p>
                 <p>
-                    Todos os dados oferecidos como API pode ser encontrados facilmente no formato de pdf na página oficial da marinha do Brasil <a href="https://www.marinha.mil.br/cppb/tabuas_de_mare" target="_blank">https://www.marinha.mil.br/cppb/tabuas_de_mare</a>, especificamente aqui: <a href="https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa" target="_blank">https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa</a>
+                    Todos os dados oferecidos como API pode ser encontrados facilmente no formato de pdf na página
+                    oficial da marinha do Brasil <a href="https://www.marinha.mil.br/cppb/tabuas_de_mare"
+                        target="_blank">https://www.marinha.mil.br/cppb/tabuas_de_mare</a>, especificamente aqui: <a
+                        href="https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa"
+                        target="_blank">https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa</a>
                 </p>
 
                 <div class="pix-container">
@@ -154,6 +140,39 @@
         </section>
     </main>
 
+    <!-- Licenças e Ferramentas -->
+    <section class="tools-section">
+        <h2 style="text-align:center; margin-top:2rem;">Ferramentas & Licenças Utilizadas</h2>
+        <div class="tools-cards">
+            <div class="tool-card">
+                <img src="/pages/assets/logo-icons8-full.svg" alt="Icons8" style="height:48px; margin-bottom:8px;">
+                <h4>Icons8</h4>
+                <a href="https://icons8.com.br/license" target="_blank">Licença & Uso</a>
+            </div>
+            <div class="tool-card">
+                <img src="/pages/assets/render-logo.svg" alt="Render" style="height:48px; margin-bottom:8px;">
+                <h4>Render</h4>
+                <a href="https://render.com/pricing" target="_blank">Licença & Preços</a>
+            </div>
+            <div class="tool-card">
+                <img src="https://raw.githubusercontent.com/vlang/v-logo/refs/heads/master/dist/v-logo_32x32.svg"
+                    alt="Vlang" style="height:48px; margin-bottom:8px;">
+                <h4>V Language</h4>
+                <a href="https://vlang.io" target="_blank">Site Oficial</a>
+            </div>
+            <div class="tool-card">
+                <img src="/pages/assets/petie-vue.svg" alt="Petite-Vue" style="height:48px; margin-bottom:8px;">
+                <h4>Petite-Vue</h4>
+                <a href="https://github.com/vuejs/petite-vue" target="_blank">GitHub</a>
+            </div>
+            <div class="tool-card">
+                <img src="https://picocss.com/favicon.ico" alt="PicoCSS" style="height:48px; margin-bottom:8px;">
+                <h4>PicoCSS</h4>
+                <a href="http://picocss.com/" target="_blank">Site Oficial</a>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
     @app.footer()
 
@@ -164,6 +183,54 @@
             pixValue: null
         }).mount();
     </script>
+
+    <style>
+        .tools-section {
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .tools-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .tool-card {
+            background: #f5f5f5;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 1rem 1.5rem;
+            text-align: center;
+            width: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: box-shadow 0.2s;
+        }
+
+        .tool-card:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+            background: #e0f7fa;
+        }
+
+        .tool-card img {
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-card h4 {
+            margin: 0.5rem 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+
+        .tool-card a {
+            color: #0077b6;
+            text-decoration: underline;
+            font-size: 0.95rem;
+        }
+    </style>
 </body>
 
 </html>
