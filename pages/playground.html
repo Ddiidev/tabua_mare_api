@@ -1,215 +1,283 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR" data-theme="cyan">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @app.open_graph()
+
     <title>Playground - Tábua de Marés API</title>
-    <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css">
-    <link rel="stylesheet" href="/pages/assets/custom-pico.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-ghcolors.min.css">
+    <link
+      rel="icon"
+      type="image/png"
+      href="/pages/assets/favicon-192x192.png"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css"
+    />
+    <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-ghcolors.min.css"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
     <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kode+Mono&amp;display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Kode+Mono&amp;display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body,
-        h1,
-        h2,
-        h3,
-        p,
-        a {
-            font-family: Spectral, serif;
-        }
+      body,
+      h1,
+      h2,
+      h3,
+      p,
+      a {
+        font-family: Spectral, serif;
+      }
 
-        pre,
-        code {
-            font-family: Kode Mono, monospace !important;
-        }
+      pre,
+      code {
+        font-family:
+          Kode Mono,
+          monospace !important;
+      }
     </style>
-</head>
+  </head>
 
-<body v-scope>
+  <body v-scope>
     <!-- Header -->
     ${ app.navbar('/playground') }
 
     <!-- Playground Header -->
     <section class="docs-hero">
-        <div class="container">
-            <h1>🚀 API Playground</h1>
-            <p>Teste os endpoints da Tábua de Marés API em tempo real</p>
-            <div class="docs-actions">
-                <button class="btn btn-primary"><a href="/" style="text-decoration: none; color: white;">← Voltar ao
-                        Início</a></button>
-                <button class="button-yellow"><a href="/docs" style="text-decoration: none; color: white;">📚
-                        Documentação</a></button>
-            </div>
+      <div class="container">
+        <h1>🚀 API Playground</h1>
+        <p>Teste os endpoints da Tábua de Marés API em tempo real</p>
+        <div class="docs-actions">
+          <button class="btn btn-primary">
+            <a href="/" style="text-decoration: none; color: white"
+              >← Voltar ao Início</a
+            >
+          </button>
+          <button class="button-yellow">
+            <a href="/docs" style="text-decoration: none; color: white"
+              >📚 Documentação</a
+            >
+          </button>
         </div>
+      </div>
     </section>
 
     <!-- Main Content -->
     <main class="main">
-
-        <!-- API Testing Section -->
-        <section class="docs-section">
-            <div class="container">
-                <!-- Endpoint 1: List States -->
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <h3 class="endpoint-title">🌊 Listar Estados</h3>
-                        <span class="method-badge">GET</span>
-                    </div>
-                    <p>Retorna todos os estados costeiros do Brasil disponíveis na API.</p>
-
-                    <div class="endpoint-url">
-                        <strong>GET</strong> /api/v1/states
-                    </div>
-
-                    <div class="endpoint-actions">
-                        <button class="btn btn-primary" @@click="callStatesAPI()" :disabled="loading.states">
-                            <span v-show="loading.states">⏳ Carregando...</span>
-                            <span v-show="!loading.states">🚀 Executar</span>
-                        </button>
-                    </div>
-
-                    <div v-show="responses.states" class="response-section">
-                        <h4>📄 Resposta:</h4>
-                        <div class="code-block">
-                            <pre><code class="language-json" v-html="responses.states"></code></pre>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Endpoint 2: List Harbors by State -->
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <h3 class="endpoint-title">🏖️ Listar Portos por Estado</h3>
-                        <span class="method-badge">GET</span>
-                    </div>
-                    <p>Retorna os portos de um estado específico.</p>
-
-                    <div class="endpoint-url">
-                        <strong>GET</strong> /api/v1/harbor_names/{state}
-                    </div>
-
-                    <div class="endpoint-params">
-                        <div class="param-group">
-                            <label for="state-input">Estado (sigla em minúsculo):</label>
-                            <input id="state-input" type="text" v-model="inputs.state" placeholder="ex: pb, sp, rj"
-                                maxlength="2">
-                        </div>
-                    </div>
-
-                    <div class="endpoint-actions">
-                        <button class="btn btn-primary" @@click="callHarborsAPI()"
-                            :disabled="loading.harbors || !inputs.state">
-                            <span v-show="loading.harbors">⏳ Carregando...</span>
-                            <span v-show="!loading.harbors">🚀 Executar</span>
-                        </button>
-                    </div>
-
-                    <div v-show="responses.harbors" class="response-section">
-                        <h4>📄 Resposta:</h4>
-                        <div class="code-block">
-                            <pre><code class="language-json" v-html="responses.harbors"></code></pre>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Endpoint 3: Get Harbor by IDs -->
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <h3 class="endpoint-title">⚓ Obter Portos por IDs</h3>
-                        <span class="method-badge">GET</span>
-                    </div>
-                    <p>Retorna informações detalhadas de um ou mais portos específicos.</p>
-
-                    <div class="endpoint-url">
-                        <strong>GET</strong> /api/v1/harbors/{ids}
-                    </div>
-
-                    <div class="endpoint-params">
-                        <div class="param-group">
-                            <label for="harbor-id-input">IDs dos Portos:</label>
-                            <input id="harbor-id-input" type="text" v-model="inputs.harborId" placeholder="ex: 1,27,50">
-                            <small>Digite os IDs separados por vírgula (ex: 1,2,3)</small>
-                        </div>
-                    </div>
-
-                    <div class="endpoint-actions">
-                        <button class="btn btn-primary" @@click="callHarborByIdAPI()"
-                            :disabled="loading.harborById || !inputs.harborId">
-                            <span v-show="loading.harborById">⏳ Carregando...</span>
-                            <span v-show="!loading.harborById">🚀 Executar</span>
-                        </button>
-                    </div>
-
-                    <div v-show="responses.harborById" class="response-section">
-                        <h4>📄 Resposta:</h4>
-                        <div class="code-block">
-                            <pre><code class="language-json" v-html="responses.harborById"></code></pre>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Endpoint 3: Get Tábua de Maré por período -->
-                <div class="endpoint-card">
-                    <div class="endpoint-header">
-                        <h3 class="endpoint-title">⚓ Obter Tábua de Maré por Período</h3>
-                        <span class="method-badge">GET</span>
-                    </div>
-                    <p>Retorna informações detalhadas da Tábua de Maré para um porto específico dentro de um período de tempo.</p>
-
-                    <div class="endpoint-url">
-                        <strong>GET</strong> /api/v1/tabua-mare/{harbor}/{month}/{days}
-                    </div>
-
-                    <div class="endpoint-params">
-                        <div class="param-group">
-                            <label for="harbor-input">Porto:</label>
-                            <input id="harbor-input" type="text" v-model="inputs.harbor" placeholder="ex: 1">
-                            <small>Digite o ID do porto (ex: 1)</small>
-                        </div>
-                        <div class="param-group">
-                            <label for="month-input">Mês:</label>
-                            <input id="month-input" type="text" v-model="inputs.month" placeholder="ex: 1">
-                            <small>Digite o mês (ex: 1)</small>
-                        </div>
-                        <div class="param-group">
-                            <label for="days-input">Dias:</label>
-                            <input id="days-input" type="text" v-model="inputs.days" placeholder="ex: 1,30,27">
-                            <small>Digite os dias (ex: 1,30,27)</small>
-                        </div>
-                    </div>
-
-                    <div class="endpoint-actions">
-                        <button class="btn btn-primary" @@click="callTabuaMareAPI()"
-                            :disabled="loading.tabuaMare || !inputs.harbor || !inputs.month || !inputs.days">
-                            <span v-show="loading.tabuaMare">⏳ Carregando...</span>
-                            <span v-show="!loading.tabuaMare">🚀 Executar</span>
-                        </button>
-                    </div>
-
-                    <div v-show="responses.tabuaMare" class="response-section">
-                        <h4>📄 Resposta:</h4>
-                        <div class="code-block">
-                            <pre><code class="language-json" v-html="responses.tabuaMare"></code></pre>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Error Display -->
-                <div v-show="error" class="error-card">
-                    <div class="error-header">
-                        <h4>⚠️ Erro na Requisição</h4>
-                        <button class="close-btn" @@click="error = ''">×</button>
-                    </div>
-                    <p>{{ error }}</p>
-                </div>
+      <!-- API Testing Section -->
+      <section class="docs-section">
+        <div class="container">
+          <!-- Endpoint 1: List States -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">🌊 Listar Estados</h3>
+              <span class="method-badge">GET</span>
             </div>
-        </section>
+            <p>
+              Retorna todos os estados costeiros do Brasil disponíveis na API.
+            </p>
+
+            <div class="endpoint-url"><strong>GET</strong> /api/v1/states</div>
+
+            <div class="endpoint-actions">
+              <button
+                class="btn btn-primary"
+                @@click="callStatesAPI()"
+                :disabled="loading.states"
+              >
+                <span v-show="loading.states">⏳ Carregando...</span>
+                <span v-show="!loading.states">🚀 Executar</span>
+              </button>
+            </div>
+
+            <div v-show="responses.states" class="response-section">
+              <h4>📄 Resposta:</h4>
+              <div class="code-block">
+                <pre><code class="language-json" v-html="responses.states"></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Endpoint 2: List Harbors by State -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">🏖️ Listar Portos por Estado</h3>
+              <span class="method-badge">GET</span>
+            </div>
+            <p>Retorna os portos de um estado específico.</p>
+
+            <div class="endpoint-url">
+              <strong>GET</strong> /api/v1/harbor_names/{state}
+            </div>
+
+            <div class="endpoint-params">
+              <div class="param-group">
+                <label for="state-input">Estado (sigla em minúsculo):</label>
+                <input
+                  id="state-input"
+                  type="text"
+                  v-model="inputs.state"
+                  placeholder="ex: pb, sp, rj"
+                  maxlength="2"
+                />
+              </div>
+            </div>
+
+            <div class="endpoint-actions">
+              <button
+                class="btn btn-primary"
+                @@click="callHarborsAPI()"
+                :disabled="loading.harbors || !inputs.state"
+              >
+                <span v-show="loading.harbors">⏳ Carregando...</span>
+                <span v-show="!loading.harbors">🚀 Executar</span>
+              </button>
+            </div>
+
+            <div v-show="responses.harbors" class="response-section">
+              <h4>📄 Resposta:</h4>
+              <div class="code-block">
+                <pre><code class="language-json" v-html="responses.harbors"></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Endpoint 3: Get Harbor by IDs -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">⚓ Obter Portos por IDs</h3>
+              <span class="method-badge">GET</span>
+            </div>
+            <p>
+              Retorna informações detalhadas de um ou mais portos específicos.
+            </p>
+
+            <div class="endpoint-url">
+              <strong>GET</strong> /api/v1/harbors/{ids}
+            </div>
+
+            <div class="endpoint-params">
+              <div class="param-group">
+                <label for="harbor-id-input">IDs dos Portos:</label>
+                <input
+                  id="harbor-id-input"
+                  type="text"
+                  v-model="inputs.harborId"
+                  placeholder="ex: 1,27,50"
+                />
+                <small>Digite os IDs separados por vírgula (ex: 1,2,3)</small>
+              </div>
+            </div>
+
+            <div class="endpoint-actions">
+              <button
+                class="btn btn-primary"
+                @@click="callHarborByIdAPI()"
+                :disabled="loading.harborById || !inputs.harborId"
+              >
+                <span v-show="loading.harborById">⏳ Carregando...</span>
+                <span v-show="!loading.harborById">🚀 Executar</span>
+              </button>
+            </div>
+
+            <div v-show="responses.harborById" class="response-section">
+              <h4>📄 Resposta:</h4>
+              <div class="code-block">
+                <pre><code class="language-json" v-html="responses.harborById"></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Endpoint 3: Get Tábua de Maré por período -->
+          <div class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">⚓ Obter Tábua de Maré por Período</h3>
+              <span class="method-badge">GET</span>
+            </div>
+            <p>
+              Retorna informações detalhadas da Tábua de Maré para um porto
+              específico dentro de um período de tempo.
+            </p>
+
+            <div class="endpoint-url">
+              <strong>GET</strong> /api/v1/tabua-mare/{harbor}/{month}/{days}
+            </div>
+
+            <div class="endpoint-params">
+              <div class="param-group">
+                <label for="harbor-input">Porto:</label>
+                <input
+                  id="harbor-input"
+                  type="text"
+                  v-model="inputs.harbor"
+                  placeholder="ex: 1"
+                />
+                <small>Digite o ID do porto (ex: 1)</small>
+              </div>
+              <div class="param-group">
+                <label for="month-input">Mês:</label>
+                <input
+                  id="month-input"
+                  type="text"
+                  v-model="inputs.month"
+                  placeholder="ex: 1"
+                />
+                <small>Digite o mês (ex: 1)</small>
+              </div>
+              <div class="param-group">
+                <label for="days-input">Dias:</label>
+                <input
+                  id="days-input"
+                  type="text"
+                  v-model="inputs.days"
+                  placeholder="ex: 1,30,27"
+                />
+                <small>Digite os dias (ex: 1,30,27)</small>
+              </div>
+            </div>
+
+            <div class="endpoint-actions">
+              <button
+                class="btn btn-primary"
+                @@click="callTabuaMareAPI()"
+                :disabled="loading.tabuaMare || !inputs.harbor || !inputs.month || !inputs.days"
+              >
+                <span v-show="loading.tabuaMare">⏳ Carregando...</span>
+                <span v-show="!loading.tabuaMare">🚀 Executar</span>
+              </button>
+            </div>
+
+            <div v-show="responses.tabuaMare" class="response-section">
+              <h4>📄 Resposta:</h4>
+              <div class="code-block">
+                <pre><code class="language-json" v-html="responses.tabuaMare"></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Display -->
+          <div v-show="error" class="error-card">
+            <div class="error-header">
+              <h4>⚠️ Erro na Requisição</h4>
+              <button class="close-btn" @@click="error = ''">×</button>
+            </div>
+            <p>{{ error }}</p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- Footer -->
@@ -217,191 +285,203 @@
 
     <!-- Contact Modal -->
     <dialog id="contact-modal" class="modal">
-        <article class="modal-content">
-            <header class="modal-header">
-                <h3>Contato</h3>
-                <button class="close-btn" aria-label="Close" rel="prev"
-                    onclick="document.getElementById('contact-modal').close()">×</button>
-            </header>
-            <div class="modal-body">
-                <p>Entre em contato conosco para dúvidas, sugestões ou suporte técnico.</p>
-                <form class="contact-form">
-                    <div class="form-group">
-                        <label for="name">Nome:</label>
-                        <input type="text" id="name" name="name" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="email">Email:</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="message">Mensagem:</label>
-                        <textarea id="message" name="message" rows="4" required></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Enviar</button>
-                </form>
+      <article class="modal-content">
+        <header class="modal-header">
+          <h3>Contato</h3>
+          <button
+            class="close-btn"
+            aria-label="Close"
+            rel="prev"
+            onclick="document.getElementById('contact-modal').close()"
+          >
+            ×
+          </button>
+        </header>
+        <div class="modal-body">
+          <p>
+            Entre em contato conosco para dúvidas, sugestões ou suporte técnico.
+          </p>
+          <form class="contact-form">
+            <div class="form-group">
+              <label for="name">Nome:</label>
+              <input type="text" id="name" name="name" required />
             </div>
-        </article>
+
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" id="email" name="email" required />
+            </div>
+
+            <div class="form-group">
+              <label for="message">Mensagem:</label>
+              <textarea
+                id="message"
+                name="message"
+                rows="4"
+                required
+              ></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Enviar</button>
+          </form>
+        </div>
+      </article>
     </dialog>
 
     <!-- Scripts -->
     <script>
-        const { createApp } = PetiteVue;
+      const { createApp } = PetiteVue;
 
-        createApp({
-            showContactModal: false,
-            showMobileMenu: false,
-            showContact: false,
-            loading: {
-                states: false,
-                harbors: false,
-                harborById: false,
-                tabuaMare: false,
-            },
-            responses: {
-                states: '',
-                harbors: '',
-                harborById: '',
-                tabuaMare: '',
-            },
-            inputs: {
-                state: '',
-                harborId: '',
-                harbor: '',
-                month: '',
-                days: ''
-            },
-            error: '',
+      createApp({
+          showContactModal: false,
+          showMobileMenu: false,
+          showContact: false,
+          loading: {
+              states: false,
+              harbors: false,
+              harborById: false,
+              tabuaMare: false,
+          },
+          responses: {
+              states: '',
+              harbors: '',
+              harborById: '',
+              tabuaMare: '',
+          },
+          inputs: {
+              state: '',
+              harborId: '',
+              harbor: '',
+              month: '',
+              days: ''
+          },
+          error: '',
 
-            async callStatesAPI() {
-                this.loading.states = true;
-                this.error = '';
+          async callStatesAPI() {
+              this.loading.states = true;
+              this.error = '';
 
-                try {
-                    const response = await fetch('/api/v1/states');
-                    const data = await response.json();
-                    this.responses.states = JSON.stringify(data, null, 2);
+              try {
+                  const response = await fetch('/api/v1/states');
+                  const data = await response.json();
+                  this.responses.states = JSON.stringify(data, null, 2);
 
-                    // Highlight code after update
-                    this.${ '$' }nextTick(() => {
-                        if (typeof Prism !== 'undefined') {
-                            Prism.highlightAll();
-                        }
-                    });
-                } catch (err) {
-                    this.error = `Erro ao buscar estados: ${'$'}{err.message}`;
-                } finally {
-                    this.loading.states = false;
-                }
-            },
+                  // Highlight code after update
+                  this.${ '$' } nextTick(() => {
+                      if (typeof Prism !== 'undefined') {
+                          Prism.highlightAll();
+                      }
+                  });
+              } catch (err) {
+                  this.error = `Erro ao buscar estados: ${'$'}{err.message}`;
+              } finally {
+                  this.loading.states = false;
+              }
+          },
 
-            async callTabuaMareAPI() {
-                if (!this.inputs.harbor || !this.inputs.month || !this.inputs.days) return;
-                this.loading.tabuaMare = true;
-                this.error = '';
-                try {
-                    const response = await fetch(`/api/v1/tabua-mare/${'$'}{this.inputs.harbor.toLowerCase()}/${'$'}{this.inputs.month}/[${'$'}{this.inputs.days}]`);
-                    const data = await response.json();
-                    this.responses.tabuaMare = JSON.stringify(data, null, 2);
+          async callTabuaMareAPI() {
+              if (!this.inputs.harbor || !this.inputs.month || !this.inputs.days) return;
+              this.loading.tabuaMare = true;
+              this.error = '';
+              try {
+                  const response = await fetch(`/api/v1/tabua-mare/${'$'}{this.inputs.harbor.toLowerCase()}/${'$'}{this.inputs.month}/[${'$'}{this.inputs.days}]`);
+                  const data = await response.json();
+                  this.responses.tabuaMare = JSON.stringify(data, null, 2);
 
-                    // Highlight code after update
-                    this.${ '$' }nextTick(() => {
-                        if (typeof Prism !== 'undefined') {
-                            Prism.highlightAll();
-                        }
-                    });
-                } catch (err) {
-                    this.error = `Erro ao buscar tabua mare: ${'$'}{err.message}`;
-                } finally {
-                    this.loading.tabuaMare = false;
-                }
-            },
+                  // Highlight code after update
+                  this.${ '$' } nextTick(() => {
+                      if (typeof Prism !== 'undefined') {
+                          Prism.highlightAll();
+                      }
+                  });
+              } catch (err) {
+                  this.error = `Erro ao buscar tabua mare: ${'$'}{err.message}`;
+              } finally {
+                  this.loading.tabuaMare = false;
+              }
+          },
 
-            async callHarborsAPI() {
-                if (!this.inputs.state) return;
+          async callHarborsAPI() {
+              if (!this.inputs.state) return;
 
-                this.loading.harbors = true;
-                this.error = '';
+              this.loading.harbors = true;
+              this.error = '';
 
-                try {
-                    const response = await fetch(`/api/v1/harbor_names/${'$'}{this.inputs.state.toLowerCase()}`);
-                    const data = await response.json();
-                    this.responses.harbors = JSON.stringify(data, null, 2);
+              try {
+                  const response = await fetch(`/api/v1/harbor_names/${'$'}{this.inputs.state.toLowerCase()}`);
+                  const data = await response.json();
+                  this.responses.harbors = JSON.stringify(data, null, 2);
 
-                    // Highlight code after update
-                    this.${ '$' }nextTick(() => {
-                        if (typeof Prism !== 'undefined') {
-                            Prism.highlightAll();
-                        }
-                    });
-                } catch (err) {
-                    this.error = `Erro ao buscar portos: ${'$'}{err.message}`;
-                } finally {
-                    this.loading.harbors = false;
-                }
-            },
+                  // Highlight code after update
+                  this.${ '$' } nextTick(() => {
+                      if (typeof Prism !== 'undefined') {
+                          Prism.highlightAll();
+                      }
+                  });
+              } catch (err) {
+                  this.error = `Erro ao buscar portos: ${'$'}{err.message}`;
+              } finally {
+                  this.loading.harbors = false;
+              }
+          },
 
-            async callHarborByIdAPI() {
-                if (!this.inputs.harborId) {
-                    this.error = 'Por favor, insira IDs válidos.';
-                    return;
-                }
+          async callHarborByIdAPI() {
+              if (!this.inputs.harborId) {
+                  this.error = 'Por favor, insira IDs válidos.';
+                  return;
+              }
 
-                // Formata os IDs em um array
-                const ids = this.inputs.harborId.split(',')
-                    .map(id => id.trim())
-                    .filter(id => id !== '' && !isNaN(id));
+              // Formata os IDs em um array
+              const ids = this.inputs.harborId.split(',')
+                  .map(id => id.trim())
+                  .filter(id => id !== '' && !isNaN(id));
 
-                if (ids.length === 0) {
-                    this.error = 'Por favor, insira IDs válidos.';
-                    return;
-                }
+              if (ids.length === 0) {
+                  this.error = 'Por favor, insira IDs válidos.';
+                  return;
+              }
 
-                this.loading.harborById = true;
-                this.error = '';
+              this.loading.harborById = true;
+              this.error = '';
 
-                try {
-                    const response = await fetch('/api/v1/harbors/[' + ids.join(',') + ']');
-                    const data = await response.json();
-                    this.responses.harborById = JSON.stringify(data, null, 2);
+              try {
+                  const response = await fetch('/api/v1/harbors/[' + ids.join(',') + ']');
+                  const data = await response.json();
+                  this.responses.harborById = JSON.stringify(data, null, 2);
 
-                    // Highlight code after update
-                    this.${ '$' }nextTick(() => {
-                        if (typeof Prism !== 'undefined') {
-                            Prism.highlightAll();
-                        }
-                    });
-                } catch (err) {
-                    this.error = 'Erro ao buscar portos: ' + err.message;
-                } finally {
-                    this.loading.harborById = false;
-                }
-            },
+                  // Highlight code after update
+                  this.${ '$' } nextTick(() => {
+                      if (typeof Prism !== 'undefined') {
+                          Prism.highlightAll();
+                      }
+                  });
+              } catch (err) {
+                  this.error = 'Erro ao buscar portos: ' + err.message;
+              } finally {
+                  this.loading.harborById = false;
+              }
+          },
 
-            async quickTest(state) {
-                this.inputs.state = state;
-                await this.callHarborsAPI();
-            },
-        }).mount();
+          async quickTest(state) {
+              this.inputs.state = state;
+              await this.callHarborsAPI();
+          },
+      }).mount();
 
-        // Inicializar Prism.js
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof Prism !== 'undefined') {
-                Prism.highlightAll();
-            }
-        });
+      // Inicializar Prism.js
+      document.addEventListener('DOMContentLoaded', () => {
+          if (typeof Prism !== 'undefined') {
+              Prism.highlightAll();
+          }
+      });
 
-        // Auto-resize textarea based on content
-        document.addEventListener('input', (e) => {
-            if (e.target.tagName === 'TEXTAREA') {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-            }
-        });
+      // Auto-resize textarea based on content
+      document.addEventListener('input', (e) => {
+          if (e.target.tagName === 'TEXTAREA') {
+              e.target.style.height = 'auto';
+              e.target.style.height = e.target.scrollHeight + 'px';
+          }
+      });
     </script>
-</body>
-
+  </body>
 </html>

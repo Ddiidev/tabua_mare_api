@@ -62,11 +62,16 @@
 }
 
 /* Common styles */
-input, select, textarea {
+input,
+select,
+textarea {
   border-radius: 0.5rem;
 }
 
-button, [type="submit"], [type="button"], [role="button"] {
+button,
+[type="submit"],
+[type="button"],
+[role="button"] {
   border-radius: 0.5rem;
 }
 
@@ -76,21 +81,24 @@ main a:not([role="button"]):not(.button) {
   text-decoration: none;
 }
 
-main a:not([role="button"]):not(.button):hover, 
+main a:not([role="button"]):not(.button):hover,
 main a:not([role="button"]):not(.button):focus {
   color: var(--yellow-accent-hover);
   text-decoration: none;
 }
 
 /* Yellow accent button variant */
-.button-yellow, button.yellow {
+.button-yellow,
+button.yellow {
   background-color: var(--yellow-accent);
   border-color: var(--yellow-accent);
   color: #000;
 }
 
-.button-yellow:hover, button.yellow:hover,
-.button-yellow:focus, button.yellow:focus {
+.button-yellow:hover,
+button.yellow:hover,
+.button-yellow:focus,
+button.yellow:focus {
   background-color: var(--yellow-accent-hover);
   border-color: var(--yellow-accent-hover);
 }
@@ -131,7 +139,11 @@ button.button-yellow.outline:focus {
 /* ===== LAYOUT PRINCIPAL ===== */
 /* Header mobile-first */
 header {
-  background: linear-gradient(135deg, var(--pico-primary-600), var(--pico-primary-700));
+  background: linear-gradient(
+    135deg,
+    var(--pico-primary-600),
+    var(--pico-primary-700)
+  );
   color: white;
   padding: var(--spacing-md) 0;
   position: sticky;
@@ -256,7 +268,11 @@ article {
 .hero {
   text-align: center;
   padding: var(--spacing-xl) 0;
-  background: linear-gradient(135deg, var(--pico-primary-50), var(--pico-primary-100));
+  background: linear-gradient(
+    135deg,
+    var(--pico-primary-50),
+    var(--pico-primary-100)
+  );
   border-radius: 1rem;
   margin-bottom: var(--spacing-xl);
 }
@@ -265,7 +281,11 @@ article {
   font-size: 2rem;
   font-weight: 800;
   margin-bottom: var(--spacing-md);
-  background: linear-gradient(135deg, var(--pico-primary-600), var(--pico-primary-700));
+  background: linear-gradient(
+    135deg,
+    var(--pico-primary-600),
+    var(--pico-primary-700)
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -434,7 +454,11 @@ article {
 
 /* CTA Section mobile-first */
 .cta {
-  background: linear-gradient(135deg, var(--pico-primary-600), var(--pico-primary-700));
+  background: linear-gradient(
+    135deg,
+    var(--pico-primary-600),
+    var(--pico-primary-700)
+  );
   color: white;
   padding: var(--spacing-2xl) 0;
   border-radius: 1rem;
@@ -611,7 +635,11 @@ footer {
 }
 
 .docs-header {
-  background: linear-gradient(135deg, var(--pico-primary-600), var(--pico-primary-700));
+  background: linear-gradient(
+    135deg,
+    var(--pico-primary-600),
+    var(--pico-primary-700)
+  );
   color: white;
   padding: var(--spacing-xl) 0;
   margin-bottom: var(--spacing-xl);
@@ -708,7 +736,7 @@ footer {
 .docs-content {
   background: var(--pico-card-background-color);
   border-radius: 1rem;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-2xl);
   border: 1px solid var(--pico-muted-border-color);
   order: 1;
 }
@@ -835,7 +863,11 @@ footer {
 .playground-header {
   text-align: center;
   padding: var(--spacing-xl) 0;
-  background: linear-gradient(135deg, var(--pico-primary-100), var(--pico-primary-200));
+  background: linear-gradient(
+    135deg,
+    var(--pico-primary-100),
+    var(--pico-primary-200)
+  );
   border-radius: 1rem;
   margin-bottom: var(--spacing-xl);
 }
@@ -999,116 +1031,117 @@ html {
   .container {
     padding: 0 var(--spacing-xl);
   }
-  
+
   /* Header */
   .logo-title h1 {
     font-size: 1.5rem;
   }
-  
+
   .mobile-menu-btn {
     display: none;
   }
-  
+
   .mobile-menu {
     display: none !important;
   }
-  
+
   nav {
     gap: var(--spacing-md);
   }
-  
+
   nav a {
     font-size: 1rem;
     padding: var(--spacing-sm) var(--spacing-md);
   }
-  
+
   /* Hero */
   .hero {
     padding: var(--spacing-2xl) 0;
   }
-  
+
   .hero h1 {
     font-size: 2.5rem;
   }
-  
+
   .hero-actions {
     flex-direction: row;
     justify-content: center;
   }
-  
+
   .hero-actions a,
   .hero-actions button {
     width: auto;
     min-width: 200px;
   }
-  
+
   /* Features */
   .features-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   /* CTA */
   .cta-actions {
     flex-direction: row;
     justify-content: center;
   }
-  
+
   .cta-actions a,
   .cta-actions button {
     width: auto;
     min-width: 200px;
   }
-  
+
   /* Footer */
   .footer-content {
     grid-template-columns: repeat(2, 1fr);
     text-align: left;
   }
-  
+
   /* Docs */
   .docs-header h1 {
     font-size: 2.5rem;
   }
-  
+
   .docs-nav {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  
+
   .docs-layout {
     grid-template-columns: 250px 1fr;
   }
-  
+
   .docs-sidebar {
     position: sticky;
     top: var(--spacing-xl);
     height: fit-content;
     order: 1;
+    transition: top 0.3s ease-out;
   }
-  
+
   .docs-content {
     order: 2;
   }
-  
+
   .endpoint-header {
     flex-wrap: nowrap;
   }
-  
+
   .endpoint-url {
     word-break: normal;
   }
-  
+
   /* States grid */
   .states-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   /* API forms */
   .api-form {
     grid-template-columns: 1fr auto;
     align-items: end;
   }
-  
+
   .quick-examples {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1121,31 +1154,31 @@ html {
     max-width: 1200px;
     padding: 0 var(--spacing-xl);
   }
-  
+
   /* Hero */
   .hero {
     padding: var(--spacing-3xl) 0;
   }
-  
+
   .hero h1 {
     font-size: 3rem;
   }
-  
+
   /* Features */
   .features-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   /* Footer */
   .footer-content {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   /* States grid */
   .states-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   /* API forms */
   .quick-examples {
     grid-template-columns: repeat(3, 1fr);
@@ -1157,15 +1190,15 @@ html {
   .container {
     max-width: 1280px;
   }
-  
+
   .hero h1 {
     font-size: 3.5rem;
   }
-  
+
   .states-grid {
     grid-template-columns: repeat(4, 1fr);
   }
-  
+
   .quick-examples {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -1181,7 +1214,7 @@ html {
   .cta-actions button:hover {
     transform: none;
   }
-  
+
   /* Increase touch targets */
   nav a,
   .mobile-menu-btn,
@@ -1203,17 +1236,17 @@ html {
   footer {
     display: none !important;
   }
-  
+
   .hero,
   .features,
   .docs-content {
     break-inside: avoid;
   }
-  
+
   .docs-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .docs-sidebar {
     display: none;
   }

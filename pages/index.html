@@ -1,209 +1,327 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR" data-theme="cyan">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @app.open_graph()
+
     <title>Tábua de Marés - API Brasileira</title>
-    <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css">
-    <link rel="stylesheet" href="/pages/assets/custom-pico.css">
+    <link
+      rel="icon"
+      type="image/png"
+      href="/pages/assets/favicon-192x192.png"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css"
+    />
+    <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
     <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body, h1, h2, h3, p, a {
-            font-family: 'Spectral', serif;
-        }
-        
-        .social-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            justify-content: center;
-            margin: 2rem 0;
-        }
-        
-        .social-link {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: var(--primary);
-            transition: transform 0.3s ease, color 0.3s ease;
-            padding: 1rem;
-            border-radius: 8px;
-            background-color: rgba(0, 0, 0, 0.03);
-        }
-        
-        .social-link:hover {
-            transform: translateY(-5px);
-            color: var(--primary-hover);
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-        
-        .social-link span {
-            margin-top: 0.5rem;
-            font-weight: 500;
-        }
-        
-        .button-yellow {
-            background-color: #f9c74f;
-            border-color: #f9c74f;
-        }
-        
-        .button-yellow:hover {
-            background-color: #f8b500;
-            border-color: #f8b500;
-        }
-    </style>
-</head>
+      body,
+      h1,
+      h2,
+      h3,
+      p,
+      a {
+        font-family: "Spectral", serif;
+      }
 
-<body v-scope>
+      .social-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        justify-content: center;
+        margin: 2rem 0;
+      }
+
+      .social-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        color: var(--primary);
+        transition:
+          transform 0.3s ease,
+          color 0.3s ease;
+        padding: 1rem;
+        border-radius: 8px;
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+
+      .social-link:hover {
+        transform: translateY(-5px);
+        color: var(--primary-hover);
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+
+      .social-link span {
+        margin-top: 0.5rem;
+        font-weight: 500;
+      }
+
+      .button-yellow {
+        background-color: #f9c74f;
+        border-color: #f9c74f;
+      }
+
+      .button-yellow:hover {
+        background-color: #f8b500;
+        border-color: #f8b500;
+      }
+    </style>
+  </head>
+
+  <body v-scope>
     <!-- Header -->
     ${ app.navbar('/') }
 
     <!-- Hero Section -->
     <main class="container">
-        <section class="hero">
-            <div class="grid">
-                <div>
-                    <hgroup>
-                        <h1>API de Tábua de Marés do Brasil</h1>
-                        <p>Acesse dados precisos de marés de todo o litoral brasileiro. Uma API completa para navegadores, pescadores e entusiastas do mar.</p>
-                    </hgroup>
-                    
-                    <p><mark>Não é necessária chave de API! Consulte livremente.</mark></p>
-                    
-                    <p>
-                        <small>De Dev para Dev</small>
-                        <img src="/pages/assets/flag-br.png" alt="Bandeira do Brasil" style="height: 1.2em; vertical-align: middle; margin-left: 0.5rem;">
-                    </p>
-                    
-                    <div class="grid">
-                        <a href="/docs" role="button" class="button-yellow">Ver Documentação</a>
-                        <button class="secondary outline" @@click="showStatesDropdown = !showStatesDropdown">
-                            Todos os Estados
-                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- States Dropdown -->
-                    <details v-show="showStatesDropdown" open>
-                        <summary>Estados Costeiros do Brasil</summary>
-                        <div class="grid state-grid">
-                            <div class="state-card">Alagoas (AL)</div>
-                            <div class="state-card">Amapá (AP)</div>
-                            <div class="state-card">Bahia (BA)</div>
-                            <div class="state-card">Ceará (CE)</div>
-                            <div class="state-card">Espírito Santo (ES)</div>
-                            <div class="state-card">Maranhão (MA)</div>
-                            <div class="state-card">Pará (PA)</div>
-                            <div class="state-card">Paraíba (PB)</div>
-                            <div class="state-card">Pernambuco (PE)</div>
-                            <div class="state-card">Piauí (PI)</div>
-                            <div class="state-card">Paraná (PR)</div>
-                            <div class="state-card">Rio de Janeiro (RJ)</div>
-                            <div class="state-card">Rio Grande do Norte (RN)</div>
-                            <div class="state-card">Rio Grande do Sul (RS)</div>
-                            <div class="state-card">Santa Catarina (SC)</div>
-                            <div class="state-card">Sergipe (SE)</div>
-                            <div class="state-card">São Paulo (SP)</div>
-                        </div>
-                    </details>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features Section -->
-        <section>
+      <section class="hero">
+        <div class="grid">
+          <div>
             <hgroup>
-                <h2>Recursos da API</h2>
-                <p>Descubra tudo o que nossa API pode oferecer para suas aplicações</p>
+              <h1>API de Tábua de Marés do Brasil</h1>
+              <p>
+                A Tábua de Marés API fornece dados precisos sobre as marés do litoral brasileiro. Uma
+                ferramenta criada por desenvolvedor para desenvolvedores, pesquisadores e entusiastas do mar.
+              </p>
             </hgroup>
 
-            <div class="grid">
-                <!-- Feature 1 -->
-                <article>
-                    <header>
-                        <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M3,12C3,7.58 6.58,4 11,4C13.54,4 15.78,5.39 17,7.5C17.81,7.19 18.69,7 19.62,7C21.95,7 23.82,8.87 23.82,11.2C23.82,13.53 21.95,15.4 19.62,15.4H17V17H15V15.4H9V17H7V15.4H4.38C3.61,15.4 3,14.79 3,14.02C3,13.25 3.61,12.64 4.38,12.64H7V11.36H4.38C3.61,11.36 3,10.75 3,9.98C3,9.21 3.61,8.6 4.38,8.6H7V7H9V8.6H15V7H17V8.6H19.62C21.95,8.6 23.82,10.47 23.82,12.8C23.82,15.13 21.95,17 19.62,17H17V19H15V17H9V19H7V17H4.38C1.61,17 0,15.39 0,12.62C0,9.85 1.61,8.24 4.38,8.24H7C7,5.79 9.21,3.58 11.62,3.58C14.03,3.58 16.24,5.79 16.24,8.24H19.62C22.39,8.24 24,9.85 24,12.62C24,15.39 22.39,17 19.62,17H17C17,19.45 14.79,21.66 12.38,21.66C9.97,21.66 7.76,19.45 7.76,17H4.38C1.61,17 0,15.39 0,12.62C0,9.85 1.61,8.24 4.38,8.24Z" />
-                        </svg>
-                        <h3>Dados Precisos</h3>
-                    </header>
-                    <p>Informações atualizadas de marés para todo o litoral brasileiro com alta precisão.</p>
-                </article>
+            <p>
+              <mark>Não é necessária chave de API! Consulte livremente.</mark>
+            </p>
 
-                <!-- Feature 2 -->
-                <article>
-                    <header>
-                        <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" />
-                        </svg>
-                        <h3>API Simples</h3>
-                    </header>
-                    <p>Interface REST fácil de usar com documentação completa e exemplos práticos.</p>
-                </article>
-
-                <!-- Feature 3 -->
-                <article>
-                    <header>
-                        <svg width="48" height="48" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12,2C15.31,2 18,4.66 18,7.95C18,12.41 12,19 12,19S6,12.41 6,7.95C6,4.66 8.69,2 12,2M12,6A2,2 0 0,0 10,8A2,2 0 0,0 12,10A2,2 0 0,0 14,8A2,2 0 0,0 12,6M20,19C20,21.21 16.42,23 12,23C7.58,23 4,21.21 4,19C4,17.71 5.22,16.56 7.11,15.94L7.75,16.74C6.67,17.19 6,17.81 6,18.5C6,19.88 8.69,21 12,21C15.31,21 18,19.88 18,18.5C18,17.81 17.33,17.19 16.25,16.74L16.89,15.94C18.78,16.56 20,17.71 20,19Z" />
-                        </svg>
-                        <h3>Cobertura Nacional</h3>
-                    </header>
-                    <p>Dados de todos os estados costeiros do Brasil, do Amapá ao Rio Grande do Sul.</p>
-                </article>
-            </div>
-        </section>
-
-        <!-- CTA Section -->
-        <section>
-            <article>
-                <header>
-                    <h2>Pronto para Navegar?</h2>
-                </header>
-                <p>Comece a usar nossa API hoje mesmo e tenha acesso aos dados de marés mais confiáveis do Brasil.</p>
-                <footer>
-                    <a href="/docs" role="button" class="button-yellow">Acessar Documentação</a>
-                </footer>
-            </article>
-        </section>
-
-        <!-- Contact Section -->
-        <section id="contact">
-            <hgroup>
-                <h2>Contato</h2>
-                <p>Conecte-se conosco através das redes sociais</p>
-            </hgroup>
+            <p>
+              <small>De Dev para Dev</small>
+              <img
+                src="/pages/assets/flag-br.png"
+                alt="Bandeira do Brasil"
+                style="
+                  height: 1.2em;
+                  vertical-align: middle;
+                  margin-left: 0.5rem;
+                "
+              />
+            </p>
 
             <div class="grid">
-                <article>
-                    <div class="social-links">
-                        <a href="https://www.youtube.com/@@mais.foco42" target="_blank" class="social-link">
-                            <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M10,15L15.19,12L10,9V15M21.56,7.17C21.69,7.64 21.78,8.27 21.84,9.07C21.91,9.87 21.94,10.56 21.94,11.16L22,12C22,14.19 21.84,15.8 21.56,16.83C21.31,17.73 20.73,18.31 19.83,18.56C19.36,18.69 18.5,18.78 17.18,18.84C15.88,18.91 14.69,18.94 13.59,18.94L12,19C7.81,19 5.2,18.84 4.17,18.56C3.27,18.31 2.69,17.73 2.44,16.83C2.31,16.36 2.22,15.73 2.16,14.93C2.09,14.13 2.06,13.44 2.06,12.84L2,12C2,9.81 2.16,8.2 2.44,7.17C2.69,6.27 3.27,5.69 4.17,5.44C4.64,5.31 5.5,5.22 6.82,5.16C8.12,5.09 9.31,5.06 10.41,5.06L12,5C16.19,5 18.8,5.16 19.83,5.44C20.73,5.69 21.31,6.27 21.56,7.17Z" />
-                            </svg>
-                            <span>YouTube</span>
-                        </a>
-                        <a href="https://andrelz.invdual.com/" target="_blank" class="social-link">
-                            <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M14,13H9.95A1,1 0 0,0 8.95,14A1,1 0 0,0 9.95,15H14A1,1 0 0,0 15,14A1,1 0 0,0 14,13M9.95,10H12.55A1,1 0 0,0 13.55,9A1,1 0 0,0 12.55,8H9.95A1,1 0 0,0 8.95,9A1,1 0 0,0 9.95,10M16,9V10A1,1 0 0,0 17,11A1,1 0 0,0 18,10V9A1,1 0 0,0 17,8A1,1 0 0,0 16,9M16,14V13A1,1 0 0,0 15,12A1,1 0 0,0 14,13V14A1,1 0 0,0 15,15A1,1 0 0,0 16,14M19,4H5C3.89,4 3,4.89 3,6V18A2,2 0 0,0 5,20H19A2,2 0 0,0 21,18V6C21,4.89 20.1,4 19,4M19,18H5V8H19V18Z" />
-                            </svg>
-                            <span>Blog Pessoal</span>
-                        </a>
-                        <a href="https://github.com/Ddiidev/tabua_mare_api" target="_blank" class="social-link">
-                            <svg width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z" />
-                            </svg>
-                            <span>GitHub</span>
-                        </a>
-                    </div>
-                </article>
+              <a href="/docs" role="button" class="button-yellow"
+                >Ver Documentação</a
+              >
+              <button
+                class="secondary outline"
+                @@click="showStatesDropdown = !showStatesDropdown"
+              >
+                Todos os Estados
+                <svg
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clip-rule="evenodd"
+                  ></path>
+                </svg>
+              </button>
             </div>
-        </section>
+
+            <!-- States Dropdown -->
+            <details v-show="showStatesDropdown" open>
+              <summary class="states-summary">
+                Estados Costeiros do Brasil
+              </summary>
+              <div class="states-grid">
+                <div class="state-item">🏖️ AL - Alagoas</div>
+                <div class="state-item">🌊 AP - Amapá</div>
+                <div class="state-item">🏝️ BA - Bahia</div>
+                <div class="state-item">⛵ CE - Ceará</div>
+                <div class="state-item">🌅 ES - Espírito Santo</div>
+                <div class="state-item">🦀 MA - Maranhão</div>
+                <div class="state-item">🐟 PA - Pará</div>
+                <div class="state-item">🏖️ PB - Paraíba</div>
+                <div class="state-item">🌊 PE - Pernambuco</div>
+                <div class="state-item">🏝️ PI - Piauí</div>
+                <div class="state-item">⛵ PR - Paraná</div>
+                <div class="state-item">🌅 RJ - Rio de Janeiro</div>
+                <div class="state-item">🦀 RN - Rio Grande do Norte</div>
+                <div class="state-item">🐟 RS - Rio Grande do Sul</div>
+                <div class="state-item">🏖️ SC - Santa Catarina</div>
+                <div class="state-item">🌊 SE - Sergipe</div>
+                <div class="state-item">🏝️ SP - São Paulo</div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section>
+        <hgroup>
+          <h2>Recursos da API</h2>
+          <p>
+            Descubra tudo o que nossa API pode oferecer para suas aplicações
+          </p>
+        </hgroup>
+
+        <div class="grid">
+          <!-- Feature 1 -->
+          <article>
+            <header>
+              <svg
+                width="48"
+                height="48"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3,12C3,7.58 6.58,4 11,4C13.54,4 15.78,5.39 17,7.5C17.81,7.19 18.69,7 19.62,7C21.95,7 23.82,8.87 23.82,11.2C23.82,13.53 21.95,15.4 19.62,15.4H17V17H15V15.4H9V17H7V15.4H4.38C3.61,15.4 3,14.79 3,14.02C3,13.25 3.61,12.64 4.38,12.64H7V11.36H4.38C3.61,11.36 3,10.75 3,9.98C3,9.21 3.61,8.6 4.38,8.6H7V7H9V8.6H15V7H17V8.6H19.62C21.95,8.6 23.82,10.47 23.82,12.8C23.82,15.13 21.95,17 19.62,17H17V19H15V17H9V19H7V17H4.38C1.61,17 0,15.39 0,12.62C0,9.85 1.61,8.24 4.38,8.24H7C7,5.79 9.21,3.58 11.62,3.58C14.03,3.58 16.24,5.79 16.24,8.24H19.62C22.39,8.24 24,9.85 24,12.62C24,15.39 22.39,17 19.62,17H17C17,19.45 14.79,21.66 12.38,21.66C9.97,21.66 7.76,19.45 7.76,17H4.38C1.61,17 0,15.39 0,12.62C0,9.85 1.61,8.24 4.38,8.24Z"
+                />
+              </svg>
+              <h3>Dados Precisos</h3>
+            </header>
+            <p>
+              Informações atualizadas de marés para todo o litoral brasileiro
+              com alta precisão.
+            </p>
+          </article>
+
+          <!-- Feature 2 -->
+          <article>
+            <header>
+              <svg
+                width="48"
+                height="48"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
+                />
+              </svg>
+              <h3>API Simples</h3>
+            </header>
+            <p>
+              Interface REST fácil de usar com documentação completa e exemplos
+              práticos.
+            </p>
+          </article>
+
+          <!-- Feature 3 -->
+          <article>
+            <header>
+              <svg
+                width="48"
+                height="48"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M12,2C15.31,2 18,4.66 18,7.95C18,12.41 12,19 12,19S6,12.41 6,7.95C6,4.66 8.69,2 12,2M12,6A2,2 0 0,0 10,8A2,2 0 0,0 12,10A2,2 0 0,0 14,8A2,2 0 0,0 12,6M20,19C20,21.21 16.42,23 12,23C7.58,23 4,21.21 4,19C4,17.71 5.22,16.56 7.11,15.94L7.75,16.74C6.67,17.19 6,17.81 6,18.5C6,19.88 8.69,21 12,21C15.31,21 18,19.88 18,18.5C18,17.81 17.33,17.19 16.25,16.74L16.89,15.94C18.78,16.56 20,17.71 20,19Z"
+                />
+              </svg>
+              <h3>Cobertura Nacional</h3>
+            </header>
+            <p>
+              Dados de todos os estados costeiros do Brasil, do Amapá ao Rio
+              Grande do Sul.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section>
+        <article>
+          <header>
+            <h2>Pronto para Navegar?</h2>
+          </header>
+          <p>
+            Comece a usar nossa API hoje mesmo e tenha acesso aos dados de marés
+            mais confiáveis do Brasil.
+          </p>
+          <footer>
+            <a href="/docs" role="button" class="button-yellow"
+              >Acessar Documentação</a
+            >
+          </footer>
+        </article>
+      </section>
+
+      <!-- Contact Section -->
+      <section id="contact">
+        <hgroup>
+          <h2>Contato</h2>
+          <p>Conecte-se conosco através das redes sociais</p>
+        </hgroup>
+
+        <div class="grid">
+          <article>
+            <div class="social-links">
+              <a
+                href="https://www.youtube.com/@@mais.foco42"
+                target="_blank"
+                class="social-link"
+              >
+                <svg
+                  width="32"
+                  height="32"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M10,15L15.19,12L10,9V15M21.56,7.17C21.69,7.64 21.78,8.27 21.84,9.07C21.91,9.87 21.94,10.56 21.94,11.16L22,12C22,14.19 21.84,15.8 21.56,16.83C21.31,17.73 20.73,18.31 19.83,18.56C19.36,18.69 18.5,18.78 17.18,18.84C15.88,18.91 14.69,18.94 13.59,18.94L12,19C7.81,19 5.2,18.84 4.17,18.56C3.27,18.31 2.69,17.73 2.44,16.83C2.31,16.36 2.22,15.73 2.16,14.93C2.09,14.13 2.06,13.44 2.06,12.84L2,12C2,9.81 2.16,8.2 2.44,7.17C2.69,6.27 3.27,5.69 4.17,5.44C4.64,5.31 5.5,5.22 6.82,5.16C8.12,5.09 9.31,5.06 10.41,5.06L12,5C16.19,5 18.8,5.16 19.83,5.44C20.73,5.69 21.31,6.27 21.56,7.17Z"
+                  />
+                </svg>
+                <span>YouTube</span>
+              </a>
+              <a
+                href="https://andrelz.invdual.com/"
+                target="_blank"
+                class="social-link"
+              >
+                <svg
+                  width="32"
+                  height="32"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M14,13H9.95A1,1 0 0,0 8.95,14A1,1 0 0,0 9.95,15H14A1,1 0 0,0 15,14A1,1 0 0,0 14,13M9.95,10H12.55A1,1 0 0,0 13.55,9A1,1 0 0,0 12.55,8H9.95A1,1 0 0,0 8.95,9A1,1 0 0,0 9.95,10M16,9V10A1,1 0 0,0 17,11A1,1 0 0,0 18,10V9A1,1 0 0,0 17,8A1,1 0 0,0 16,9M16,14V13A1,1 0 0,0 15,12A1,1 0 0,0 14,13V14A1,1 0 0,0 15,15A1,1 0 0,0 16,14M19,4H5C3.89,4 3,4.89 3,6V18A2,2 0 0,0 5,20H19A2,2 0 0,0 21,18V6C21,4.89 20.1,4 19,4M19,18H5V8H19V18Z"
+                  />
+                </svg>
+                <span>Blog Pessoal</span>
+              </a>
+              <a
+                href="https://github.com/Ddiidev/tabua_mare_api"
+                target="_blank"
+                class="social-link"
+              >
+                <svg
+                  width="32"
+                  height="32"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z"
+                  />
+                </svg>
+                <span>GitHub</span>
+              </a>
+            </div>
+          </article>
+        </div>
+      </section>
     </main>
 
     <!-- Footer -->
@@ -211,57 +329,46 @@
 
     <!-- Contact Modal -->
     <dialog v-show="showContactModal" @@click="showContactModal = false">
-        <article @@click.stop>
-            <header>
-                <button aria-label="Close" rel="prev" @@click="showContactModal = false"></button>
-                <h3>Contato</h3>
-            </header>
-            <p>Entre em contato conosco para dúvidas sobre a API:</p>
-            <div class="grid">
-                <div>
-                    <strong>Email:</strong>
-                    <p>contato@@tabuamare.com.br</p>
-                </div>
-                <div>
-                    <strong>Suporte Técnico:</strong>
-                    <p>suporte@@tabuamare.com.br</p>
-                </div>
-            </div>
-        </article>
+      <article @@click.stop>
+        <header>
+          <button
+            aria-label="Close"
+            rel="prev"
+            @@click="showContactModal = false"
+          ></button>
+          <h3>Contato</h3>
+        </header>
+        <p>Entre em contato conosco para dúvidas sobre a API:</p>
+        <div class="grid">
+          <div>
+            <strong>Email:</strong>
+            <p>contato@@tabuamare.com.br</p>
+          </div>
+          <div>
+            <strong>Suporte Técnico:</strong>
+            <p>suporte@@tabuamare.com.br</p>
+          </div>
+        </div>
+      </article>
     </dialog>
 
     <script>
-        const { createApp } = PetiteVue;
+      const { createApp } = PetiteVue;
 
-        createApp({
-            showContactModal: false,
-            showStatesDropdown: false,
-            showMobileMenu: false
-        }).mount();
+      createApp({
+        showContactModal: false,
+        showStatesDropdown: false,
+        showMobileMenu: false,
+      }).mount();
     </script>
-</body>
+  </body>
 
+  <style>
+    .states-summary {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: var(--spacing-md);
+      color: var(--pico-primary-700);
+    }
+  </style>
 </html>
-
-<style>
-.state-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1rem;
-}
-.state-card {
-    background: #f5f5f5;
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-    transition: box-shadow 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.state-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    background: #e0e0e0;
-}
-</style>
