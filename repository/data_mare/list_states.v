@@ -12,6 +12,7 @@ import shareds.constants
 pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB
+	db.reset()!
 
 	defer {
 		pool_conn.put(conn) or {}

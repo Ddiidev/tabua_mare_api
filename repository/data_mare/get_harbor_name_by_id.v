@@ -11,9 +11,9 @@ import repository.data_mare.dto
 pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.ResultValues[dto.DTODataMareGetHarbor] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB
+	db.reset()!
 
 	defer {
-		db.close() or {}
 		pool_conn.put(conn) or {}
 	}
 

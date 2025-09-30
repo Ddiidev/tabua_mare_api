@@ -12,6 +12,7 @@ import repository.data_mare.dto
 pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state string) !types.ResultValues[dto.DTODataMareListHaborNameByState] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB
+	db.reset()!
 
 	defer {
 		pool_conn.put(conn) or {}

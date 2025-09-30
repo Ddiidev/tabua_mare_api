@@ -12,6 +12,7 @@ import repository.tabua_mare.dto
 pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id int, month int, days []int) !types.ResultValues[dto.DTOTabuaMare] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB
+	db.reset()!
 
 	defer {
 		pool_conn.put(conn) or { dump(err) }

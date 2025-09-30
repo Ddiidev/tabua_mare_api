@@ -28,5 +28,5 @@ fn create_conn() !&pool.ConnectionPoolable {
 		dbname:   env.db_database
 	}
 	db := pg.connect(config)!
-	return db
+	return &db
 }
