@@ -30,12 +30,15 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.Re
 	mut data_harbors := []dto.DTODataMareGetHarbor{}
 	for harbor in harbors {
 		data_harbors << dto.DTODataMareGetHarbor{
-			id:           harbor.id
-			card:         harbor.card
-			state:        harbor.state
-			timezone:     harbor.timezone
-			harbor_name:  harbor.harbor_name
-			geo_location: geo_location.filter(it.data_mare_id == harbor.id).map(dto.GeoLocation{
+			id:                          harbor.id
+			year:                        harbor.year
+			card:                        harbor.card
+			state:                       harbor.state
+			timezone:                    harbor.timezone
+			mean_level:                  harbor.mean_level
+			harbor_name:                 harbor.harbor_name
+			data_collection_institution: harbor.data_collection_institution
+			geo_location:                geo_location.filter(it.data_mare_id == harbor.id).map(dto.GeoLocation{
 				lat:           it.lat
 				lng:           it.lng
 				decimal_lat:   it.decimal_lat

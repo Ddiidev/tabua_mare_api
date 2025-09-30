@@ -154,6 +154,52 @@
                     </div>
                 </div>
 
+                <!-- Endpoint 3: Get Tábua de Maré por período -->
+                <div class="endpoint-card">
+                    <div class="endpoint-header">
+                        <h3 class="endpoint-title">⚓ Obter Tábua de Maré por Período</h3>
+                        <span class="method-badge">GET</span>
+                    </div>
+                    <p>Retorna informações detalhadas da Tábua de Maré para um porto específico dentro de um período de tempo.</p>
+
+                    <div class="endpoint-url">
+                        <strong>GET</strong> /api/v1/tabua-mare/{harbor}/{month}/{days}
+                    </div>
+
+                    <div class="endpoint-params">
+                        <div class="param-group">
+                            <label for="harbor-input">Porto:</label>
+                            <input id="harbor-input" type="text" v-model="inputs.harbor" placeholder="ex: 1">
+                            <small>Digite o ID do porto (ex: 1)</small>
+                        </div>
+                        <div class="param-group">
+                            <label for="month-input">Mês:</label>
+                            <input id="month-input" type="text" v-model="inputs.month" placeholder="ex: 1">
+                            <small>Digite o mês (ex: 1)</small>
+                        </div>
+                        <div class="param-group">
+                            <label for="days-input">Dias:</label>
+                            <input id="days-input" type="text" v-model="inputs.days" placeholder="ex: 1,30,27">
+                            <small>Digite os dias (ex: 1,30,27)</small>
+                        </div>
+                    </div>
+
+                    <div class="endpoint-actions">
+                        <button class="btn btn-primary" @@click="callTabuaMareAPI()"
+                            :disabled="loading.tabuaMare || !inputs.harbor || !inputs.month || !inputs.days">
+                            <span v-show="loading.tabuaMare">⏳ Carregando...</span>
+                            <span v-show="!loading.tabuaMare">🚀 Executar</span>
+                        </button>
+                    </div>
+
+                    <div v-show="responses.tabuaMare" class="response-section">
+                        <h4>📄 Resposta:</h4>
+                        <div class="code-block">
+                            <pre><code class="language-json" v-html="responses.tabuaMare"></code></pre>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Error Display -->
                 <div v-show="error" class="error-card">
                     <div class="error-header">
@@ -212,16 +258,21 @@
             loading: {
                 states: false,
                 harbors: false,
-                harborById: false
+                harborById: false,
+                tabuaMare: false,
             },
             responses: {
                 states: '',
                 harbors: '',
-                harborById: ''
+                harborById: '',
+                tabuaMare: '',
             },
             inputs: {
                 state: '',
-                harborId: ''
+                harborId: '',
+                harbor: '',
+                month: '',
+                days: ''
             },
             error: '',
 
@@ -235,7 +286,7 @@
                     this.responses.states = JSON.stringify(data, null, 2);
 
                     // Highlight code after update
-                    this.${ '$' } nextTick(() => {
+                    this.${ '$' }nextTick(() => {
                         if (typeof Prism !== 'undefined') {
                             Prism.highlightAll();
                         }
@@ -244,6 +295,28 @@
                     this.error = `Erro ao buscar estados: ${'$'}{err.message}`;
                 } finally {
                     this.loading.states = false;
+                }
+            },
+
+            async callTabuaMareAPI() {
+                if (!this.inputs.harbor || !this.inputs.month || !this.inputs.days) return;
+                this.loading.tabuaMare = true;
+                this.error = '';
+                try {
+                    const response = await fetch(`/api/v1/tabua-mare/${'$'}{this.inputs.harbor.toLowerCase()}/${'$'}{this.inputs.month}/[${'$'}{this.inputs.days}]`);
+                    const data = await response.json();
+                    this.responses.tabuaMare = JSON.stringify(data, null, 2);
+
+                    // Highlight code after update
+                    this.${ '$' }nextTick(() => {
+                        if (typeof Prism !== 'undefined') {
+                            Prism.highlightAll();
+                        }
+                    });
+                } catch (err) {
+                    this.error = `Erro ao buscar tabua mare: ${'$'}{err.message}`;
+                } finally {
+                    this.loading.tabuaMare = false;
                 }
             },
 
@@ -259,7 +332,7 @@
                     this.responses.harbors = JSON.stringify(data, null, 2);
 
                     // Highlight code after update
-                    this.${ '$' } nextTick(() => {
+                    this.${ '$' }nextTick(() => {
                         if (typeof Prism !== 'undefined') {
                             Prism.highlightAll();
                         }
@@ -296,7 +369,7 @@
                     this.responses.harborById = JSON.stringify(data, null, 2);
 
                     // Highlight code after update
-                    this.${ '$' } nextTick(() => {
+                    this.${ '$' }nextTick(() => {
                         if (typeof Prism !== 'undefined') {
                             Prism.highlightAll();
                         }
