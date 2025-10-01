@@ -365,7 +365,6 @@
                   const response = await fetch('/api/v1/states');
                   const data = await response.json();
                   this.responses.states = JSON.stringify(data, null, 2);
-
                   // Highlight code after update
                   this.${ '$' }nextTick(() => {
                       if (typeof Prism !== 'undefined') {
@@ -480,6 +479,34 @@
           if (e.target.tagName === 'TEXTAREA') {
               e.target.style.height = 'auto';
               e.target.style.height = e.target.scrollHeight + 'px';
+          }
+      });
+
+      // Handle Enter key navigation and execution
+      document.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'text') {
+              e.preventDefault();
+              
+              // Get the current input field
+              const currentInput = e.target;
+              const currentCard = currentInput.closest('.endpoint-card');
+              
+              if (!currentCard) return;
+              
+              // Get all input fields in the same endpoint card
+              const inputsInCard = Array.from(currentCard.querySelectorAll('input[type="text"]'));
+              const currentIndex = inputsInCard.indexOf(currentInput);
+              
+              // If there's a next input field, focus on it
+              if (currentIndex < inputsInCard.length - 1) {
+                  inputsInCard[currentIndex + 1].focus();
+              } else {
+                  // If this is the last input field, trigger the execute button
+                  const executeButton = currentCard.querySelector('.btn.btn-primary');
+                  if (executeButton && !executeButton.disabled) {
+                      executeButton.click();
+                  }
+              }
           }
       });
     </script>
