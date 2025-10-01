@@ -12,8 +12,6 @@ pub:
 	db_port        string
 	db_user        string
 	db_pass        string
-	jwt_secret     string
-	jwt_expires_in string
 	url_env        string
 }
 
@@ -34,8 +32,6 @@ pub fn load_env() EnvConfig {
 		db_port:        get_env('DB_PORT', env_map).trim_space()
 		db_user:        get_env('DB_USER', env_map).trim_space()
 		db_pass:        get_env('DB_PASS', env_map).trim_space()
-		jwt_secret:     get_env('JWT_SECRET', env_map).trim_space()
-		jwt_expires_in: get_env('JWT_EXPIRES_IN', env_map).trim_space()
 		url_env:        get_env('URL_ENV', env_map).trim_space()
 	}
 }
