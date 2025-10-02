@@ -40,366 +40,364 @@
   <!-- Header -->
   ${ app.navbar('/docs') }
 
-  <!-- Docs Header -->
-  <section class="docs-hero">
-    <div class="container">
-      <h1>📚 Documentação da API</h1>
-      <p>Guia completo para integração com a Tábua de Marés API</p>
-      <div class="docs-actions">
-        <button class="btn btn-primary" @@click="showQuickStart = true">
-          ⚡ Quick Start
-        </button>
-        <button class="button-yellow">
-          <a href="/playground" style="text-decoration: none; color: white">🚀 Playground</a>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Quick Start Modal -->
-  <dialog :open="showQuickStart" @@click="showQuickStart = false">
-    <div class="modal-content" @@click.stop>
-      <div class="modal-header">
-        <h3>⚡ Quick Start</h3>
-        <button class="close-btn" @@click="showQuickStart = false">×</button>
-      </div>
-      <div>
-        <h4>1. Primeira requisição:</h4>
-        <div class="code-block">
-          <pre><code>curl -X GET "${url_env}/states"</code></pre>
-        </div>
-        <h4>2. Exemplo JavaScript:</h4>
-        <div class="code-block">
-          <pre><code>fetch('${url_env}/states')
-  .then(response => response.json())
-  .then(data => console.log(data));</code></pre>
-        </div>
-      </div>
-    </div>
-  </dialog>
-
   <!-- Main Content -->
-  <main class="main">
-    <div class="container">
-      <div class="docs-layout">
-        <!-- Sidebar -->
-        <aside class="docs-sidebar">
-          <nav style="
+  <main class="container">
+    <!-- Docs Header -->
+    <section class="docs-hero">
+      <div class="container">
+        <h1>📚 Documentação da API</h1>
+        <p>Guia completo para integração com a Tábua de Marés API</p>
+        <div class="docs-actions">
+          <button class="btn btn-primary" @@click="showQuickStart = true">
+            ⚡ Quick Start
+          </button>
+          <button class="button-yellow">
+            <a href="/playground" style="text-decoration: none; color: white">🚀 Playground</a>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="docs-layout">
+      <!-- Sidebar -->
+      <aside class="docs-sidebar">
+        <nav style="
                 display: flex;
                 flex-direction: column;
                 align-items: flex-start;
               ">
-            <a href="#overview" onclick="scrollToSection('#overview')">Visão Geral</a>
-            <a href="#authentication" onclick="scrollToSection('#authentication')">Autenticação</a>
-            <a href="#response-structure" onclick="scrollToSection('#response-structure')">Estrutura de Resposta</a>
-            <a href="#endpoints" onclick="scrollToSection('#endpoints')">Endpoints</a>
-            <a href="#list-states" class="sub-item" onclick="scrollToSection('#list-states')">Listar Estados</a>
-            <a href="#list-harbors" class="sub-item" onclick="scrollToSection('#list-harbors')">Listar Portos</a>
-            <a href="#get-harbor" class="sub-item" onclick="scrollToSection('#get-harbor')">Obter Porto</a>
-            <a href="#get-tabua-mare" class="sub-item" onclick="scrollToSection('#get-tabua-mare')">Tábua de Maré</a>
-            <a href="#errors" onclick="scrollToSection('#errors')">Códigos de Erro</a>
-          </nav>
-        </aside>
+          <a href="#overview" onclick="scrollToSection('#overview')">Visão Geral</a>
+          <a href="#authentication" onclick="scrollToSection('#authentication')">Autenticação</a>
+          <a href="#response-structure" onclick="scrollToSection('#response-structure')">Estrutura de Resposta</a>
+          <a href="#endpoints" onclick="scrollToSection('#endpoints')">Endpoints</a>
+          <a href="#list-states" class="sub-item" onclick="scrollToSection('#list-states')">Listar Estados</a>
+          <a href="#list-harbors" class="sub-item" onclick="scrollToSection('#list-harbors')">Listar Portos</a>
+          <a href="#get-harbor" class="sub-item" onclick="scrollToSection('#get-harbor')">Obter Porto</a>
+          <a href="#get-tabua-mare" class="sub-item" onclick="scrollToSection('#get-tabua-mare')">Tábua de Maré</a>
+          <a href="#errors" onclick="scrollToSection('#errors')">Códigos de Erro</a>
+        </nav>
+      </aside>
 
-        <!-- Content -->
-        <div class="docs-content">
-          <!-- Visão Geral -->
-          <section id="overview" class="docs-section">
-            <div class="section-header">
-              <svg fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z" />
-              </svg>
-              <h2>Visão Geral</h2>
+      <!-- Content -->
+      <div class="docs-content">
+        <!-- Visão Geral -->
+        <section id="overview" class="docs-section">
+          <div class="section-header">
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8Z" />
+            </svg>
+            <h2>Visão Geral</h2>
+          </div>
+
+          <p>
+            A <strong>Tábua de Marés API</strong> fornece dados precisos
+            sobre as marés do litoral brasileiro. Uma API REST completa para
+            desenvolvedores, pesquisadores e entusiastas do mar.
+          </p>
+
+          <div class="info-box">
+            <p><strong>🌐 Base URL:</strong> <code>${url_env}</code></p>
+            <p><strong>📊 Formato:</strong> JSON</p>
+            <p><strong>🚀 Status:</strong> Ativo e gratuito</p>
+          </div>
+
+          <h3>✨ Características</h3>
+          <ul>
+            <li>
+              🌊 <strong>Cobertura completa:</strong> Dados de marés para
+              todo o litoral brasileiro
+            </li>
+            <li>
+              📍 <strong>17 estados costeiros:</strong> Informações
+              detalhadas por localização
+            </li>
+            <li>
+              ⚡ <strong>Respostas rápidas:</strong> API otimizada para
+              performance
+            </li>
+            <li>
+              🔒 <strong>Confiável:</strong> Dados oficiais e atualizados
+            </li>
+          </ul>
+        </section>
+
+        <!-- Autenticação -->
+        <section id="authentication" class="docs-section">
+          <div class="section-header">
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11.5C15.4,11.5 16,12.4 16,13V16C16,17.4 15.4,18 14.8,18H9.2C8.6,18 8,17.4 8,16V13C8,12.4 8.6,11.5 9.2,11.5V10C9.2,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,10V11.5H13.5V10C13.5,8.7 12.8,8.2 12,8.2Z" />
+            </svg>
+            <h2>Autenticação</h2>
+          </div>
+
+          <div class="info-box">
+            <p>
+              <strong>🎉 Uso Livre:</strong> Esta API não requer
+              autenticação e é de uso público.
+            </p>
+            <p>
+              <strong>⚡ Limite:</strong> 500 requisições por minuto por IP
+              para garantir qualidade do serviço.
+            </p>
+          </div>
+        </section>
+
+        <!-- Estrutura de Resposta -->
+        <section id="response-structure" class="docs-section">
+          <div class="section-header">
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+            <h2>Estrutura de Resposta</h2>
+          </div>
+
+          <p>Todas as respostas seguem o mesmo padrão JSON:</p>
+
+          <div class="code-block">
+            <pre><code class="language-json">{{code_estrutura_default}}</code></pre>
+          </div>
+
+          <div class="info-box warning">
+            <p><strong>💡 Observações:</strong></p>
+            <ul>
+              <li>
+                O campo <code>error</code> só aparece quando há erro na
+                requisição
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Endpoints -->
+        <section id="endpoints" class="docs-section">
+          <div class="section-header">
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M10.59,13.41C11,13.8 11,14.4 10.59,14.81C10.2,15.2 9.6,15.2 9.19,14.81L7.78,13.4L6.37,14.81C6,15.2 5.4,15.2 5,14.81C4.6,14.4 4.6,13.8 5,13.41L6.41,12L5,10.59C4.6,10.2 4.6,9.6 5,9.19C5.4,8.8 6,8.8 6.37,9.19L7.78,10.6L9.19,9.19C9.6,8.8 10.2,8.8 10.59,9.19C11,9.6 11,10.2 10.59,10.59L9.18,12L10.59,13.41M14.5,17A1.5,1.5 0 0,1 13,15.5A1.5,1.5 0 0,1 14.5,14A1.5,1.5 0 0,1 16,15.5A1.5,1.5 0 0,1 14.5,17M14.5,10A1.5,1.5 0 0,1 13,8.5A1.5,1.5 0 0,1 14.5,7A1.5,1.5 0 0,1 16,8.5A1.5,1.5 0 0,1 14.5,10M19.5,12A1.5,1.5 0 0,1 18,10.5A1.5,1.5 0 0,1 19.5,9A1.5,1.5 0 0,1 21,10.5A1.5,1.5 0 0,1 19.5,12Z" />
+            </svg>
+            <h2>Endpoints</h2>
+          </div>
+
+          <!-- Listar Estados -->
+          <div id="list-states" class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">Listar Estados</h3>
+              <span class="method-badge">GET</span>
             </div>
 
             <p>
-              A <strong>Tábua de Marés API</strong> fornece dados precisos
-              sobre as marés do litoral brasileiro. Uma API REST completa para
-              desenvolvedores, pesquisadores e entusiastas do mar.
+              Retorna a lista de todos os estados costeiros do Brasil
+              disponíveis na API.
             </p>
 
-            <div class="info-box">
-              <p><strong>🌐 Base URL:</strong> <code>${url_env}</code></p>
-              <p><strong>📊 Formato:</strong> JSON</p>
-              <p><strong>🚀 Status:</strong> Ativo e gratuito</p>
+            <div class="endpoint-url"><strong>GET</strong> /states</div>
+
+            <h4>📝 Exemplo de Requisição:</h4>
+            <div class="code-block">
+              <pre><code>curl -X GET "${url_env}/states" -H "Accept: application/json"</code></pre>
             </div>
 
-            <h3>✨ Características</h3>
+            <h4>✅ Resposta de Sucesso (200):</h4>
+            <div class="code-block">
+              <pre><code class="language-json">{{code_resposta_states}}</code></pre>
+            </div>
+
+            <h4>🗺️ Estados Disponíveis:</h4>
+            <div class="states-grid">
+              <div class="state-item">🏖️ AL - Alagoas</div>
+              <div class="state-item">🌊 AP - Amapá</div>
+              <div class="state-item">🏝️ BA - Bahia</div>
+              <div class="state-item">⛵ CE - Ceará</div>
+              <div class="state-item">🌅 ES - Espírito Santo</div>
+              <div class="state-item">🦀 MA - Maranhão</div>
+              <div class="state-item">🐟 PA - Pará</div>
+              <div class="state-item">🏖️ PB - Paraíba</div>
+              <div class="state-item">🌊 PE - Pernambuco</div>
+              <div class="state-item">🏝️ PI - Piauí</div>
+              <div class="state-item">⛵ PR - Paraná</div>
+              <div class="state-item">🌅 RJ - Rio de Janeiro</div>
+              <div class="state-item">🦀 RN - Rio Grande do Norte</div>
+              <div class="state-item">🐟 RS - Rio Grande do Sul</div>
+              <div class="state-item">🏖️ SC - Santa Catarina</div>
+              <div class="state-item">🌊 SE - Sergipe</div>
+              <div class="state-item">🏝️ SP - São Paulo</div>
+            </div>
+          </div>
+
+          <!-- Listar Portos por Estado -->
+          <div id="list-harbors" class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">Listar Portos por Estado</h3>
+              <span class="method-badge">GET</span>
+            </div>
+
+            <p>
+              Retorna uma lista com os nomes dos portos de um estado
+              específico.
+            </p>
+
+            <div class="endpoint-url">
+              <strong>GET</strong> /harbor_names/{state}
+            </div>
+
+            <h4>📋 Parâmetros:</h4>
             <ul>
               <li>
-                🌊 <strong>Cobertura completa:</strong> Dados de marés para
-                todo o litoral brasileiro
-              </li>
-              <li>
-                📍 <strong>17 estados costeiros:</strong> Informações
-                detalhadas por localização
-              </li>
-              <li>
-                ⚡ <strong>Respostas rápidas:</strong> API otimizada para
-                performance
-              </li>
-              <li>
-                🔒 <strong>Confiável:</strong> Dados oficiais e atualizados
+                <strong>state</strong> (string): Sigla do estado em
+                minúsculo (ex: sp, rj, sc, pb)
               </li>
             </ul>
-          </section>
 
-          <!-- Autenticação -->
-          <section id="authentication" class="docs-section">
-            <div class="section-header">
-              <svg fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7C13.4,7 14.8,8.6 14.8,10V11.5C15.4,11.5 16,12.4 16,13V16C16,17.4 15.4,18 14.8,18H9.2C8.6,18 8,17.4 8,16V13C8,12.4 8.6,11.5 9.2,11.5V10C9.2,8.6 10.6,7 12,7M12,8.2C11.2,8.2 10.5,8.7 10.5,10V11.5H13.5V10C13.5,8.7 12.8,8.2 12,8.2Z" />
-              </svg>
-              <h2>Autenticação</h2>
-            </div>
-
-            <div class="info-box">
-              <p>
-                <strong>🎉 Uso Livre:</strong> Esta API não requer
-                autenticação e é de uso público.
-              </p>
-              <p>
-                <strong>⚡ Limite:</strong> 500 requisições por minuto por IP
-                para garantir qualidade do serviço.
-              </p>
-            </div>
-          </section>
-
-          <!-- Estrutura de Resposta -->
-          <section id="response-structure" class="docs-section">
-            <div class="section-header">
-              <svg fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-              </svg>
-              <h2>Estrutura de Resposta</h2>
-            </div>
-
-            <p>Todas as respostas seguem o mesmo padrão JSON:</p>
-
+            <h4>📝 Exemplo de Requisição:</h4>
             <div class="code-block">
-              <pre><code class="language-json">{{code_estrutura_default}}</code></pre>
-            </div>
-
-            <div class="info-box warning">
-              <p><strong>💡 Observações:</strong></p>
-              <ul>
-                <li>
-                  O campo <code>error</code> só aparece quando há erro na
-                  requisição
-                </li>
-              </ul>
-            </div>
-          </section>
-
-          <!-- Endpoints -->
-          <section id="endpoints" class="docs-section">
-            <div class="section-header">
-              <svg fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  d="M10.59,13.41C11,13.8 11,14.4 10.59,14.81C10.2,15.2 9.6,15.2 9.19,14.81L7.78,13.4L6.37,14.81C6,15.2 5.4,15.2 5,14.81C4.6,14.4 4.6,13.8 5,13.41L6.41,12L5,10.59C4.6,10.2 4.6,9.6 5,9.19C5.4,8.8 6,8.8 6.37,9.19L7.78,10.6L9.19,9.19C9.6,8.8 10.2,8.8 10.59,9.19C11,9.6 11,10.2 10.59,10.59L9.18,12L10.59,13.41M14.5,17A1.5,1.5 0 0,1 13,15.5A1.5,1.5 0 0,1 14.5,14A1.5,1.5 0 0,1 16,15.5A1.5,1.5 0 0,1 14.5,17M14.5,10A1.5,1.5 0 0,1 13,8.5A1.5,1.5 0 0,1 14.5,7A1.5,1.5 0 0,1 16,8.5A1.5,1.5 0 0,1 14.5,10M19.5,12A1.5,1.5 0 0,1 18,10.5A1.5,1.5 0 0,1 19.5,9A1.5,1.5 0 0,1 21,10.5A1.5,1.5 0 0,1 19.5,12Z" />
-              </svg>
-              <h2>Endpoints</h2>
-            </div>
-
-            <!-- Listar Estados -->
-            <div id="list-states" class="endpoint-card">
-              <div class="endpoint-header">
-                <h3 class="endpoint-title">Listar Estados</h3>
-                <span class="method-badge">GET</span>
-              </div>
-
-              <p>
-                Retorna a lista de todos os estados costeiros do Brasil
-                disponíveis na API.
-              </p>
-
-              <div class="endpoint-url"><strong>GET</strong> /states</div>
-
-              <h4>📝 Exemplo de Requisição:</h4>
-              <div class="code-block">
-                <pre><code>curl -X GET "${url_env}/states" -H "Accept: application/json"</code></pre>
-              </div>
-
-              <h4>✅ Resposta de Sucesso (200):</h4>
-              <div class="code-block">
-                <pre><code class="language-json">{{code_resposta_states}}</code></pre>
-              </div>
-
-              <h4>🗺️ Estados Disponíveis:</h4>
-              <div class="states-grid">
-                <div class="state-item">🏖️ AL - Alagoas</div>
-                <div class="state-item">🌊 AP - Amapá</div>
-                <div class="state-item">🏝️ BA - Bahia</div>
-                <div class="state-item">⛵ CE - Ceará</div>
-                <div class="state-item">🌅 ES - Espírito Santo</div>
-                <div class="state-item">🦀 MA - Maranhão</div>
-                <div class="state-item">🐟 PA - Pará</div>
-                <div class="state-item">🏖️ PB - Paraíba</div>
-                <div class="state-item">🌊 PE - Pernambuco</div>
-                <div class="state-item">🏝️ PI - Piauí</div>
-                <div class="state-item">⛵ PR - Paraná</div>
-                <div class="state-item">🌅 RJ - Rio de Janeiro</div>
-                <div class="state-item">🦀 RN - Rio Grande do Norte</div>
-                <div class="state-item">🐟 RS - Rio Grande do Sul</div>
-                <div class="state-item">🏖️ SC - Santa Catarina</div>
-                <div class="state-item">🌊 SE - Sergipe</div>
-                <div class="state-item">🏝️ SP - São Paulo</div>
-              </div>
-            </div>
-
-            <!-- Listar Portos por Estado -->
-            <div id="list-harbors" class="endpoint-card">
-              <div class="endpoint-header">
-                <h3 class="endpoint-title">Listar Portos por Estado</h3>
-                <span class="method-badge">GET</span>
-              </div>
-
-              <p>
-                Retorna uma lista com os nomes dos portos de um estado
-                específico.
-              </p>
-
-              <div class="endpoint-url">
-                <strong>GET</strong> /harbor_names/{state}
-              </div>
-
-              <h4>📋 Parâmetros:</h4>
-              <ul>
-                <li>
-                  <strong>state</strong> (string): Sigla do estado em
-                  minúsculo (ex: sp, rj, sc, pb)
-                </li>
-              </ul>
-
-              <h4>📝 Exemplo de Requisição:</h4>
-              <div class="code-block">
-                <pre><code># Listar portos da Paraíba
+              <pre><code># Listar portos da Paraíba
 curl -X GET "${url_env}/harbor_names/pb"</code></pre>
-              </div>
-
-              <h4>✅ Exemplo de Resposta:</h4>
-              <div class="code-block">
-                <pre><code class="language-json">{{code_resposta_harbor_names}}</code></pre>
-              </div>
             </div>
 
-            <!-- Obter Porto por ID -->
-            <div id="get-harbor" class="endpoint-card">
-              <div class="endpoint-header">
-                <h3 class="endpoint-title">Obter Portos por IDs</h3>
-                <span class="method-badge">GET</span>
-              </div>
+            <h4>✅ Exemplo de Resposta:</h4>
+            <div class="code-block">
+              <pre><code class="language-json">{{code_resposta_harbor_names}}</code></pre>
+            </div>
+          </div>
 
-              <p>
-                Retorna informações detalhadas de um/mais portos específico
-                pelo seu ID.
-              </p>
+          <!-- Obter Porto por ID -->
+          <div id="get-harbor" class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">Obter Portos por IDs</h3>
+              <span class="method-badge">GET</span>
+            </div>
 
-              <div class="endpoint-url">
-                <strong>GET</strong> /harbors/{ids}
-              </div>
+            <p>
+              Retorna informações detalhadas de um/mais portos específico
+              pelo seu ID.
+            </p>
 
-              <h4>📋 Parâmetros:</h4>
-              <ul>
-                <li>
-                  <strong>ids</strong> (integer): IDs únicos dos portos
-                  separados por vírgula (ex: [1,2,3])
-                </li>
-              </ul>
+            <div class="endpoint-url">
+              <strong>GET</strong> /harbors/{ids}
+            </div>
 
-              <h4>📝 Exemplo de Requisição:</h4>
-              <div class="code-block">
-                <pre><code># Obter informações do porto ID 1
+            <h4>📋 Parâmetros:</h4>
+            <ul>
+              <li>
+                <strong>ids</strong> (integer): IDs únicos dos portos
+                separados por vírgula (ex: [1,2,3])
+              </li>
+            </ul>
+
+            <h4>📝 Exemplo de Requisição:</h4>
+            <div class="code-block">
+              <pre><code># Obter informações do porto ID 1
 curl -X GET "${url_env}/harbor/1"</code></pre>
-              </div>
-
-              <h4>✅ Exemplo de Resposta:</h4>
-              <div class="code-block">
-                <pre><code class="language-json">{{code_resposta_harbor_by_id}}</code></pre>
-              </div>
             </div>
 
-            <!-- Obter Tábua de Maré por Período -->
-            <div id="get-tabua-mare" class="endpoint-card">
-              <div class="endpoint-header">
-                <h3 class="endpoint-title">
-                  Obter Tábua de Maré por Período
-                </h3>
-                <span class="method-badge">GET</span>
-              </div>
+            <h4>✅ Exemplo de Resposta:</h4>
+            <div class="code-block">
+              <pre><code class="language-json">{{code_resposta_harbor_by_id}}</code></pre>
+            </div>
+          </div>
 
-              <p>
-                Retorna os dados da tábua de maré para um porto específico em
-                um mês e dias determinados.
-              </p>
+          <!-- Obter Tábua de Maré por Período -->
+          <div id="get-tabua-mare" class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">
+                Obter Tábua de Maré por Período
+              </h3>
+              <span class="method-badge">GET</span>
+            </div>
 
-              <div class="endpoint-url">
-                <strong>GET</strong> /tabua-mare/{harbor}/{month}/{days}
-              </div>
+            <p>
+              Retorna os dados da tábua de maré para um porto específico em
+              um mês e dias determinados.
+            </p>
 
-              <h4>📋 Parâmetros:</h4>
-              <ul>
-                <li><strong>harbor</strong> (integer): ID único do porto</li>
-                <li><strong>month</strong> (integer): Mês desejado (1-12)</li>
-                <li>
-                  <strong>days</strong> (string): Array de dias no formato
-                  "[1,2,3]" ou dias específicos separados por vírgula
-                </li>
-              </ul>
+            <div class="endpoint-url">
+              <strong>GET</strong> /tabua-mare/{harbor}/{month}/{days}
+            </div>
 
-              <h4>📝 Exemplo de Requisição:</h4>
-              <div class="code-block">
-                <pre><code># Obter tábua de maré do porto ID 1 para janeiro, dias 1, 2 e 3
+            <h4>📋 Parâmetros:</h4>
+            <ul>
+              <li><strong>harbor</strong> (integer): ID único do porto</li>
+              <li><strong>month</strong> (integer): Mês desejado (1-12)</li>
+              <li>
+                <strong>days</strong> (string): Array de dias no formato
+                "[1,2,3]" ou dias específicos separados por vírgula
+              </li>
+            </ul>
+
+            <h4>📝 Exemplo de Requisição:</h4>
+            <div class="code-block">
+              <pre><code># Obter tábua de maré do porto ID 1 para janeiro, dias 1, 2 e 3
 curl -X GET "${url_env}/tabua-mare/1/1/[1,2,3]"
 
 # Obter tábua de maré para múltiplos dias
 curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
-              </div>
-
-              <h4>✅ Exemplo de Resposta:</h4>
-              <div class="code-block">
-                <pre><code class="language-json">{{code_resposta_tabua_mare}}</code></pre>
-              </div>
-            </div>
-          </section>
-
-          <!-- Códigos de Erro -->
-          <section id="errors" class="docs-section">
-            <div class="section-header">
-              <svg fill="currentColor" viewBox="0 0 24 24">
-                <path
-                  d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
-              </svg>
-              <h2>Códigos de Erro</h2>
             </div>
 
-            <div class="endpoint-card">
-              <h3>🚨 Códigos HTTP</h3>
-              <ul>
-                <li>
-                  <strong>400 - Bad Request:</strong> Requisição malformada ou
-                  parâmetros inválidos
-                </li>
-                <li>
-                  <strong>404 - Not Found:</strong> Recurso não encontrado
-                </li>
-                <li>
-                  <strong>500 - Internal Server Error:</strong> Erro interno
-                  do servidor
-                </li>
-              </ul>
-
-              <h4>📄 Formato de Erro:</h4>
-              <div class="code-block">
-                <pre><code class="language-json">{{code_formato_erro}}</code></pre>
-              </div>
+            <h4>✅ Exemplo de Resposta:</h4>
+            <div class="code-block">
+              <pre><code class="language-json">{{code_resposta_tabua_mare}}</code></pre>
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
+
+        <!-- Códigos de Erro -->
+        <section id="errors" class="docs-section">
+          <div class="section-header">
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+            </svg>
+            <h2>Códigos de Erro</h2>
+          </div>
+
+          <div class="endpoint-card">
+            <h3>🚨 Códigos HTTP</h3>
+            <ul>
+              <li>
+                <strong>400 - Bad Request:</strong> Requisição malformada ou
+                parâmetros inválidos
+              </li>
+              <li>
+                <strong>404 - Not Found:</strong> Recurso não encontrado
+              </li>
+              <li>
+                <strong>500 - Internal Server Error:</strong> Erro interno
+                do servidor
+              </li>
+            </ul>
+
+            <h4>📄 Formato de Erro:</h4>
+            <div class="code-block">
+              <pre><code class="language-json">{{code_formato_erro}}</code></pre>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
+
+    <!-- Quick Start Modal -->
+    <dialog :open="showQuickStart" @@click="showQuickStart = false">
+      <div class="modal-content" @@click.stop>
+        <div class="modal-header">
+          <h3>⚡ Quick Start</h3>
+          <button class="close-btn" @@click="showQuickStart = false">×</button>
+        </div>
+        <div>
+          <h4>1. Primeira requisição:</h4>
+          <div class="code-block">
+            <pre><code>curl -X GET "${url_env}/states"</code></pre>
+          </div>
+          <h4>2. Exemplo JavaScript:</h4>
+          <div class="code-block">
+            <pre><code>fetch('${url_env}/states')
+  .then(response => response.json())
+  .then(data => console.log(data));</code></pre>
+          </div>
+        </div>
+      </div>
+    </dialog>
   </main>
 
   <!-- Footer -->
