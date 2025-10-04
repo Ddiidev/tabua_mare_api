@@ -8,7 +8,7 @@ import shareds.conf_env
 import repository.habor_mare as repo_habor_mare
 import repository.tabua_mare as repo_tabua_mare
 
-// APIController Controlador da API endpoint base: /api/v1
+// APIController Controller da API endpoint base: /api/v1
 pub struct APIController {
 	veb.Middleware[web_ctx.WsCtx]
 	env conf_env.EnvConfig
