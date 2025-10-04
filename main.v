@@ -6,8 +6,6 @@ import shareds.web_ctx
 import shareds.infradb
 import shareds.conf_env
 import shareds.components_view
-import time
-import net
 
 struct App {
 	veb.Controller
