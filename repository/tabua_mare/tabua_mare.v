@@ -5,7 +5,7 @@ import pool
 import db.pg
 import entities
 import shareds.types
-import repository.data_mare
+import repository.habor_mare
 import repository.tabua_mare.dto
 
 // get_tabua_mare_by_month_days Retorna os dados da tábua de maré de um determinado porto, mês e dias
@@ -22,7 +22,7 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 	mut qb_month_days := orm.new_query[entities.DayData](db)
 	mut qb_days := orm.new_query[entities.HourData](db)
 
-	mut harbor := data_mare.get_harbor_by_ids(mut pool_conn, [harbor_id])!
+	mut harbor := habor_mare.get_harbor_by_ids(mut pool_conn, [harbor_id])!
 
 	mut month_data := qb_month
 		.where('data_mare_id = ? && month = ?', harbor_id, month)!
