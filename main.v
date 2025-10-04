@@ -6,6 +6,8 @@ import shareds.web_ctx
 import shareds.infradb
 import shareds.conf_env
 import shareds.components_view
+import time
+import net
 
 struct App {
 	veb.Controller
@@ -59,7 +61,8 @@ pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 	return $veb.html('./pages/apoiar.html')
 }
 
-@['/ping'; get]
+@['/ping'; head]
 pub fn (app &App) ping(mut ctx web_ctx.WsCtx) veb.Result {
-	return ctx.ok('pong')
+	ctx.conn.write_string('HTTP/1.1 200 OK') or {}
+	return ctx.no_content()
 }
