@@ -1,302 +1,267 @@
 <!doctype html>
 <html lang="pt-BR" data-theme="cyan">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Apoiar - Tábua de Marés API</title>
 
-    @app.open_graph()
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apoiar - Tábua de Marés API</title>
 
-    <link
-      rel="icon"
-      type="image/png"
-      href="/pages/assets/favicon-192x192.png"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css"
-    />
-    <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
-    <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body,
-      h1,
-      h2,
-      h3,
-      p,
-      a {
-        font-family: "Spectral", serif;
-      }
+  @app.open_graph()
 
-      .button-yellow {
-        background-color: #f9c74f;
-        border-color: #f9c74f;
-      }
+  <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css" />
+  <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+  <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet" />
+  <style>
+    body,
+    h1,
+    h2,
+    h3,
+    p,
+    a {
+      font-family: "Spectral", serif;
+    }
 
-      .button-yellow:hover {
-        background-color: #f8b500;
-        border-color: #f8b500;
-      }
+    .button-yellow {
+      background-color: #f9c74f;
+      border-color: #f9c74f;
+    }
 
-      .donation-container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 2rem;
-        background-color: rgba(0, 0, 0, 0.03);
-        border-radius: 10px;
-      }
+    .button-yellow:hover {
+      background-color: #f8b500;
+      border-color: #f8b500;
+    }
 
-      .donation-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin: 2rem 0;
-        justify-content: center;
-      }
+    .donation-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: rgba(0, 0, 0, 0.03);
+      border-radius: 10px;
+    }
 
-      .donation-option {
-        padding: 1rem 2rem;
-        border-radius: 8px;
-        background-color: var(--card-background-color);
-        cursor: pointer;
-        transition:
-          transform 0.2s ease,
-          box-shadow 0.2s ease;
-        text-align: center;
-      }
+    .donation-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 2rem 0;
+      justify-content: center;
+    }
 
-      .donation-option:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
+    .donation-option {
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      background-color: var(--card-background-color);
+      cursor: pointer;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+      text-align: center;
+    }
 
-      .pix-container {
-        text-align: center;
-        margin: 2rem 0;
-        padding: 1rem;
-        background-color: var(--card-background-color);
-        border-radius: 8px;
-      }
+    .donation-option:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-      .pix-key {
-        font-family: monospace;
-        padding: 0.5rem 1rem;
-        background-color: rgba(0, 0, 0, 0.05);
-        border-radius: 4px;
-        margin: 1rem 0;
-        display: inline-block;
-      }
+    .pix-container {
+      text-align: center;
+      margin: 2rem 0;
+      padding: 1rem;
+      background-color: var(--card-background-color);
+      border-radius: 8px;
+    }
 
-      .thank-you {
-        margin-top: 3rem;
-        text-align: center;
-        font-style: italic;
-      }
-    </style>
-  </head>
+    .pix-key {
+      font-family: monospace;
+      padding: 0.5rem 1rem;
+      background-color: rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+      margin: 1rem 0;
+      display: inline-block;
+    }
 
-  <body v-scope>
-    <!-- Header -->
-    ${ app.navbar('/apoiar') }
+    .thank-you {
+      margin-top: 3rem;
+      text-align: center;
+      font-style: italic;
+    }
+  </style>
+</head>
 
-    <!-- Main Content -->
-    <main class="container">
-      <section>
-        <hgroup>
-          <h1>Apoie este Projeto</h1>
-          <p>
-            Ajude a manter a API de Tábua de Marés gratuita e em constante
-            evolução
-          </p>
-        </hgroup>
+<body v-scope>
+  <!-- Header -->
+  ${ app.navbar('/apoiar') }
 
-        <div class="donation-container">
-          <p>
-            A API de Tábua de Marés é um projeto independente, desenvolvido com
-            paixão para democratizar o acesso facilitado a esses dados.
-          </p>
-          <p>
-            Além de permitir outros devs a construir sus próprias soluções, sem
-            precisar pagar nada por isso.
-          </p>
-          <p>
-            Todos os dados oferecidos como API pode ser encontrados facilmente
-            no formato de pdf na página oficial da marinha do Brasil
-            <a
-              href="https://www.marinha.mil.br/cppb/tabuas_de_mare"
-              target="_blank"
-              >https://www.marinha.mil.br/cppb/tabuas_de_mare</a
-            >, especificamente aqui:
-            <a
-              href="https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa"
-              target="_blank"
-              >https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa</a
-            >
-          </p>
+  <!-- Main Content -->
+  <main class="container">
+    <section>
+      <hgroup>
+        <h1>Apoie este Projeto</h1>
+        <p>
+          Ajude a manter a API de Tábua de Marés gratuita e em constante
+          evolução
+        </p>
+      </hgroup>
 
-          <div class="pix-container">
-            <h3>Faça uma transferência via PIX</h3>
-            <p>Chave PIX (e-mail):</p>
-            <div class="pix-key">contato@@devtu.qzz.io</div>
-            <p>Envie qualquer valor que desejar</p>
+      <div class="donation-container">
+        <p>
+          A API de Tábua de Marés é um projeto independente, desenvolvido com
+          paixão para democratizar o acesso facilitado a esses dados.
+        </p>
+        <p>
+          Além de permitir outros devs a construir sus próprias soluções, sem
+          precisar pagar nada por isso.
+        </p>
+        <p>
+          Todos os dados oferecidos como API pode ser encontrados facilmente
+          no formato de pdf na página oficial da marinha do Brasil
+          <a href="https://www.marinha.mil.br/cppb/tabuas_de_mare"
+            target="_blank">https://www.marinha.mil.br/cppb/tabuas_de_mare</a>, especificamente aqui:
+          <a href="https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa"
+            target="_blank">https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa</a>
+        </p>
 
-            <!-- QR Code PIX -->
-            <div style="margin: 1.5rem 0">
-              <p><strong>Ou escaneie o QR Code:</strong></p>
-              <img
-                src="/pages/assets/qrCodePix.svg"
-                alt="QR Code PIX"
-                style="
+        <div class="pix-container">
+          <h3>Faça uma transferência via PIX</h3>
+          <p>Chave PIX (e-mail):</p>
+          <div class="pix-key">contato@@devtu.qzz.io</div>
+          <p>Envie qualquer valor que desejar</p>
+
+          <!-- QR Code PIX -->
+          <div style="margin: 1.5rem 0">
+            <p><strong>Ou escaneie o QR Code:</strong></p>
+            <img src="/pages/assets/qrCodePix.svg" alt="QR Code PIX" style="
                   max-width: 200px;
                   height: auto;
                   border: 1px solid #ddd;
                   border-radius: 8px;
                   padding: 10px;
                   background-color: white;
-                "
-              />
-            </div>
-
-            <p>
-              <small
-                >Após a transferência, envie um e-mail para
-                contato@@devtu.qzz.io informando sua contribuição para receber
-                um agradecimento especial.</small
-              >
-            </p>
+                " />
           </div>
 
-          <div class="thank-you">
-            <p>Muito obrigado pelo seu apoio! 🙏</p>
-            <a href="/" role="button" class="outline"
-              >Voltar para a página inicial</a
-            >
-          </div>
+          <p>
+            <small>Após a transferência, envie um e-mail para
+              contato@@devtu.qzz.io informando sua contribuição para receber
+              um agradecimento especial.</small>
+          </p>
         </div>
-      </section>
-    </main>
 
-    <!-- Licenças e Ferramentas -->
-    <section class="tools-section">
-      <h2 style="text-align: center; margin-top: 2rem">
-        Ferramentas & Licenças Free Utilizadas
-      </h2>
-      <div class="tools-cards">
-        <div class="tool-card">
-          <img
-            src="/pages/assets/logo-icons8-full.svg"
-            alt="Icons8"
-            style="height: 48px; margin-bottom: 8px"
-          />
-          <h4>Icons8</h4>
-          <a href="https://icons8.com.br/license" target="_blank"
-            >Licença & Uso</a
-          >
-        </div>
-        <div class="tool-card">
-          <img
-            src="/pages/assets/render-logo.svg"
-            alt="Render"
-            style="height: 48px; margin-bottom: 8px"
-          />
-          <h4>Render</h4>
-          <a href="https://render.com/pricing" target="_blank"
-            >Licença & Preços</a
-          >
-        </div>
-        <div class="tool-card">
-          <img
-            src="https://raw.githubusercontent.com/vlang/v-logo/refs/heads/master/dist/v-logo_32x32.svg"
-            alt="Vlang"
-            style="height: 48px; margin-bottom: 8px"
-          />
-          <h4>V Language</h4>
-          <a href="https://vlang.io" target="_blank">Site Oficial</a>
-        </div>
-        <div class="tool-card">
-          <img
-            src="/pages/assets/petie-vue.svg"
-            alt="Petite-Vue"
-            style="height: 48px; margin-bottom: 8px"
-          />
-          <h4>Petite-Vue</h4>
-          <a href="https://github.com/vuejs/petite-vue" target="_blank"
-            >GitHub</a
-          >
-        </div>
-        <div class="tool-card">
-          <img
-            src="https://picocss.com/favicon.ico"
-            alt="PicoCSS"
-            style="height: 48px; margin-bottom: 8px"
-          />
-          <h4>PicoCSS</h4>
-          <a href="http://picocss.com/" target="_blank">Site Oficial</a>
+        <div class="thank-you">
+          <p>Muito obrigado pelo seu apoio! 🙏</p>
+          <a href="/" role="button" class="outline">Voltar para a página inicial</a>
         </div>
       </div>
     </section>
+  </main>
 
-    <!-- Footer -->
-    @app.footer()
+  <!-- Licenças e Ferramentas -->
+  <section class="tools-section">
+    <h2 style="text-align: center; margin-top: 2rem">
+      Ferramentas & Licenças Free Utilizadas
+    </h2>
+    <div class="tools-cards">
+      <div class="tool-card">
+        <img src="/pages/assets/logo-icons8-full.svg" alt="Icons8" style="height: 48px; margin-bottom: 8px" />
+        <h4>Icons8</h4>
+        <a href="https://icons8.com.br/license" target="_blank">Ícones e Ilustrações (licença) <img src="/pages/assets/link.svg" /></a>
+      </div>
+      <div class="tool-card">
+        <img src="/pages/assets/render-logo.svg" alt="Render" style="height: 48px; margin-bottom: 8px" />
+        <h4>Render</h4>
+        <a href="https://render.com/pricing" target="_blank">Hospedagem <img src="/pages/assets/link.svg" /></a>
+      </div>
+      <div class="tool-card">
+        <div style="display:flex; align-items:center; justify-content:center; margin:10px; background-color:black; border-radius:5px; padding:8px; padding-bottom: 2px;">
+          <img src="/pages/assets/neon.tech.svg" alt="Neon" style="height:32px; width: 128px;" />
+        </div>
+        <h4>Neon.tech</h4>
+        <a href="https://neon.tech" target="_blank">Banco de Dados <img src="/pages/assets/link.svg" /></a>
+      </div>
+      <div class="tool-card">
+        <img src="https://raw.githubusercontent.com/vlang/v-logo/refs/heads/master/dist/v-logo_32x32.svg" alt="Vlang"
+          style="height: 48px; margin-bottom: 8px" />
+        <h4>V Lang</h4>
+        <a href="https://vlang.io" target="_blank">Linguagem <img src="/pages/assets/link.svg" /></a>
+      </div>
+      <div class="tool-card">
+        <img src="/pages/assets/petie-vue.svg" alt="Petite-Vue" style="height: 66px; margin-bottom: 8px" />
+        <h4>PetiteVue</h4>
+        <a href="https://github.com/vuejs/petite-vue" target="_blank">Minimal-Frontend <img src="/pages/assets/link.svg" /> </a>
+      </div>
+      <div class="tool-card">
+        <img src="https://picocss.com/favicon.ico" alt="PicoCSS" style="height: 48px; margin-bottom: 8px" />
+        <h4>PicoCSS</h4>
+        <a href="http://picocss.com/" target="_blank">Minimal CSS <img src="/pages/assets/link.svg" /> </a>
+      </div>
+    </div>
+  </section>
 
-    <script>
-      const { createApp } = PetiteVue;
+  <!-- Footer -->
+  @app.footer()
 
-      createApp({
-        pixValue: null,
-      }).mount();
-    </script>
+  <script>
+    const { createApp } = PetiteVue;
 
-    <style>
-      .tools-section {
-        margin-top: 3rem;
-        margin-bottom: 2rem;
-      }
+    createApp({
+      pixValue: null,
+    }).mount();
+  </script>
 
-      .tools-cards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        justify-content: center;
-        margin-top: 1.5rem;
-      }
+  <style>
+    .tools-section {
+      margin-top: 3rem;
+      margin-bottom: 2rem;
+    }
 
-      .tool-card {
-        background: #f5f5f5;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        padding: 1rem 1.5rem;
-        text-align: center;
-        width: 160px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        transition: box-shadow 0.2s;
-      }
+    .tools-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .tool-card {
+      background: #f5f5f5;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      padding: 1rem 1.5rem 0.5rem;
+      text-align: center;
+      width: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+      justify-content: space-between;
+      height: 260px;
+    }
 
-      .tool-card:hover {
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-        background: #e0f7fa;
-      }
+    .tool-card a {
+      margin-top: auto;
+    }
 
-      .tool-card img {
-        margin-bottom: 0.5rem;
-      }
+    .tool-card:hover {
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+      background: #e0f7fa;
+    }
 
-      .tool-card h4 {
-        margin: 0.5rem 0 0.5rem 0;
-        font-size: 1.1rem;
-      }
+    .tool-card img {
+      margin-bottom: 0.5rem;
+    }
 
-      .tool-card a {
-        color: #0077b6;
-        text-decoration: underline;
-        font-size: 0.95rem;
-      }
-    </style>
-  </body>
+    .tool-card h4 {
+      margin: 0.5rem 0 0.5rem 0;
+      font-size: 1.1rem;
+    }
+
+    .tool-card a {
+      color: #0077b6;
+      text-decoration: underline;
+      font-size: 0.95rem;
+    }
+  </style>
+</body>
+
 </html>
