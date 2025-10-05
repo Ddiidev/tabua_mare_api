@@ -19,7 +19,6 @@ Uma API pública para consultar dados precisos de marés em todo o litoral brasi
 ## Base de API
 
 - Prefixo: `/api/v1`
-- Healthcheck: `GET /ping` → `pong`
 
 ## Como usar a API
 
