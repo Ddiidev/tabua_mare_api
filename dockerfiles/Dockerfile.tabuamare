@@ -51,7 +51,7 @@ RUN v install
 RUN v install https://github.com/ken0x0a/v-dotenv
 
 # Compilar o projeto em modo de produção
-RUN v -prod . -o TabuaMareAPI
+RUN v -gc boehm_incr_opt -prod . -o TabuaMareAPI
 
 # Configurar Nginx: usar os arquivos do repositório
 RUN rm -rf /etc/nginx/conf.d/* && rm -f /etc/nginx/nginx.conf

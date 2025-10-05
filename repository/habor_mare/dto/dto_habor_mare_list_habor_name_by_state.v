@@ -1,6 +1,6 @@
 module dto
 
-pub struct DTODataMareListHaborNameByState {
+pub struct DTOHaborMareListHaborNameByState {
 pub:
 	id                          int    @[omitempty]
 	year                        int    @[omitempty]

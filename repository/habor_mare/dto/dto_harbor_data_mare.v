@@ -1,6 +1,6 @@
 module dto
 
-pub struct DTODataMareGetHarbor {
+pub struct DTOHaborMareGetHarbor {
 pub mut:
 	id                          int           @[omitempty]
 	year                        int           @[omitempty]

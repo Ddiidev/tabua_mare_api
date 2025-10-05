@@ -1,4 +1,4 @@
-module data_mare
+module habor_mare
 
 import orm
 import pool
@@ -6,10 +6,10 @@ import db.pg
 import entities
 import shareds.types
 import shareds.constants
-import repository.data_mare.dto
+import repository.habor_mare.dto
 
 // list_harbor_name_by_states Lista os nomes dos portos por estado
-pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state string) !types.ResultValues[dto.DTODataMareListHaborNameByState] {
+pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state string) !types.ResultValues[dto.DTOHaborMareListHaborNameByState] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB
 	db.reset()!
@@ -26,7 +26,7 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 		.query()!
 
 	return types.ResultValues{
-		data:  harbor_name.map(dto.DTODataMareListHaborNameByState{
+		data:  harbor_name.map(dto.DTOHaborMareListHaborNameByState{
 			id:                          it.id
 			year:                        it.year
 			harbor_name:                 it.harbor_name

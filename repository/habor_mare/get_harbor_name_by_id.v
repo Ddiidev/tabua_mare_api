@@ -1,14 +1,14 @@
-module data_mare
+module habor_mare
 
 import orm
 import pool
 import db.pg
 import entities
 import shareds.types
-import repository.data_mare.dto
+import repository.habor_mare.dto
 
 // get_harbor_by_ids Pega o porto por ids
-pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.ResultValues[dto.DTODataMareGetHarbor] {
+pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.ResultValues[dto.DTOHaborMareGetHarbor] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB
 	db.reset()!
@@ -27,9 +27,9 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.Re
 		select from entities.GeoLocation where data_mare_id in ids
 	}!
 
-	mut data_harbors := []dto.DTODataMareGetHarbor{}
+	mut data_harbors := []dto.DTOHaborMareGetHarbor{}
 	for harbor in harbors {
-		data_harbors << dto.DTODataMareGetHarbor{
+		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id
 			year:                        harbor.year
 			card:                        harbor.card
@@ -49,7 +49,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.Re
 		}
 	}
 
-	return types.ResultValues[dto.DTODataMareGetHarbor]{
+	return types.ResultValues[dto.DTOHaborMareGetHarbor]{
 		data:  data_harbors
 		total: data_harbors.len
 	}
