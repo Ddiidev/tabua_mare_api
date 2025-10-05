@@ -1,0 +1,1 @@
+v -gc boehm_incr_opt watch --only-watch=*.v,*.html,*.css,*.js --before "cls" run . 3330

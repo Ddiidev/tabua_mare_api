@@ -4,7 +4,7 @@ import arrays
 
 pub type IntArr = string
 
-//ints convert string on format "[1,5-15]" to array of ints
+// ints convert string on format "[1,5-15]" to array of ints
 pub fn (ids IntArr) ints() []int {
 	mut inters := []int{}
 	for id in ids.replace_each(['[', '', ']', '', ' ', '']).split(',') {
