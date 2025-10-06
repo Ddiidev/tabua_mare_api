@@ -2,6 +2,7 @@ module main
 
 import os
 import veb
+import cache
 import shareds.web_ctx
 import shareds.infradb
 import shareds.conf_env
@@ -16,7 +17,7 @@ struct App {
 
 fn main() {
 	if os.args.len < 2 {
-		println('Usage: v . <port>')
+		println('Usage: tabua-mare-api <port>')
 		return
 	}
 	port := os.args[1].int()
@@ -26,7 +27,8 @@ fn main() {
 	}
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
-		env:       env
+		cache:     cache.Cache{}
+		env:       env	
 	}
 
 	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
