@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 # Evitar interações durante instalação de pacotes
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar dependências de build, runtime, nginx e utilitários
+# Instalar dependências de build e runtime
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -12,22 +12,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
     ca-certificates \
-    nginx \
-    gettext-base \
     && rm -rf /var/lib/apt/lists/*
-
-# Criar usuário/grupo 'nginx' (no Ubuntu, o pacote nginx usa www-data por padrão; 
-# mantemos o usuário 'nginx' por compatibilidade com o nginx.conf existente)
-RUN adduser --system --no-create-home --group nginx || true
-
-# Instalar cloudflared (via repositório oficial)
-RUN set -eux; \
-    mkdir -p --mode=0755 /usr/share/keyrings; \
-    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list; \
-    apt-get update; \
-    apt-get install -y cloudflared; \
-    rm -rf /var/lib/apt/lists/*
 
 # Build do compilador V
 WORKDIR /tmp
@@ -43,9 +28,6 @@ WORKDIR /app
 # Copiar arquivos do projeto
 COPY . .
 
-# Garantir permissão de execução do start.sh
-RUN chmod +x start.sh
-
 # Instalar dependências do projeto (via v)
 RUN v install
 RUN v install https://github.com/ken0x0a/v-dotenv
@@ -53,14 +35,9 @@ RUN v install https://github.com/ken0x0a/v-dotenv
 # Compilar o projeto em modo de produção
 RUN v -gc boehm_incr_opt -prod . -o TabuaMareAPI
 
-# Configurar Nginx: usar os arquivos do repositório
-RUN rm -rf /etc/nginx/conf.d/* && rm -f /etc/nginx/nginx.conf
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY nginx/conf.d/ /etc/nginx/conf.d/
+# Porta padrão da aplicação
+EXPOSE 4048
+ENV PORT=4048
 
-# Porta padrão interna (Render definirá PORT em runtime). EXPOSE é metadado.
-EXPOSE 8080
-ENV PORT=8080
-
-# Comando para iniciar todos os processos (APIs + Nginx + Cloudflare Tunnel opcional)
-CMD ["./start.sh"]
+# Comando para iniciar a aplicação
+CMD ["./TabuaMareAPI"]
