@@ -1,46 +1,80 @@
+networks:
+  tabua-mare-network:
+    driver: bridge
+
 services:
-  # Instâncias da aplicação MaisFoco
+  # Instância 1 da aplicação Tabua Mare
   tabua-mare1:
     build:
       context: .
       dockerfile: dockerfiles/Dockerfile.tabuamare
     image: tabua-mare-app:latest
     restart: always
-    env_file:
-      - ./.env
     environment:
       - PORT=4048
     deploy:
       resources:
         limits:
-          cpus: "0.30"
-          memory: 128M
-    network_mode: host
+          cpus: "0.35"
+          memory: 64M
     container_name: tabua-mare-app1
+    networks:
+      - tabua-mare-network
     volumes:
-      - ./.env:/app/.env
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
+  # Instância 2 da aplicação Tabua Mare
   tabua-mare2:
-    build:
-      context: .
-      dockerfile: dockerfiles/Dockerfile.tabuamare
     image: tabua-mare-app:latest
     restart: always
-    env_file:
-      - ./.env
     environment:
-      - PORT=4049
+      - PORT=4048
     deploy:
       resources:
         limits:
-          cpus: "0.30"
-          memory: 128M
-    network_mode: host
+          cpus: "0.35"
+          memory: 64M
     container_name: tabua-mare-app2
+    networks:
+      - tabua-mare-network
     volumes:
-      - ./.env:/app/.env
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  # Instância 3 da aplicação Tabua Mare
+  tabua-mare3:
+    image: tabua-mare-app:latest
+    restart: always
+    environment:
+      - PORT=4048
+    deploy:
+      resources:
+        limits:
+          cpus: "0.35"
+          memory: 64M
+    container_name: tabua-mare-app3
+    networks:
+      - tabua-mare-network
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  # Instância 4 da aplicação Tabua Mare
+  tabua-mare4:
+    image: tabua-mare-app:latest
+    restart: always
+    environment:
+      - PORT=4048
+    deploy:
+      resources:
+        limits:
+          cpus: "0.35"
+          memory: 64M
+    container_name: tabua-mare-app4
+    networks:
+      - tabua-mare-network
+    volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
@@ -52,32 +86,45 @@ services:
     depends_on:
       - tabua-mare1
       - tabua-mare2
-    network_mode: host
+      - tabua-mare3
+      - tabua-mare4
+    # Para Coolify, use expose ao invés de ports
+    expose:
+      - 9090
+    # Descomente a linha abaixo se NÃO estiver usando Coolify
+    ports:
+      - "9090:9090"
+    networks:
+      - tabua-mare-network
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 100M
+          cpus: "0.50"
+          memory: 150M
+    labels:
+      - "coolify.managed=true"
+      - "coolify.http.enabled=true"
+      - "coolify.http.port=9090"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/conf.d:/etc/nginx/conf.d
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  # Cloudflare Tunnel
-  cloudflare-tunnel:
+  # Cloudflare Tunnel - Tunela nginx:9090 para seu domínio
+  cloudflared:
     image: cloudflare/cloudflared:latest
-    container_name: tabua-mare-cloudflare-tunnel
+    container_name: tabua-mare-cloudflared
     restart: always
     depends_on:
       - nginx
-    command: tunnel --no-autoupdate run --token $CLOUDFLARE_TUNNEL_TOKEN
-    network_mode: host
+    networks:
+      - tabua-mare-network
     deploy:
       resources:
         limits:
-          cpus: "0.15"
+          cpus: "0.35"
           memory: 64M
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
