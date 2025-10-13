@@ -1,0 +1,18 @@
+FROM nginx:latest
+
+# Copiar arquivos de configuração
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/conf.d/maisfoco.conf /etc/nginx/conf.d/default.conf
+
+# Criar diretório para logs
+RUN mkdir -p /var/log/nginx
+
+# Configurar permissões
+RUN chown -R nginx:nginx /var/log/nginx && \
+    chmod -R 755 /var/log/nginx
+
+# Expor a porta 3330
+EXPOSE 3330
+
+# Comando para iniciar o Nginx
+CMD ["nginx", "-g", "daemon off;"]

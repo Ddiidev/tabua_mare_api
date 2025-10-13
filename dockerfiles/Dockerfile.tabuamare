@@ -33,11 +33,7 @@ RUN v install
 RUN v install https://github.com/ken0x0a/v-dotenv
 
 # Compilar o projeto em modo de produção
-RUN v -gc boehm_incr_opt -prod . -o TabuaMareAPI
-
-# Porta padrão da aplicação
-EXPOSE 4048
-ENV PORT=4048
+RUN v -prod . -o TabuaMareAPI
 
 # Comando para iniciar a aplicação
-CMD ["./TabuaMareAPI"]
+CMD ["./TabuaMareAPI", "4048"]
