@@ -28,8 +28,11 @@ fn main() {
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
 		cache:     cache.Cache{}
-		env:       env	
+		env:       env
 	}
+
+	// Inicializar CORS no APIController
+	api_controller.init_cors()
 
 	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
 	app.mount_static_folder_at('./pages/assets', '/pages/assets')!
