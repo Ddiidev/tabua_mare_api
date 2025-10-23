@@ -3,7 +3,6 @@ networks:
     driver: bridge
 
 services:
-  # Instância 1 da aplicação Tabua Mare
   tabua-mare1:
     build:
       context: .
@@ -24,7 +23,6 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  # Instância 2 da aplicação Tabua Mare
   tabua-mare2:
     image: tabua-mare-app:latest
     restart: always
@@ -42,7 +40,6 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  # Instância 3 da aplicação Tabua Mare
   tabua-mare3:
     image: tabua-mare-app:latest
     restart: always
@@ -60,7 +57,6 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  # Instância 4 da aplicação Tabua Mare
   tabua-mare4:
     image: tabua-mare-app:latest
     restart: always
@@ -78,7 +74,6 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  # Nginx como balanceador de carga
   nginx:
     image: nginx:latest
     container_name: tabua-mare-nginx
@@ -88,10 +83,8 @@ services:
       - tabua-mare2
       - tabua-mare3
       - tabua-mare4
-    # Para Coolify, use expose ao invés de ports
     expose:
       - 9090
-    # Descomente a linha abaixo se NÃO estiver usando Coolify
     ports:
       - "9090:9090"
     networks:
@@ -111,7 +104,6 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-  # Cloudflare Tunnel - Tunela nginx:9090 para seu domínio
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: tabua-mare-cloudflared

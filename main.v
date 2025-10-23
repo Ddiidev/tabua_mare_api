@@ -39,7 +39,6 @@ fn main() {
 		env:       env
 	}
 
-	// Inicializar CORS no APIController
 	api_controller.init_cors()
 
 	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
@@ -51,6 +50,7 @@ fn main() {
 
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
+	dump(ctx.ip())
 	return $veb.html('./pages/index.html')
 }
 

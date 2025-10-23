@@ -21,6 +21,31 @@ pub fn (mut l Logger) save(params model.MsgLog) {
 	}
 }
 
+@[params]
+pub struct ParamsLogger {
+pub:
+	id    string
+	level string
+	error ?types.ErrorMsg
+	msg   string
+}
+
+pub fn (mut l Logger) async_save(params ParamsLogger) {
+	error := params.error
+	id := params.id
+	level := params.level
+	msg := params.msg
+
+	go fn [mut l, error, id, level, msg] () {
+		l.save(
+			id:    id
+			level: level
+			error: error
+			msg:   msg
+		)
+	}()
+}
+
 fn (l Logger) new_relic_info(msg string) ! {
 	http.fetch(http.FetchConfig{
 		url:    'https://log-api.newrelic.com/log/v1'
@@ -30,28 +55,4 @@ fn (l Logger) new_relic_info(msg string) ! {
 		})!
 		data:   msg
 	})!
-}
-
-pub struct ParamsLogger {
-pub:
-	req_id string
-	error  ?types.ErrorMsg
-	msg    string
-pub mut:
-	log Logger
-}
-
-pub fn Logger.async_save(params ParamsLogger) {
-	mut log := params.log
-	error := params.error
-	req_id := params.req_id
-	msg := params.msg
-
-	go fn [mut log, error, req_id, msg] () {
-		log.save(
-			id:    req_id
-			error: error
-			msg:   msg
-		)
-	}()
 }

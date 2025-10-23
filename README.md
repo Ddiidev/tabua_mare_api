@@ -42,17 +42,20 @@ Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estr
 ### Configuração do ambiente
 
 1. Copie o arquivo `.env.template` para `.env`:
+
 ```bash
 cp .env.template .env
 ```
 
 2. Configure as seguintes variáveis no arquivo `.env`:
+
 ```
 DB_DATABASE=nome_do_banco
 DB_USER=usuario_do_banco
 DB_HOST=localhost
 DB_PASS=senha_do_banco
 DB_PORT=5432
+NEW_RELIC_KEY=CHAVE
 URL_ENV=http://localhost:3330
 ```
 
