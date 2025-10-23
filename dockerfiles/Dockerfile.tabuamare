@@ -1,9 +1,11 @@
-FROM ubuntu:20.04
+# ============================================
+# Stage 1: Builder - Compila o V e a aplicação
+# ============================================
+FROM ubuntu:20.04 AS builder
 
-# Evitar interações durante instalação de pacotes
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Instalar dependências de build, runtime, nginx e utilitários
+# Instalar dependências de build
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -12,24 +14,9 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
     ca-certificates \
-    nginx \
-    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
-# Criar usuário/grupo 'nginx' (no Ubuntu, o pacote nginx usa www-data por padrão; 
-# mantemos o usuário 'nginx' por compatibilidade com o nginx.conf existente)
-RUN adduser --system --no-create-home --group nginx || true
-
-# Instalar cloudflared (via repositório oficial)
-RUN set -eux; \
-    mkdir -p --mode=0755 /usr/share/keyrings; \
-    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list; \
-    apt-get update; \
-    apt-get install -y cloudflared; \
-    rm -rf /var/lib/apt/lists/*
-
-# Build do compilador V
+# Build do compilador V (cacheable - só recompila se mudar)
 WORKDIR /tmp
 RUN git clone https://github.com/vlang/v && \
     cd v && \
@@ -37,30 +24,48 @@ RUN git clone https://github.com/vlang/v && \
     ./v symlink && \
     v --version
 
-# Criar diretório para a aplicação
+# Copiar apenas arquivos necessários para dependências (cache layer)
 WORKDIR /app
+COPY v.mod ./
 
-# Copiar arquivos do projeto
+# Instalar dependências do V (cache layer separado)
+RUN v install && \
+    v install https://github.com/ken0x0a/v-dotenv
+
+# Copiar resto do código
 COPY . .
 
-# Garantir permissão de execução do start.sh
-RUN chmod +x start.sh
-
-# Instalar dependências do projeto (via v)
-RUN v install
-RUN v install https://github.com/ken0x0a/v-dotenv
-
-# Compilar o projeto em modo de produção
+# Compilar aplicação em modo produção
 RUN v -gc boehm_incr_opt -prod . -o TabuaMareAPI
 
-# Configurar Nginx: usar os arquivos do repositório
-RUN rm -rf /etc/nginx/conf.d/* && rm -f /etc/nginx/nginx.conf
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY nginx/conf.d/ /etc/nginx/conf.d/
+# ============================================
+# Stage 2: Runtime - Apenas executável e deps
+# ============================================
+FROM ubuntu:20.04
 
-# Porta padrão interna (Render definirá PORT em runtime). EXPOSE é metadado.
-EXPOSE 8080
-ENV PORT=8080
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Comando para iniciar todos os processos (APIs + Nginx + Cloudflare Tunnel opcional)
-CMD ["./start.sh"]
+# Instalar apenas runtime dependencies (não build tools)
+RUN apt-get update && apt-get install -y \
+    libssl1.1 \
+    libpq5 \
+    libsqlite3-0 \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copiar apenas o executável compilado do stage builder
+COPY --from=builder /app/TabuaMareAPI .
+
+# Copiar arquivos necessários em runtime (se houver)
+COPY --from=builder /app/pages ./pages
+COPY --from=builder /app/cache ./cache
+
+# Porta padrão
+EXPOSE 4048
+ENV PORT=4048
+
+# Executar aplicação
+CMD ["sh", "-c", "./TabuaMareAPI $PORT"]
