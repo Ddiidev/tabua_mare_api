@@ -4,8 +4,10 @@ import veb
 import pool
 import cache
 import shareds.types
+import shareds.logger
 import shareds.web_ctx
 import shareds.conf_env
+import shareds.logger.model
 import repository.habor_mare as repo_habor_mare
 import repository.tabua_mare as repo_tabua_mare
 
@@ -15,6 +17,7 @@ pub struct APIController {
 	env   conf_env.EnvConfig
 	cache shared cache.Cache
 mut:
+	log       logger.Logger
 	pool_conn &pool.ConnectionPool
 }
 
@@ -38,33 +41,132 @@ fn (mut api APIController) init_cors() {
 @['/states']
 pub fn (mut api APIController) list_states(mut ctx web_ctx.WsCtx) veb.Result {
 	shared ctx_cache := api.cache
-	return ctx.json(repo_habor_mare.list_states(shared ctx_cache, mut api.pool_conn) or {
-		return ctx.ok('error: ${err}')
+
+	api.log.save(model.MsgLog{
+		id:    ctx.request_id
+		level: 'info'
+		msg:   'Listando estados'
 	})
+
+	res := repo_habor_mare.list_states(shared ctx_cache, mut api.pool_conn) or {
+		api.log.save(model.MsgLog{
+			id:    ctx.request_id
+			error: err
+			level: 'error'
+			msg:   'Erro ao listar estados'
+		})
+		return ctx.ok('error: ${err}')
+	}
+
+	if res.error != none {
+		api.log.save(model.MsgLog{
+			id:    ctx.request_id
+			error: res.error
+			level: 'error'
+			msg:   'Listando estados'
+		})
+	} else {
+		api.log.save(model.MsgLog{
+			id:    ctx.request_id
+			level: 'info'
+			msg:   'Estados listados com sucesso'
+		})
+	}
+
+	return ctx.json(res)
 }
 
 // list_harbor_name_by_states Lista todos os nomes de portos de um estado específico
+//'
 @['/harbor_names/:state']
 pub fn (mut api APIController) list_harbor_name_by_states(mut ctx web_ctx.WsCtx, state string) veb.Result {
 	shared ctx_cache := api.cache
-	return ctx.json(repo_habor_mare.list_harbor_name_by_states(shared ctx_cache, mut api.pool_conn,
-		state) or { return ctx.ok('error: ${err}') })
+
+	api.log.save(model.MsgLog{
+		id:    ctx.request_id
+		level: 'info'
+		msg:   'Listando nomes de portos por estado: ${state}'
+	})
+
+	res := repo_habor_mare.list_harbor_name_by_states(shared ctx_cache, mut api.pool_conn,
+		state) or {
+		api.log.save(model.MsgLog{
+			id:    ctx.request_id
+			error: err
+			level: 'error'
+			msg:   'Erro ao listar nomes de portos por estado: ${state}'
+		})
+		return ctx.ok('error: ${err}')
+	}
+
+	api.log.save(model.MsgLog{
+		id:    ctx.request_id
+		level: 'info'
+		msg:   'Nomes de portos listados com sucesso para estado: ${state}'
+	})
+
+	return ctx.json(res)
 }
 
 // get_harbors_by_ids Retorna informações de um/mais portos específico pelo seu ID
+//'
 @['/harbors/:ids']
 pub fn (mut api APIController) get_harbors_by_ids(mut ctx web_ctx.WsCtx, ids types.IntArr) veb.Result {
 	shared ctx_cache := api.cache
-	return ctx.json(repo_habor_mare.get_harbor_by_ids(shared ctx_cache, mut api.pool_conn,
-		ids.ints()) or { return ctx.ok('error: ${err}') })
+
+	api.log.save(model.MsgLog{
+		id:    ctx.request_id
+		level: 'info'
+		msg:   'Obtendo portos pelos IDs: ${ids.ints()}'
+	})
+
+	res := repo_habor_mare.get_harbor_by_ids(shared ctx_cache, mut api.pool_conn, ids.ints()) or {
+		api.log.save(model.MsgLog{
+			id:    ctx.request_id
+			error: err
+			level: 'error'
+			msg:   'Erro ao obter portos pelos IDs: ${ids.ints()}'
+		})
+		return ctx.ok('error: ${err}')
+	}
+
+	api.log.save(model.MsgLog{
+		id:    ctx.request_id
+		level: 'info'
+		msg:   'Portos obtidos com sucesso pelos IDs: ${ids.ints()}'
+	})
+
+	return ctx.json(res)
 }
 
 // get_tabua_mare Retorna o tábua (tabela) da mare de um porto específico para um mês e dias específicos.
+//'
 @['/tabua-mare/:harbor/:month/:days']
 pub fn (mut api APIController) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id int, month int, days types.IntArr) veb.Result {
 	shared ctx_cache := api.cache
+
+	api.log.save(model.MsgLog{
+		id:    ctx.request_id
+		level: 'info'
+		msg:   'Obtendo tábua da maré para porto ${harbor_id}, mês ${month}, dias ${days.ints()}'
+	})
+
 	result := repo_tabua_mare.get_tabua_mare_by_month_days(shared ctx_cache, mut api.pool_conn,
-		harbor_id, month, days.ints()) or { return ctx.ok('error: ${err}') }
+		harbor_id, month, days.ints()) or {
+		api.log.save(model.MsgLog{
+			id:    ctx.request_id
+			error: err
+			level: 'error'
+			msg:   'Erro ao obter tábua da maré para porto ${harbor_id}, mês ${month}'
+		})
+		return ctx.ok('error: ${err}')
+	}
+
+	api.log.save(model.MsgLog{
+		id:    ctx.request_id
+		level: 'info'
+		msg:   'Tábua da maré obtida com sucesso para porto ${harbor_id}, mês ${month}'
+	})
 
 	return ctx.json(result)
 }

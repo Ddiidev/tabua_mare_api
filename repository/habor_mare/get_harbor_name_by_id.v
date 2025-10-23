@@ -28,11 +28,6 @@ pub fn get_harbor_by_ids(shared ctx_cache cache.Cache, mut pool_conn pool.Connec
 
 	conn := pool_conn.get()!
 	db := conn as pg.DB
-	db.reset()!
-
-	defer {
-		pool_conn.put(conn) or {}
-	}
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
@@ -66,11 +61,10 @@ pub fn get_harbor_by_ids(shared ctx_cache cache.Cache, mut pool_conn pool.Connec
 		}
 	}
 
-	go fn [shared ctx_cache, mut ids_ordered, data_harbors] () {
-		lock ctx_cache {
-			ctx_cache.set('harbor_by_ids_${ids_ordered.map(it.str()).join('_')}', data_harbors)
-		}
-	}()
+	lock ctx_cache {
+		ctx_cache.set('harbor_by_ids_${ids_ordered.map(it.str()).join('_')}', data_harbors)
+	}
+	pool_conn.put(conn) or { dump(err) }
 
 	return types.ResultValues[dto.DTOHaborMareGetHarbor]{
 		data:  data_harbors
