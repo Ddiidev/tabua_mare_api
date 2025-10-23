@@ -3,6 +3,7 @@ module main
 import os
 import veb
 import cache
+import shareds.logger
 import shareds.web_ctx
 import shareds.infradb
 import shareds.conf_env
@@ -16,18 +17,25 @@ struct App {
 }
 
 fn main() {
+	at_exit(on_panic)!
+
 	if os.args.len < 2 {
 		println('Usage: tabua-mare-api <port>')
 		return
 	}
 	port := os.args[1].int()
-	env := conf_env.load_env()
+	env := conf_env.EnvConfig{
+		...conf_env.load_env()
+		current_port: port.str()
+	}
+
 	mut app := &App{
 		env: env
 	}
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
 		cache:     cache.Cache{}
+		log:       logger.Logger.new(port.str())!
 		env:       env
 	}
 

@@ -7,12 +7,14 @@ import dotenv
 // Contém todas as configurações necessárias para a aplicação funcionar corretamente
 pub struct EnvConfig {
 pub:
-	db_database string
-	db_host     string
-	db_port     string
-	db_user     string
-	db_pass     string
-	url_env     string
+	db_database   string
+	db_host       string
+	db_port       string
+	db_user       string
+	db_pass       string
+	url_env       string
+	new_relic_key string
+	current_port  string
 }
 
 // load_env carrega as variáveis de ambiente primeiro do sistema operacional e, se não encontradas,
@@ -27,12 +29,13 @@ pub fn load_env() EnvConfig {
 
 	// Create and populate the config struct
 	return EnvConfig{
-		db_database: get_env('DB_DATABASE', env_map).trim_space()
-		db_host:     get_env('DB_HOST', env_map).trim_space()
-		db_port:     get_env('DB_PORT', env_map).trim_space()
-		db_user:     get_env('DB_USER', env_map).trim_space()
-		db_pass:     get_env('DB_PASS', env_map).trim_space()
-		url_env:     get_env('URL_ENV', env_map).trim_space()
+		db_database:   get_env('DB_DATABASE', env_map).trim_space()
+		db_host:       get_env('DB_HOST', env_map).trim_space()
+		db_port:       get_env('DB_PORT', env_map).trim_space()
+		db_user:       get_env('DB_USER', env_map).trim_space()
+		db_pass:       get_env('DB_PASS', env_map).trim_space()
+		new_relic_key: get_env('NEW_RELIC_KEY', env_map).trim_space()
+		url_env:       get_env('URL_ENV', env_map).trim_space()
 	}
 }
 

@@ -7,10 +7,10 @@ import conf_env
 
 pub fn new() !&pool.ConnectionPool {
 	config := pool.ConnectionPoolConfig{
-		max_conns:      5
-		min_idle_conns: 2
-		max_lifetime:   2 * time.hour
-		idle_timeout:   30 * time.minute
+		max_conns:      10
+		min_idle_conns: 5
+		max_lifetime:   time.hour
+		idle_timeout:   1 * time.minute
 		get_timeout:    15 * time.second
 	}
 

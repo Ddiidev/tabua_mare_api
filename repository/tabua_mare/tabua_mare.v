@@ -13,15 +13,12 @@ import repository.tabua_mare.dto
 pub fn get_tabua_mare_by_month_days(shared ctx_cache cache.Cache, mut pool_conn pool.ConnectionPool, harbor_id int, month int, days []int) !types.ResultValues[dto.DTOTabuaMare] {
 	conn := pool_conn.get()!
 	db := conn as pg.DB
-	db.reset()!
-
-	defer {
-		pool_conn.put(conn) or { dump(err) }
-	}
 
 	mut qb_month := orm.new_query[entities.MonthData](db)
 
-	mut harbor := habor_mare.get_harbor_by_ids(shared ctx_cache, mut pool_conn, [harbor_id])!
+	mut harbor := habor_mare.get_harbor_by_ids(shared ctx_cache, mut pool_conn, [
+		harbor_id,
+	])!
 
 	mut month_data := qb_month
 		.where('data_mare_id = ? && month = ?', harbor_id, month)!
@@ -97,11 +94,11 @@ pub fn get_tabua_mare_by_month_days(shared ctx_cache cache.Cache, mut pool_conn 
 		}
 	}
 
-	go fn [shared ctx_cache, harbor_id, month, days_data_with_hours] () {
-		lock ctx_cache {
-			ctx_cache.set('tabua_mare_by_month_days_${harbor_id}_${month}', days_data_with_hours)
-		}
-	}()
+	lock ctx_cache {
+		ctx_cache.set('tabua_mare_by_month_days_${harbor_id}_${month}', days_data_with_hours)
+	}
+
+	pool_conn.put(conn) or { dump(err) }
 
 	result := dto.DTOTabuaMare{
 		year:                        harbor.data[0].year
