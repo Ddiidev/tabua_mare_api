@@ -14,8 +14,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.35"
-          memory: 64M
+          cpus: "0.4"
+          memory: 160M
+        reservations:
+          cpus: "0.2"
+          memory: 100M
     container_name: tabua-mare-app1
     networks:
       - tabua-mare-network
@@ -31,8 +34,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.35"
-          memory: 64M
+          cpus: "0.4"
+          memory: 160M
+        reservations:
+          cpus: "0.2"
+          memory: 100M
     container_name: tabua-mare-app2
     networks:
       - tabua-mare-network
@@ -48,8 +54,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.35"
-          memory: 64M
+          cpus: "0.4"
+          memory: 160M
+        reservations:
+          cpus: "0.2"
+          memory: 100M
     container_name: tabua-mare-app3
     networks:
       - tabua-mare-network
@@ -65,8 +74,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.35"
-          memory: 64M
+          cpus: "0.4"
+          memory: 160M
+        reservations:
+          cpus: "0.2"
+          memory: 100M
     container_name: tabua-mare-app4
     networks:
       - tabua-mare-network
@@ -92,8 +104,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.50"
-          memory: 150M
+          cpus: "0.35"
+          memory: 200M
     labels:
       - "coolify.managed=true"
       - "coolify.http.enabled=true"
@@ -115,8 +127,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.35"
-          memory: 64M
+          cpus: "0.20"
+          memory: 100M
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}

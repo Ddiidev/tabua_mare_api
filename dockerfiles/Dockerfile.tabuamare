@@ -36,7 +36,7 @@ RUN v install && \
 COPY . .
 
 # Compilar aplicação em modo produção
-RUN v -gc boehm_incr_opt -prod . -o TabuaMareAPI
+RUN v -g -gc boehm_incr_opt -prod . -o TabuaMareAPI
 
 # ============================================
 # Stage 2: Runtime - Apenas executável e deps
@@ -52,6 +52,7 @@ RUN apt-get update && apt-get install -y \
     libsqlite3-0 \
     ca-certificates \
     curl \
+    binutils \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
