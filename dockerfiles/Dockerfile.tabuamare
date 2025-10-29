@@ -35,8 +35,7 @@ RUN v install && \
 # Copiar resto do código
 COPY . .
 
-# Compilar aplicação em modo produção
-RUN v -g -gc boehm_incr_opt -prod . -o TabuaMareAPI
+RUN v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -prod . -o TabuaMareAPI
 
 # ============================================
 # Stage 2: Runtime - Apenas executável e deps

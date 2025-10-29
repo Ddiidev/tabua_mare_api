@@ -3,7 +3,6 @@ module main
 import os
 import veb
 import cache
-import shareds.logger
 import shareds.web_ctx
 import shareds.infradb
 import shareds.conf_env
@@ -35,7 +34,6 @@ fn main() {
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
 		cache:     cache.Cache{}
-		log:       logger.Logger.new(port.str())!
 		env:       env
 	}
 

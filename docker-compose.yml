@@ -15,10 +15,10 @@ services:
       resources:
         limits:
           cpus: "0.4"
-          memory: 160M
+          memory: 320M
         reservations:
           cpus: "0.2"
-          memory: 100M
+          memory: 160M
     container_name: tabua-mare-app1
     networks:
       - tabua-mare-network
@@ -35,10 +35,10 @@ services:
       resources:
         limits:
           cpus: "0.4"
-          memory: 160M
+          memory: 320M
         reservations:
           cpus: "0.2"
-          memory: 100M
+          memory: 160M
     container_name: tabua-mare-app2
     networks:
       - tabua-mare-network
@@ -47,6 +47,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
   tabua-mare3:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.tabuamare
     image: tabua-mare-app:latest
     restart: always
     environment:
@@ -55,10 +58,10 @@ services:
       resources:
         limits:
           cpus: "0.4"
-          memory: 160M
+          memory: 320M
         reservations:
           cpus: "0.2"
-          memory: 100M
+          memory: 160M
     container_name: tabua-mare-app3
     networks:
       - tabua-mare-network
@@ -75,10 +78,10 @@ services:
       resources:
         limits:
           cpus: "0.4"
-          memory: 160M
+          memory: 320M
         reservations:
           cpus: "0.2"
-          memory: 100M
+          memory: 160M
     container_name: tabua-mare-app4
     networks:
       - tabua-mare-network
