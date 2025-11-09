@@ -2,7 +2,6 @@ module main
 
 import os
 import veb
-import cache
 import shareds.web_ctx
 import shareds.infradb
 import shareds.conf_env
@@ -33,7 +32,6 @@ fn main() {
 	}
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
-		cache:     cache.Cache{}
 		env:       env
 	}
 
