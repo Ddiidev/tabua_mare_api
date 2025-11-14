@@ -2,7 +2,11 @@ module habor_mare
 
 import orm
 import pool
-import db.pg
+$if using_sqlite ? {
+	import db.sqlite as db_provider
+} $else {
+	import db.pg as db_provider
+}
 import arrays
 import entities
 import shareds.types
@@ -11,7 +15,7 @@ import shareds.constants
 // list_States Lista apenas os estados
 pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string] {
 	conn := pool_conn.get()!
-	db := conn as pg.DB
+	mut db := conn as db_provider.DB
 	db.reset()!
 
 	mut qb := orm.new_query[entities.DataMare](db)

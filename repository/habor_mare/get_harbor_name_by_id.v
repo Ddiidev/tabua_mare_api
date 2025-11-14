@@ -2,7 +2,11 @@ module habor_mare
 
 import orm
 import pool
-import db.pg
+$if using_sqlite ? {
+	import db.sqlite as db_provider
+} $else {
+	import db.pg as db_provider
+}
 import entities
 import shareds.types
 import repository.habor_mare.dto
@@ -13,7 +17,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.Re
 	ids_ordered.sort()
 
 	conn := pool_conn.get()!
-	db := conn as pg.DB
+	db := conn as db_provider.DB
 
 	mut qb := orm.new_query[entities.DataMare](db)
 

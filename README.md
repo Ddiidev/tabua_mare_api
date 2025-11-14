@@ -15,6 +15,7 @@ Uma API pública para consultar dados precisos de marés em todo o litoral brasi
 - Interface REST simples e fácil de integrar.
 - Cobertura nacional (todos os estados costeiros do Brasil).
 - Uso livre, sem autenticação.
+- Banco SQLite atualizado do ano corrente, com dados reais utilizados em produção, disponível para utilização em seus próprios projetos.
 
 ## Base de API
 
@@ -37,7 +38,7 @@ Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estr
 - **PostgreSQL**: Banco de dados necessário para armazenar os dados de marés. (Como instalar https://modules.vlang.io/db.pg.html)
 - **Arquivo .env**: Configure as variáveis de ambiente (veja seção abaixo)
 
-> **Observação**: Planejo adicionar suporte ao SQLite futuramente para facilitar testes locais.
+> **Observação**: O projeto utiliza PostgreSQL em produção, mas ofereço um banco SQLite com dados atualizados do ano corrente. O banco de dados está disponível para facilitar testes locais e desenvolvimento.
 
 ### Configuração do ambiente
 

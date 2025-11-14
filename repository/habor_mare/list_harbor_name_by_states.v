@@ -2,7 +2,11 @@ module habor_mare
 
 import orm
 import pool
-import db.pg
+$if using_sqlite ? {
+	import db.sqlite as db_provider
+} $else {
+	import db.pg as db_provider
+}
 import entities
 import shareds.types
 import shareds.constants
@@ -11,7 +15,7 @@ import repository.habor_mare.dto
 // list_harbor_name_by_states Lista os nomes dos portos por estado
 pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state string) !types.ResultValues[dto.DTOHaborMareListHaborNameByState] {
 	conn := pool_conn.get()!
-	db := conn as pg.DB
+	mut db := conn as db_provider.DB
 	db.reset()!
 
 	mut qb := orm.new_query[entities.DataMare](db)
