@@ -2,6 +2,7 @@ module infradb
 
 import pool
 import time
+
 $if using_sqlite ? {
 	import db.sqlite as db_provider
 } $else {

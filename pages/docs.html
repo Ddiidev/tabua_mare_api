@@ -73,6 +73,9 @@
           <a href="#list-states" class="sub-item" onclick="scrollToSection('#list-states')">Listar Estados</a>
           <a href="#list-harbors" class="sub-item" onclick="scrollToSection('#list-harbors')">Listar Portos</a>
           <a href="#get-harbor" class="sub-item" onclick="scrollToSection('#get-harbor')">Obter Porto</a>
+          <a href="#nearested-harbor" class="sub-item" onclick="scrollToSection('#nearested-harbor')">Porto mais próximo (estado)</a>
+          <a href="#nearest-harbor-independent" class="sub-item" onclick="scrollToSection('#nearest-harbor-independent')">Porto mais próximo (independente)</a>
+          <a href="#geo-tabua-mare" class="sub-item" onclick="scrollToSection('#geo-tabua-mare')">Tábua por geolocalização</a>
           <a href="#get-tabua-mare" class="sub-item" onclick="scrollToSection('#get-tabua-mare')">Tábua de Maré</a>
           <a href="#errors" onclick="scrollToSection('#errors')">Códigos de Erro</a>
         </nav>
@@ -338,6 +341,115 @@ curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
             <h4>✅ Exemplo de Resposta:</h4>
             <div class="code-block">
               <pre><code class="language-json">{{code_resposta_tabua_mare}}</code></pre>
+            </div>
+          </div>
+
+          <!-- Porto mais próximo por Estado -->
+          <div id="nearested-harbor" class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">Porto mais próximo (estado)</h3>
+              <span class="method-badge">GET</span>
+            </div>
+
+            <p>
+              Retorna o porto mais próximo das coordenadas informadas dentro do estado especificado.
+            </p>
+
+            <div class="endpoint-url">
+              <strong>GET</strong> /nearested-harbor/{state}/{lat_lng}
+            </div>
+
+            <h4>📋 Parâmetros:</h4>
+            <ul>
+              <li><strong>state</strong> (string): Sigla do estado (ex: pb, rj, sp).</li>
+              <li><strong>lat_lng</strong> (string): Coordenadas no formato <code>[lat,lng]</code>.</li>
+            </ul>
+
+            <h4>📝 Exemplo de Requisição:</h4>
+            <div class="code-block">
+              <pre><code>curl -X GET "${url_env}/nearested-harbor/pb/[-7.11509,-34.864]"</code></pre>
+            </div>
+
+            <h4>🧪 Exemplo com Fetch:</h4>
+            <div class="code-block">
+              <pre><code>fetch(`${url_env}/nearested-harbor/pb/[-7.11509,-34.864]`).then(r => r.json())</code></pre>
+            </div>
+          </div>
+
+          <!-- Porto mais próximo independente de Estado -->
+          <div id="nearest-harbor-independent" class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">Porto mais próximo (independente)</h3>
+              <span class="method-badge">GET</span>
+            </div>
+
+            <p>
+              Retorna o porto mais próximo das coordenadas informadas sem restringir por estado.
+            </p>
+
+            <div class="endpoint-url">
+              <strong>GET</strong> /nearest-harbor-independent-state/{lat_lng}
+            </div>
+
+            <h4>📋 Parâmetros:</h4>
+            <ul>
+              <li><strong>lat_lng</strong> (string): Coordenadas no formato <code>[lat,lng]</code>.</li>
+            </ul>
+
+            <h4>📝 Exemplo de Requisição:</h4>
+            <div class="code-block">
+              <pre><code>curl -X GET "${url_env}/nearest-harbor-independent-state/[-7.11509,-34.864]"</code></pre>
+            </div>
+
+            <h4>🧪 Exemplo com Fetch:</h4>
+            <div class="code-block">
+              <pre><code>fetch(`${url_env}/nearest-harbor-independent-state/[-7.11509,-34.864]`).then(r => r.json())</code></pre>
+            </div>
+          </div>
+
+          <!-- Tábua de Maré por Geolocalização -->
+          <div id="geo-tabua-mare" class="endpoint-card">
+            <div class="endpoint-header">
+              <h3 class="endpoint-title">Tábua de Maré por Geolocalização</h3>
+              <span class="method-badge">GET</span>
+            </div>
+
+            <p>
+              Obtém a tábua de maré do porto mais próximo dentro de um estado, informando apenas coordenadas e período.
+            </p>
+
+            <div class="endpoint-url">
+              <strong>GET</strong> /geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
+            </div>
+
+            <h4>📋 Parâmetros:</h4>
+            <ul>
+              <li><strong>lat_lng</strong> (string): Coordenadas <code>[lat,lng]</code>.</li>
+              <li><strong>state</strong> (string): Sigla do estado (ex: pb, rj, sp).</li>
+              <li><strong>month</strong> (integer): Mês (1-12).</li>
+              <li><strong>days</strong> (string): Dias e/ou intervalos (ex: <code>[1,2,10-30]</code>).</li>
+            </ul>
+
+            <h4>📝 Exemplo de Requisição:</h4>
+            <div class="code-block">
+              <pre><code>curl -X GET "${url_env}/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"</code></pre>
+            </div>
+
+            <h4>🧪 Exemplo com Fetch:</h4>
+            <div class="code-block">
+              <pre><code>fetch(`${url_env}/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]`).then(r => r.json())</code></pre>
+            </div>
+
+            <h4>⚙️ Detalhes técnicos</h4>
+            <ul>
+              <li><code>lat_lng</code> é parseado no servidor por um tipo dedicado e suporta negativos e decimais.</li>
+              <li><code>days</code> aceita dias e intervalos; o servidor expande e deduplica valores.</li>
+              <li>O porto é escolhido pela menor distância às coordenadas, respeitando o estado.</li>
+            </ul>
+
+            <h4>🌐 Exemplo: obter sigla do estado com Nominatim</h4>
+            <div class="code-block">
+              <pre><code class="language-js">-----AQUI---------</code></pre>
             </div>
           </div>
         </section>

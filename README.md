@@ -16,6 +16,7 @@ Uma API pública para consultar dados precisos de marés em todo o litoral brasi
 - Cobertura nacional (todos os estados costeiros do Brasil).
 - Uso livre, sem autenticação.
 - Banco SQLite atualizado do ano corrente, com dados reais utilizados em produção, disponível para utilização em seus próprios projetos.
+- Consulta por geolocalização: obtenha a tábua de maré informando latitude, longitude e estado, sem precisar conhecer o porto.
 
 ## Base de API
 
@@ -24,6 +25,58 @@ Uma API pública para consultar dados precisos de marés em todo o litoral brasi
 ## Como usar a API
 
 Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estrutura de resposta, acesse: **https://tabuamare.devtu.qzz.io/docs**
+
+### Principais Endpoints
+
+- `GET /api/v1/states`
+  - Lista as siglas dos estados costeiros disponíveis.
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/states"`
+
+- `GET /api/v1/harbor_names/{state}`
+  - Lista os nomes dos portos de um estado.
+  - Parâmetro `state`: sigla do estado em minúsculas (`pb`, `rj`, `sp`).
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/harbor_names/pb"`
+
+- `GET /api/v1/harbors/{ids}`
+  - Retorna dados de um ou mais portos por ID.
+  - Parâmetro `ids`: lista no formato `[1,2,3]`.
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/harbors/[1,2,3]"`
+
+- `GET /api/v1/tabua-mare/{harbor}/{month}/{days}`
+  - Tábua de maré para um porto específico.
+  - Parâmetros: `harbor` (ID), `month` (`1-12`), `days` (ex.: `[1,2,10-30]`).
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/tabua-mare/1/1/[1,2,3]"`
+
+- `GET /api/v1/nearested-harbor/{state}/{lat_lng}`
+  - Porto mais próximo dentro do estado informado.
+  - Parâmetros: `state` (sigla minúscula), `lat_lng` como string no formato `[lat,lng]`.
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/nearested-harbor/pb/[-7.11509,-34.864]"`
+
+- `GET /api/v1/nearest-harbor-independent-state/{lat_lng}`
+  - Porto mais próximo sem limitar por estado.
+  - Parâmetros: `lat_lng` como string no formato `[lat,lng]`.
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/nearest-harbor-independent-state/[-7.11509,-34.864]"`
+
+### Obter tábua de maré por geolocalização
+
+Agora é possível consultar a tábua de maré sem saber o porto, informando apenas as coordenadas geográficas (latitude e longitude) e a sigla do estado. A API identifica o porto mais próximo dentro do estado e retorna a tábua de maré para o período solicitado.
+
+- Endpoint: `GET /api/v1/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}`
+- Parâmetros:
+  - `lat_lng`: string no formato `[lat,lng]` (ex.: `[-7.11509,-34.864]`)
+  - `state`: sigla do estado em minúsculas (ex.: `pb`, `rj`, `sp`)
+  - `month`: mês desejado (`1-12`)
+  - `days`: dias no formato de array, podendo combinar dias específicos e intervalos (ex.: `[1,2,10-30]`)
+
+Exemplo de requisição:
+
+```
+curl -X GET "http://localhost:3330/api/v1/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"
+```
+
+Observações:
+- O cálculo do porto é feito com base na menor distância às coordenadas fornecidas, respeitando o estado informado.
+- O formato de `days` aceita combinações como `[1,5-13,27]`.
 
 ## Limites e uso
 

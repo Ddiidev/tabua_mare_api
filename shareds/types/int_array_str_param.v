@@ -2,10 +2,10 @@ module types
 
 import arrays
 
-pub type IntArr = string
+pub type IntRangeArr = string
 
 // ints convert string on format "[1,5-15]" to array of ints
-pub fn (ids IntArr) ints() []int {
+pub fn (ids IntRangeArr) ints() []int {
 	mut inters := []int{}
 	for id in ids.replace_each(['[', '', ']', '', ' ', '']).split(',') {
 		if id.contains('-') {

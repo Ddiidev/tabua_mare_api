@@ -60,6 +60,7 @@ pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 
 @['/playground']
 pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
+	url_normatin := veb.raw(r'https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&addressdetails=1')
 	return $veb.html('./pages/playground.html')
 }
 
