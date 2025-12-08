@@ -22,8 +22,9 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, ids []int) !types.Re
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
+	// harbors := []entities.DataMare{}
 	harbors := qb
-		.where('id IN ?', ids.map(orm.Primitive(it)))!
+		.where('id IN ?', orm.Primitive(ids.map(orm.Primitive(it))))!
 		.query()!
 
 	geo_location := sql db {
