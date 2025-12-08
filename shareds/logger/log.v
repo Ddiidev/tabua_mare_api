@@ -46,7 +46,7 @@ fn local_log(id_application string) Logger {
 
 fn generate_name_file(last_log string) string {
 	parts := last_log.split('-')
-	number := parts[1].int() + 1
+	number := parts[1] or { '0' }.int() + 1
 	return 'log-${number}.txt'
 }
 

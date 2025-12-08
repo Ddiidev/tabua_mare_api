@@ -31,6 +31,10 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 	mut qb_month_days := orm.new_query[entities.DayData](db)
 	mut qb_hours := orm.new_query[entities.HourData](db)
 
+	if month_data.len == 0 {
+		return error('Nenhum dado mensal encontrado para o porto e mês especificados')
+	}
+
 	mut days_data := qb_month_days
 		.where('month_data_id = ? && day IN ?', month_data[0].id, days.map(orm.Primitive(it)))!
 		.order(.asc, 'day')!
@@ -53,6 +57,10 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 	}
 
 	pool_conn.put(conn) or { dump(err) }
+
+	if harbor.data.len == 0 {
+		return error('Nenhum dado de porto encontrado para o ID especificado')
+	}
 
 	result := dto.DTOTabuaMare{
 		year:                        harbor.data[0].year

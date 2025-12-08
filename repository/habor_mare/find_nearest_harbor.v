@@ -38,6 +38,10 @@ pub fn find_nearest_harbor(mut pool_conn pool.ConnectionPool, lat f64, lng f64) 
 			continue
 		}
 
+		if harbor.geo_location.len < 1 {
+			return error('Dados de geo_localização inválidos para o porto: coordenadas insuficientes')
+		}
+
 		harbor_lat := harbor.geo_location[0].lat.f64()
 		harbor_lng := harbor.geo_location[0].lng.f64()
 
@@ -77,6 +81,11 @@ pub fn find_nearest_harbor_within_same_state(mut pool_conn pool.ConnectionPool, 
 		if harbor.state != state {
 			continue
 		}
+
+		if harbor.geo_location.len < 1 {
+			return error('Dados de geo_localização inválidos para o porto: coordenadas insuficientes')
+		}
+
 		harbor_lat := harbor.geo_location[0].lat.f64()
 		harbor_lng := harbor.geo_location[0].lng.f64()
 		dist := distance(lat, lng, harbor_lat, harbor_lng)

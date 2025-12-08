@@ -83,8 +83,8 @@ pub fn (mut api APIController) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id i
 @['/geo-tabua-mare/:lat_lng/:state/:month/:days']
 pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, lat_lng types.FloatArr, state string, month int, days types.IntRangeArr) veb.Result {
 	geo_latlng := lat_lng.list_float()
-	lat := geo_latlng[0]
-	lng := geo_latlng[1]
+	lat := geo_latlng[0] or { 0.0 }
+	lng := geo_latlng[1] or { 0.0 }
 
 	// TODO: Depois deixar isso dentro do método de get_tabua_mare_by_month_days
 	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state(mut api.pool_conn,
@@ -106,8 +106,8 @@ pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, l
 @['/nearested-harbor/:state/:lat_lng']
 pub fn (mut api APIController) get_nearest_harbor_by_state(mut ctx web_ctx.WsCtx, state string, lat_lng types.FloatArr) veb.Result {
 	geo_latlng := lat_lng.list_float()
-	lat := geo_latlng[0]
-	lng := geo_latlng[1]
+	lat := geo_latlng[0] or { 0.0 }
+	lng := geo_latlng[1] or { 0.0 }
 
 	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state(mut api.pool_conn,
 		lat, lng, state) or {
@@ -122,8 +122,8 @@ pub fn (mut api APIController) get_nearest_harbor_by_state(mut ctx web_ctx.WsCtx
 @['/nearest-harbor-independent-state/:lat_lng']
 pub fn (mut api APIController) get_nearest_harbor(mut ctx web_ctx.WsCtx, lat_lng types.FloatArr) veb.Result {
 	geo_latlng := lat_lng.list_float()
-	lat := geo_latlng[0]
-	lng := geo_latlng[1]
+	lat := geo_latlng[0] or { 0.0 }
+	lng := geo_latlng[1] or { 0.0 }
 
 	nearest_harbor := repo_habor_mare.find_nearest_harbor(mut api.pool_conn, lat, lng) or {
 		ctx.request_error('Nenhum porto encontrado perto das coordenadas fornecidas.')
