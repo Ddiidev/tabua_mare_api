@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
     ca-certificates \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Build do compilador V (cacheable - só recompila se mudar)
@@ -35,7 +36,7 @@ RUN v install && \
 # Copiar resto do código
 COPY . .
 
-RUN v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -prod . -o TabuaMareAPI
+RUN v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
 
 # ============================================
 # Stage 2: Runtime - Apenas executável e deps
@@ -52,6 +53,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     binutils \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
