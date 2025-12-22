@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     build-essential \
-    libssl-dev \
     libpq-dev \
     libsqlite3-dev \
     ca-certificates \
@@ -36,6 +35,8 @@ RUN v install && \
 # Copiar resto do código
 COPY . .
 
+RUN v version
+
 RUN v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
 
 # ============================================
@@ -53,6 +54,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     binutils \
+    gdb \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -69,5 +71,7 @@ COPY --from=builder /app/cache ./cache
 EXPOSE 4048
 ENV PORT=4048
 
-# Executar aplicação
+# Executar aplicação via GDB em modo batch
+# Configura o GDB para ignorar sinais do GC (SIG40, SIGPWR, etc) e só parar em erros reais
+# CMD ["sh", "-c", "gdb -batch -ex 'handle SIG32 nostop noprint pass' -ex 'handle SIG39 nostop noprint pass' -ex 'handle SIG40 nostop noprint pass' -ex 'handle SIGPWR nostop noprint pass' -ex 'handle SIGXCPU nostop noprint pass' -ex run -ex bt --args ./TabuaMareAPI $PORT"]
 CMD ["sh", "-c", "./TabuaMareAPI $PORT"]
