@@ -7,3 +7,7 @@ pub struct WsCtx {
 	veb.Context
 	request_id.RequestIdContext
 }
+
+// pub fn (mut ctx WsCtx) before_request() {
+// 	dump(ctx)
+// }

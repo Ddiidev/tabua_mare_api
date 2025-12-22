@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     build-essential \
-    libssl-dev \
     libpq-dev \
     libsqlite3-dev \
     ca-certificates \
@@ -36,7 +35,9 @@ RUN v install && \
 # Copiar resto do código
 COPY . .
 
-RUN v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
+RUN v version
+
+RUN v -showcc -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
 
 # ============================================
 # Stage 2: Runtime - Apenas executável e deps
