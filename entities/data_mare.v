@@ -5,6 +5,7 @@ pub struct DataMare {
 pub mut:
 	id                          int @[primary; sql: serial]
 	year                        int
+	id_harbor_state             string        @[sql_type: 'VARCHAR(5)']
 	harbor_name                 string        @[sql_type: 'VARCHAR(255)']
 	state                       string        @[sql_type: 'VARCHAR(2)']
 	timezone                    string        @[sql_type: 'VARCHAR(20)']

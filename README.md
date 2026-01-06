@@ -20,48 +20,56 @@ Uma API pública para consultar dados precisos de marés em todo o litoral brasi
 
 ## Base de API
 
-- Prefixo: `/api/v1`
+- Prefixo V2 (Atual): `/api/v2`
+- Prefixo V1 (Depreciado): `/api/v1`
+
+## Mudanças na V2 (Versão Atual)
+
+A versão 2 da API traz uma mudança importante na identificação dos portos:
+- **IDs de Portos agora são strings baseadas no estado** (ex: `pb01`, `rj02`, `sp03`).
+- Na V1, os IDs eram numéricos (ex: 1, 2, 3).
+- Todos os endpoints da V1 estão disponíveis na V2, mas devem ser acessados com o prefixo `/api/v2` e utilizando os novos IDs de string.
 
 ## Como usar a API
 
 Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estrutura de resposta, acesse: **https://tabuamare.devtu.qzz.io/docs**
 
-### Principais Endpoints
+### Principais Endpoints (V2)
 
-- `GET /api/v1/states`
+- `GET /api/v2/states`
   - Lista as siglas dos estados costeiros disponíveis.
-  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/states"`
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v2/states"`
 
-- `GET /api/v1/harbor_names/{state}`
+- `GET /api/v2/harbor_names/{state}`
   - Lista os nomes dos portos de um estado.
   - Parâmetro `state`: sigla do estado em minúsculas (`pb`, `rj`, `sp`).
-  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/harbor_names/pb"`
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v2/harbor_names/pb"`
 
-- `GET /api/v1/harbors/{ids}`
+- `GET /api/v2/harbors/{ids}`
   - Retorna dados de um ou mais portos por ID.
-  - Parâmetro `ids`: lista no formato `[1,2,3]`.
-  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/harbors/[1,2,3]"`
+  - Parâmetro `ids`: lista de strings no formato `["pb01","pe02"]`.
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v2/harbors/['pb01']"`
 
-- `GET /api/v1/tabua-mare/{harbor}/{month}/{days}`
+- `GET /api/v2/tabua-mare/{harbor}/{month}/{days}`
   - Tábua de maré para um porto específico.
-  - Parâmetros: `harbor` (ID), `month` (`1-12`), `days` (ex.: `[1,2,10-30]`).
-  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/tabua-mare/1/1/[1,2,3]"`
+  - Parâmetros: `harbor` (ID String ex: `pb01`), `month` (`1-12`), `days` (ex.: `[1,2,10-30]`).
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v2/tabua-mare/pb01/1/[1,2,3]"`
 
-- `GET /api/v1/nearested-harbor/{state}/{lat_lng}`
+- `GET /api/v2/nearested-harbor/{state}/{lat_lng}`
   - Porto mais próximo dentro do estado informado.
   - Parâmetros: `state` (sigla minúscula), `lat_lng` como string no formato `[lat,lng]`.
-  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/nearested-harbor/pb/[-7.11509,-34.864]"`
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v2/nearested-harbor/pb/[-7.11509,-34.864]"`
 
-- `GET /api/v1/nearest-harbor-independent-state/{lat_lng}`
+- `GET /api/v2/nearest-harbor-independent-state/{lat_lng}`
   - Porto mais próximo sem limitar por estado.
   - Parâmetros: `lat_lng` como string no formato `[lat,lng]`.
-  - Exemplo: `curl -X GET "http://localhost:3330/api/v1/nearest-harbor-independent-state/[-7.11509,-34.864]"`
+  - Exemplo: `curl -X GET "http://localhost:3330/api/v2/nearest-harbor-independent-state/[-7.11509,-34.864]"`
 
 ### Obter tábua de maré por geolocalização
 
 Agora é possível consultar a tábua de maré sem saber o porto, informando apenas as coordenadas geográficas (latitude e longitude) e a sigla do estado. A API identifica o porto mais próximo dentro do estado e retorna a tábua de maré para o período solicitado.
 
-- Endpoint: `GET /api/v1/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}`
+- Endpoint: `GET /api/v2/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}`
 - Parâmetros:
   - `lat_lng`: string no formato `[lat,lng]` (ex.: `[-7.11509,-34.864]`)
   - `state`: sigla do estado em minúsculas (ex.: `pb`, `rj`, `sp`)
@@ -71,7 +79,7 @@ Agora é possível consultar a tábua de maré sem saber o porto, informando ape
 Exemplo de requisição:
 
 ```
-curl -X GET "http://localhost:3330/api/v1/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"
+curl -X GET "http://localhost:3330/api/v2/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"
 ```
 
 Observações:

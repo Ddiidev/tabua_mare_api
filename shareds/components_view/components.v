@@ -1,11 +1,11 @@
 module components_view
 
 import veb
-import shareds.constants
+import time
 
 pub struct ComponentsView {}
 
 pub fn (cv ComponentsView) footer() veb.RawHtml {
-	year := constants.year
+	year := time.now().year
 	return $tmpl('../../pages/footer.html')
 }

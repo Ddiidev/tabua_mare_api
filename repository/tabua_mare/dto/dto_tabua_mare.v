@@ -26,6 +26,7 @@ pub mut:
 // TabuaMare is the main DTO that holds the complete tide table for a specific harbor and year.
 pub struct DTOTabuaMare {
 pub mut:
+	id                          string
 	year                        int
 	harbor_name                 string
 	state                       string

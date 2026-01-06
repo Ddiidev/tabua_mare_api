@@ -8,10 +8,10 @@ $if using_sqlite ? {
 } $else {
 	import db.pg as db_provider
 }
+import time
 import arrays
 import entities
 import shareds.types
-import shareds.constants
 
 // list_States Lista apenas os estados
 pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string] {
@@ -21,9 +21,10 @@ pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
+	year := time.now().year
 	distinct_states := arrays.distinct(qb
 		.select('state')!
-		.where('year = ?', constants.year)!
+		.where('year = ?', year)!
 		.query()!
 		.map(it.state))
 

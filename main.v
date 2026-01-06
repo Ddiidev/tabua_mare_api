@@ -35,9 +35,15 @@ fn main() {
 		env:       env
 	}
 
+	mut api_controller_v2 := &APIControllerV2{
+		pool_conn: infradb.new()!
+		env:       env
+	}
+
 	api_controller.init_cors()
 
 	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
+	app.register_controller[APIControllerV2, web_ctx.WsCtx]('/api/v2', mut api_controller_v2)!
 	app.mount_static_folder_at('./pages/assets', '/pages/assets')!
 
 	println('Starting Tabua Mare API on port ${port}')
@@ -53,14 +59,14 @@ pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
 @['/docs']
 pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 	url_env := rlock app.env {
-		'${app.env.url_env}/api/v1'
+		app.env.url_env
 	}
 	return $veb.html('./pages/docs.html')
 }
 
 @['/playground']
 pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
-	url_normatin := veb.raw(r'https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&addressdetails=1')
+	// url_normatin := veb.raw(r'https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&addressdetails=1')
 	return $veb.html('./pages/playground.html')
 }
 

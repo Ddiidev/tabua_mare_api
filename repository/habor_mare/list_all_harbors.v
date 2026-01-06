@@ -8,6 +8,7 @@ $if using_sqlite ? {
 } $else {
 	import db.pg as db_provider
 }
+import time
 import entities
 import shareds.types
 import repository.habor_mare.dto
@@ -19,16 +20,18 @@ pub fn list_all_harbors(mut pool_conn pool.ConnectionPool) !types.ResultValues[d
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
-	harbors := qb.query()!
+	harbors := qb.where('year = ?', time.now().year)!.query()!
+	harbor_ids := harbors.map(it.id)
 
 	geo_location := sql db {
-		select from entities.GeoLocation
+		select from entities.GeoLocation where data_mare_id in harbor_ids
 	}!
 
 	mut data_harbors := []dto.DTOHaborMareGetHarbor{}
 	for harbor in harbors {
 		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id
+			harbor_id:                   harbor.id_harbor_state
 			year:                        harbor.year
 			card:                        harbor.card
 			state:                       harbor.state
@@ -61,7 +64,8 @@ pub fn list_all_harbors_by_state(mut pool_conn pool.ConnectionPool, state string
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
-	harbors := qb.where('state = ?', state)!.query()!
+	year := time.now().year
+	harbors := qb.where('state = ? && year = ?', state, year)!.query()!
 	data_mare_ids := harbors.map(it.id)
 
 	geo_location := sql db {
@@ -72,6 +76,7 @@ pub fn list_all_harbors_by_state(mut pool_conn pool.ConnectionPool, state string
 	for harbor in harbors {
 		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id
+			harbor_id:                   harbor.id_harbor_state
 			year:                        harbor.year
 			card:                        harbor.card
 			state:                       harbor.state

@@ -8,9 +8,9 @@ $if using_sqlite ? {
 } $else {
 	import db.pg as db_provider
 }
+import time
 import entities
 import shareds.types
-import shareds.constants
 import repository.habor_mare.dto
 
 // list_harbor_name_by_states Lista os nomes dos portos por estado
@@ -18,15 +18,16 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 	conn := pool_conn.get()!
 	mut db := conn as db_provider.DB
 	db.reset()!
+	year := time.now().year
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
 	harbor_name := qb
-		.where('year = ? && state = ?', constants.year, state)!
-		.select('id', 'harbor_name', 'data_collection_institution', 'year')!
+		.where('year = ? && state = ?', year, state)!
+		.select('id_harbor_state', 'harbor_name', 'data_collection_institution', 'year')!
 		.query()!
 		.map(dto.DTOHaborMareListHaborNameByState{
-			id:                          it.id
+			id:                          it.id_harbor_state
 			year:                        it.year
 			harbor_name:                 it.harbor_name
 			data_collection_institution: it.data_collection_institution

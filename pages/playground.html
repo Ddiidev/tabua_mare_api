@@ -33,6 +33,39 @@
         Kode Mono,
         monospace !important;
     }
+
+    .code-block {
+      position: relative;
+    }
+
+    .code-block pre {
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid var(--pico-muted-border-color);
+      border-radius: var(--pico-border-radius);
+      padding-top: 60px;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      z-index: 10;
+      padding: 4px 8px;
+      font-size: 12px;
+      width: auto;
+      background: var(--pico-primary-background);
+      color: var(--pico-primary-inverse);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .copy-btn:hover {
+      opacity: 1;
+    }
   </style>
 </head>
 
@@ -45,6 +78,17 @@
     <div class="container">
       <h1>🚀 API Playground</h1>
       <p>Teste os endpoints da Tábua de Marés API em tempo real</p>
+      
+      <div class="version-selector" style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; display: inline-block;">
+        <label style="margin-right: 15px; font-weight: bold;">Versão da API:</label>
+        <label style="margin-right: 15px; cursor: pointer;">
+          <input type="radio" name="apiVersion" value="v1" v-model="apiVersion"> V1 (Depreciada)
+        </label>
+        <label style="cursor: pointer;">
+          <input type="radio" name="apiVersion" value="v2" v-model="apiVersion"> V2 (Atual)
+        </label>
+      </div>
+
       <div class="docs-actions">
         <button class="btn btn-primary">
           <a href="/" style="text-decoration: none; color: white">← Voltar ao Início</a>
@@ -70,8 +114,8 @@
           <p>
             Retorna todos os estados costeiros do Brasil disponíveis na API.
           </p>
-
-          <div class="endpoint-url"><strong>GET</strong> /api/v1/states</div>
+          
+          <div class="endpoint-url"><strong>GET</strong> /api/{{apiVersion}}/states</div>
 
           <div class="endpoint-actions">
             <button class="btn btn-primary" @@click="callStatesAPI()" :disabled="loading.states">
@@ -83,6 +127,7 @@
           <div v-show="responses.states" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
+              <button class="copy-btn" @@click="copyToClipboard(responses.states, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.states"></code></pre>
             </div>
           </div>
@@ -97,7 +142,7 @@
           <p>Retorna os portos de um estado específico.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/v1/harbor_names/{state}
+            <strong>GET</strong> /api/{{apiVersion}}/harbor_names/{state}
           </div>
 
           <div class="endpoint-params">
@@ -117,6 +162,7 @@
           <div v-show="responses.harbors" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
+              <button class="copy-btn" @@click="copyToClipboard(responses.harbors, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.harbors"></code></pre>
             </div>
           </div>
@@ -133,14 +179,15 @@
           </p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/v1/harbors/{ids}
+            <strong>GET</strong> /api/{{apiVersion}}/harbors/{ids}
           </div>
 
           <div class="endpoint-params">
             <div class="param-group">
               <label for="harbor-id-input">IDs dos Portos:</label>
-              <input id="harbor-id-input" type="text" v-model="inputs.harborId" placeholder="ex: 1,27,50" />
-              <small>Digite os IDs separados por vírgula (ex: 1,2,3)</small>
+              <input id="harbor-id-input" type="text" v-model="inputs.harborId" :placeholder="apiVersion === 'v2' ? 'ex: pb01, pe02' : 'ex: 1,27,50'" />
+              <small v-if="apiVersion === 'v2'">Digite os IDs separados por vírgula (ex: pb01,pe02)</small>
+              <small v-else>Digite os IDs separados por vírgula (ex: 1,2,3)</small>
             </div>
           </div>
 
@@ -155,6 +202,7 @@
           <div v-show="responses.harborById" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
+              <button class="copy-btn" @@click="copyToClipboard(responses.harborById, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.harborById"></code></pre>
             </div>
           </div>
@@ -172,14 +220,15 @@
           </p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/v1/tabua-mare/{harbor}/{month}/{days}
+            <strong>GET</strong> /api/{{apiVersion}}/tabua-mare/{harbor}/{month}/{days}
           </div>
 
           <div class="endpoint-params">
             <div class="param-group">
               <label for="harbor-input">Porto:</label>
-              <input id="harbor-input" type="text" v-model="inputs.harbor" placeholder="ex: 1" />
-              <small>Digite o ID do porto (ex: 1)</small>
+              <input id="harbor-input" type="text" v-model="inputs.harbor" :placeholder="apiVersion === 'v2' ? 'ex: pb01' : 'ex: 1'" />
+              <small v-if="apiVersion === 'v2'">Digite o ID do porto (ex: pb01)</small>
+              <small v-else>Digite o ID do porto (ex: 1)</small>
             </div>
             <div class="param-group">
               <label for="month-input">Mês:</label>
@@ -204,6 +253,7 @@
           <div v-show="responses.tabuaMare" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
+              <button class="copy-btn" @@click="copyToClipboard(responses.tabuaMare, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.tabuaMare"></code></pre>
             </div>
           </div>
@@ -217,7 +267,7 @@
           <p>Retorna o porto mais próximo dentro do estado informado.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/v1/nearested-harbor/{state}/{lat_lng}
+            <strong>GET</strong> /api/{{apiVersion}}/nearested-harbor/{state}/{lat_lng}
           </div>
 
           <div class="endpoint-params">
@@ -244,6 +294,7 @@
           <div v-show="responses.nearestedState" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
+              <button class="copy-btn" @@click="copyToClipboard(responses.nearestedState, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.nearestedState"></code></pre>
             </div>
           </div>
@@ -257,7 +308,7 @@
           <p>Retorna o porto mais próximo sem restringir por estado.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/v1/nearest-harbor-independent-state/{lat_lng}
+            <strong>GET</strong> /api/{{apiVersion}}/nearest-harbor-independent-state/{lat_lng}
           </div>
 
           <div class="endpoint-params">
@@ -280,6 +331,7 @@
           <div v-show="responses.nearestIndependent" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
+              <button class="copy-btn" @@click="copyToClipboard(responses.nearestIndependent, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.nearestIndependent"></code></pre>
             </div>
           </div>
@@ -293,7 +345,7 @@
           <p>Obtém a tábua de maré usando coordenadas e estado.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/v1/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
+            <strong>GET</strong> /api/{{apiVersion}}/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
           </div>
 
           <div class="endpoint-params">
@@ -328,6 +380,7 @@
           <div v-show="responses.geoTabuaGeo" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
+              <button class="copy-btn" @@click="copyToClipboard(responses.geoTabuaGeo, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.geoTabuaGeo"></code></pre>
             </div>
           </div>
@@ -389,6 +442,7 @@
     const { createApp } = PetiteVue;
 
     createApp({
+      apiVersion: 'v2',
       showContactModal: false,
       showMobileMenu: false,
       showContact: false,
@@ -425,7 +479,7 @@
         this.error = '';
 
         try {
-          const response = await fetch('/api/v1/states');
+          const response = await fetch(`/api/${'$'}{this.apiVersion}/states`);
           const data = await response.json();
           this.responses.states = JSON.stringify(data, null, 2);
           // Highlight code after update
@@ -446,7 +500,7 @@
         this.loading.tabuaMare = true;
         this.error = '';
         try {
-          const response = await fetch(`/api/v1/tabua-mare/${'$'}{this.inputs.harbor.toLowerCase()}/${'$'}{this.inputs.month}/[${'$'}{this.inputs.days}]`);
+          const response = await fetch(`/api/${'$'}{this.apiVersion}/tabua-mare/${'$'}{this.inputs.harbor.toLowerCase()}/${'$'}{this.inputs.month}/[${'$'}{this.inputs.days}]`);
           const data = await response.json();
           this.responses.tabuaMare = JSON.stringify(data, null, 2);
 
@@ -470,7 +524,7 @@
         this.error = '';
 
         try {
-          const response = await fetch(`/api/v1/harbor_names/${'$'}{this.inputs.state.toLowerCase()}`);
+          const response = await fetch(`/api/${'$'}{this.apiVersion}/harbor_names/${'$'}{this.inputs.state.toLowerCase()}`);
           const data = await response.json();
           this.responses.harbors = JSON.stringify(data, null, 2);
 
@@ -493,10 +547,9 @@
           return;
         }
 
-        // Formata os IDs em um array
         const ids = this.inputs.harborId.split(',')
           .map(id => id.trim())
-          .filter(id => id !== '' && !isNaN(id));
+          .filter(id => id !== '');
 
         if (ids.length === 0) {
           this.error = 'Por favor, insira IDs válidos.';
@@ -507,7 +560,19 @@
         this.error = '';
 
         try {
-          const response = await fetch('/api/v1/harbors/[' + ids.join(',') + ']');
+          let url;
+          if (this.apiVersion === 'v2') {
+             const formattedIds = ids.join(',');
+             url = `/api/${'$'}{this.apiVersion}/harbors/[${'$'}{formattedIds}]`;
+          } else {
+             const numericIds = ids.filter(id => !isNaN(id));
+             if (numericIds.length === 0) {
+                throw new Error('IDs devem ser numéricos na V1');
+             }
+             url = `/api/${'$'}{this.apiVersion}/harbors/[${'$'}{numericIds.join(',')}]`;
+          }
+
+          const response = await fetch(url);
           const data = await response.json();
           this.responses.harborById = JSON.stringify(data, null, 2);
 
@@ -546,7 +611,7 @@
         })
       },
       async getStateCodeFromLatLng(lat, lng) {
-        const r = await fetch(`${url_normatin}`)
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${'$'}{lat}&lon=${'$'}{lng}`)
         const j = await r.json()
         const s = j.address?.state || ''
         return this.mapStateNameToCode(s)
@@ -592,12 +657,11 @@
         }
       },
       async callNearestedHarborAPI() {
-        debugger
         if (!this.inputs.stateNearested || !this.inputs.latLngNearestedState) return
         this.loading.nearestedState = true
         this.error = ''
         try {
-          const response = await fetch(`/api/v1/nearested-harbor/${'$'}{this.inputs.stateNearested.toLowerCase()}/${'$'}{this.inputs.latLngNearestedState}`)
+          const response = await fetch(`/api/${'$'}{this.apiVersion}/nearested-harbor/${'$'}{this.inputs.stateNearested.toLowerCase()}/${'$'}{this.inputs.latLngNearestedState}`)
           const data = await response.json()
           this.responses.nearestedState = JSON.stringify(data, null, 2)
           this.${'$'}nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
@@ -612,7 +676,7 @@
         this.loading.nearestIndependent = true
         this.error = ''
         try {
-          const response = await fetch(`/api/v1/nearest-harbor-independent-state/${'$'}{this.inputs.latLngIndependent}`)
+          const response = await fetch(`/api/${'$'}{this.apiVersion}/nearest-harbor-independent-state/${'$'}{this.inputs.latLngIndependent}`)
           const data = await response.json()
           this.responses.nearestIndependent = JSON.stringify(data, null, 2)
           this.${'$'}nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
@@ -627,7 +691,7 @@
         this.loading.geoTabuaGeo = true
         this.error = ''
         try {
-          const response = await fetch(`/api/v1/geo-tabua-mare/${'$'}{this.inputs.latLngGeo}/${'$'}{this.inputs.stateGeo.toLowerCase()}/${'$'}{this.inputs.monthGeo}/[${'$'}{this.inputs.daysGeo}]`)
+          const response = await fetch(`/api/${'$'}{this.apiVersion}/geo-tabua-mare/${'$'}{this.inputs.latLngGeo}/${'$'}{this.inputs.stateGeo.toLowerCase()}/${'$'}{this.inputs.monthGeo}/[${'$'}{this.inputs.daysGeo}]`)
           const data = await response.json()
           this.responses.geoTabuaGeo = JSON.stringify(data, null, 2)
           this.${'$'}nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
@@ -641,6 +705,18 @@
       async quickTest(state) {
         this.inputs.state = state;
         await this.callHarborsAPI();
+      },
+
+      async copyToClipboard(text, event) {
+        try {
+          await navigator.clipboard.writeText(text);
+          const btn = event.target.closest('button');
+          const originalContent = btn.innerHTML;
+          btn.innerText = '✅ Copiado!';
+          setTimeout(() => btn.innerHTML = originalContent, 2000);
+        } catch (err) {
+          console.error('Failed to copy:', err);
+        }
       },
     }).mount();
 

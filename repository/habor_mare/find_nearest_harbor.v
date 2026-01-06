@@ -100,3 +100,35 @@ pub fn find_nearest_harbor_within_same_state(mut pool_conn pool.ConnectionPool, 
 	}
 	return nearest_harbor
 }
+
+// find_nearest_harbor_v2 wrapper para retornar DTO v2
+pub fn find_nearest_harbor_v2(mut pool_conn pool.ConnectionPool, lat f64, lng f64) !dto.DTOHaborMareGetHarborV2 {
+	harbor := find_nearest_harbor(mut pool_conn, lat, lng)!
+	return dto.DTOHaborMareGetHarborV2{
+		id:                          harbor.harbor_id
+		year:                        harbor.year
+		harbor_name:                 harbor.harbor_name
+		state:                       harbor.state
+		timezone:                    harbor.timezone
+		card:                        harbor.card
+		geo_location:                harbor.geo_location
+		data_collection_institution: harbor.data_collection_institution
+		mean_level:                  harbor.mean_level
+	}
+}
+
+// find_nearest_harbor_within_same_state_v2 wrapper para retornar DTO v2
+pub fn find_nearest_harbor_within_same_state_v2(mut pool_conn pool.ConnectionPool, lat f64, lng f64, state string) !dto.DTOHaborMareGetHarborV2 {
+	harbor := find_nearest_harbor_within_same_state(mut pool_conn, lat, lng, state)!
+	return dto.DTOHaborMareGetHarborV2{
+		id:                          harbor.harbor_id
+		year:                        harbor.year
+		harbor_name:                 harbor.harbor_name
+		state:                       harbor.state
+		timezone:                    harbor.timezone
+		card:                        harbor.card
+		geo_location:                harbor.geo_location
+		data_collection_institution: harbor.data_collection_institution
+		mean_level:                  harbor.mean_level
+	}
+}

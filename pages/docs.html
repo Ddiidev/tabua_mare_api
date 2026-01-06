@@ -61,6 +61,15 @@
     <div class="docs-layout">
       <!-- Sidebar -->
       <aside class="docs-sidebar">
+        <div class="version-selector" style="margin-bottom: 20px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+           <label style="display: block; font-weight: bold; margin-bottom: 5px;">Versão da API:</label>
+           <label style="display: block; cursor: pointer; margin-bottom: 5px;">
+             <input type="radio" name="apiVersionDocs" value="v1" v-model="apiVersion"> V1 (Depreciada)
+           </label>
+           <label style="display: block; cursor: pointer;">
+             <input type="radio" name="apiVersionDocs" value="v2" v-model="apiVersion"> V2 (Atual)
+           </label>
+        </div>
         <nav style="
                 display: flex;
                 flex-direction: column;
@@ -100,9 +109,9 @@
           </p>
 
           <div class="info-box">
-            <p><strong>🌐 Base URL:</strong> <code>${url_env}</code></p>
+            <p><strong>🌐 Base URL:</strong> <code>${url_env}/api/{{apiVersion}}</code></p>
             <p><strong>📊 Formato:</strong> JSON</p>
-            <p><strong>🚀 Status:</strong> Ativo e gratuito</p>
+            <p><strong>🚀 Status:</strong> <span v-if="apiVersion === 'v2'">Ativo (Recomendado)</span><span v-else style="color: orange">Depreciado</span></p>
           </div>
 
           <h3>✨ Características</h3>
@@ -195,11 +204,11 @@
               disponíveis na API.
             </p>
 
-            <div class="endpoint-url"><strong>GET</strong> /states</div>
+            <div class="endpoint-url"><strong>GET</strong> /api/{{apiVersion}}/states</div>
 
             <h4>📝 Exemplo de Requisição:</h4>
             <div class="code-block">
-              <pre><code>curl -X GET "${url_env}/states" -H "Accept: application/json"</code></pre>
+              <pre><code>curl -X GET "${url_env}/api/{{apiVersion}}/states" -H "Accept: application/json"</code></pre>
             </div>
 
             <h4>✅ Resposta de Sucesso (200):</h4>
@@ -242,7 +251,7 @@
             </p>
 
             <div class="endpoint-url">
-              <strong>GET</strong> /harbor_names/{state}
+              <strong>GET</strong> /api/{{apiVersion}}/harbor_names/{state}
             </div>
 
             <h4>📋 Parâmetros:</h4>
@@ -256,7 +265,7 @@
             <h4>📝 Exemplo de Requisição:</h4>
             <div class="code-block">
               <pre><code># Listar portos da Paraíba
-curl -X GET "${url_env}/harbor_names/pb"</code></pre>
+curl -X GET "${url_env}/api/{{apiVersion}}/harbor_names/pb"</code></pre>
             </div>
 
             <h4>✅ Exemplo de Resposta:</h4>
@@ -271,6 +280,10 @@ curl -X GET "${url_env}/harbor_names/pb"</code></pre>
               <h3 class="endpoint-title">Obter Portos por IDs</h3>
               <span class="method-badge">GET</span>
             </div>
+            
+            <div v-if="apiVersion === 'v1'" class="info-box warning" style="margin-top: 10px;">
+              <p>⚠️ <strong>Depreciado:</strong> A V1 utiliza IDs numéricos do porto vinculados diretamente ao banco de dados. Recomendamos a migração para a <strong>V2</strong>, que utiliza IDs baseados no estado (ex: 'pb01') referenciados ao ano corrente, tornando a integração mais estável e segura!</p>
+            </div>
 
             <p>
               Retorna informações detalhadas de um/mais portos específico
@@ -278,21 +291,23 @@ curl -X GET "${url_env}/harbor_names/pb"</code></pre>
             </p>
 
             <div class="endpoint-url">
-              <strong>GET</strong> /harbors/{ids}
+              <strong>GET</strong> /api/{{apiVersion}}/harbors/{ids}
             </div>
 
             <h4>📋 Parâmetros:</h4>
             <ul>
               <li>
-                <strong>ids</strong> (integer): IDs únicos dos portos
-                separados por vírgula (ex: [1,2,3])
+                <strong>ids</strong> 
+                <span v-if="apiVersion === 'v2'">(string): IDs dos portos (ex: [pb01, pe02])</span>
+                <span v-else>(integer): IDs numéricos (ex: [1,2,3])</span>
               </li>
             </ul>
 
             <h4>📝 Exemplo de Requisição:</h4>
             <div class="code-block">
-              <pre><code># Obter informações do porto ID 1
-curl -X GET "${url_env}/harbor/1"</code></pre>
+              <pre><code v-if="apiVersion === 'v2'"># Obter informações do porto pb01
+curl -X GET "${url_env}/api/{{apiVersion}}/harbors/[pb01]"</code><code v-else># Obter informações do porto ID 1
+curl -X GET "${url_env}/api/{{apiVersion}}/harbor/[1]"</code></pre>
             </div>
 
             <h4>✅ Exemplo de Resposta:</h4>
@@ -309,6 +324,10 @@ curl -X GET "${url_env}/harbor/1"</code></pre>
               </h3>
               <span class="method-badge">GET</span>
             </div>
+            
+            <div v-if="apiVersion === 'v1'" class="info-box warning" style="margin-top: 10px;">
+              <p>⚠️ <strong>Depreciado:</strong> A V1 utiliza IDs numéricos do porto legados. Na <strong>V2</strong>, os IDs são estruturados por estado e ano corrente, garantindo maior segurança e consistência nos dados.</p>
+            </div>
 
             <p>
               Retorna os dados da tábua de maré para um porto específico em
@@ -316,12 +335,12 @@ curl -X GET "${url_env}/harbor/1"</code></pre>
             </p>
 
             <div class="endpoint-url">
-              <strong>GET</strong> /tabua-mare/{harbor}/{month}/{days}
+              <strong>GET</strong> /api/{{apiVersion}}/tabua-mare/{harbor}/{month}/{days}
             </div>
 
             <h4>📋 Parâmetros:</h4>
             <ul>
-              <li><strong>harbor</strong> (integer): ID único do porto</li>
+              <li><strong>harbor</strong> <span v-if="apiVersion === 'v2'">(string): ID do porto (ex: 'pb01')</span><span v-else>(integer): ID numérico (ex: 1)</span></li>
               <li><strong>month</strong> (integer): Mês desejado (1-12)</li>
               <li>
                 <strong>days</strong> (string): Array de dias no formato
@@ -331,11 +350,9 @@ curl -X GET "${url_env}/harbor/1"</code></pre>
 
             <h4>📝 Exemplo de Requisição:</h4>
             <div class="code-block">
-              <pre><code># Obter tábua de maré do porto ID 1 para janeiro, dias 1, 2 e 3
-curl -X GET "${url_env}/tabua-mare/1/1/[1,2,3]"
-
-# Obter tábua de maré para múltiplos dias
-curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
+              <pre><code v-if="apiVersion === 'v2'"># Obter tábua de maré do porto pb01
+curl -X GET "${url_env}/api/{{apiVersion}}/tabua-mare/pb01/1/[1,2,3]"</code><code v-else># Obter tábua de maré do porto ID 1
+curl -X GET "${url_env}/api/{{apiVersion}}/tabua-mare/1/1/[1,2,3]"</code></pre>
             </div>
 
             <h4>✅ Exemplo de Resposta:</h4>
@@ -356,7 +373,7 @@ curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
             </p>
 
             <div class="endpoint-url">
-              <strong>GET</strong> /nearested-harbor/{state}/{lat_lng}
+              <strong>GET</strong> /api/{{apiVersion}}/nearested-harbor/{state}/{lat_lng}
             </div>
 
             <h4>📋 Parâmetros:</h4>
@@ -367,12 +384,12 @@ curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
 
             <h4>📝 Exemplo de Requisição:</h4>
             <div class="code-block">
-              <pre><code>curl -X GET "${url_env}/nearested-harbor/pb/[-7.11509,-34.864]"</code></pre>
+              <pre><code>curl -X GET "${url_env}/api/{{apiVersion}}/nearested-harbor/pb/[-7.11509,-34.864]"</code></pre>
             </div>
 
             <h4>🧪 Exemplo com Fetch:</h4>
             <div class="code-block">
-              <pre><code>fetch(`${url_env}/nearested-harbor/pb/[-7.11509,-34.864]`).then(r => r.json())</code></pre>
+              <pre><code>fetch(`${url_env}/api/{{apiVersion}}/nearested-harbor/pb/[-7.11509,-34.864]`).then(r => r.json())</code></pre>
             </div>
           </div>
 
@@ -388,7 +405,7 @@ curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
             </p>
 
             <div class="endpoint-url">
-              <strong>GET</strong> /nearest-harbor-independent-state/{lat_lng}
+              <strong>GET</strong> /api/{{apiVersion}}/nearest-harbor-independent-state/{lat_lng}
             </div>
 
             <h4>📋 Parâmetros:</h4>
@@ -398,12 +415,12 @@ curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
 
             <h4>📝 Exemplo de Requisição:</h4>
             <div class="code-block">
-              <pre><code>curl -X GET "${url_env}/nearest-harbor-independent-state/[-7.11509,-34.864]"</code></pre>
+              <pre><code>curl -X GET "${url_env}/api/{{apiVersion}}/nearest-harbor-independent-state/[-7.11509,-34.864]"</code></pre>
             </div>
 
             <h4>🧪 Exemplo com Fetch:</h4>
             <div class="code-block">
-              <pre><code>fetch(`${url_env}/nearest-harbor-independent-state/[-7.11509,-34.864]`).then(r => r.json())</code></pre>
+              <pre><code>fetch(`${url_env}/api/{{apiVersion}}/nearest-harbor-independent-state/[-7.11509,-34.864]`).then(r => r.json())</code></pre>
             </div>
           </div>
 
@@ -572,6 +589,7 @@ curl -X GET "${url_env}/tabua-mare/5/3/[15,16,17,18]"</code></pre>
     const { createApp } = PetiteVue;
 
     createApp({
+      apiVersion: 'v2',
       showQuickStart: false,
       showContactModal: false,
       showMobileMenu: false,
