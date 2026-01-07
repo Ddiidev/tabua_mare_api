@@ -5,16 +5,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  @app.open_graph()
+  ${ og }
 
   <title>Playground - Tábua de Marés API</title>
   <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
   <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-ghcolors.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-  <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
+  <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Kode+Mono&amp;display=swap" rel="stylesheet" />
   <style>
@@ -71,7 +71,7 @@
 
 <body v-scope>
   <!-- Header -->
-  ${ app.navbar('/playground') }
+  ${ navbar }
 
   <!-- Playground Header -->
   <section class="docs-hero">
@@ -118,7 +118,7 @@
           <div class="endpoint-url"><strong>GET</strong> /api/{{apiVersion}}/states</div>
 
           <div class="endpoint-actions">
-            <button class="btn btn-primary" @@click="callStatesAPI()" :disabled="loading.states">
+            <button class="btn btn-primary" @click="callStatesAPI()" :disabled="loading.states">
               <span v-show="loading.states">⏳ Carregando...</span>
               <span v-show="!loading.states">🚀 Executar</span>
             </button>
@@ -127,7 +127,7 @@
           <div v-show="responses.states" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
-              <button class="copy-btn" @@click="copyToClipboard(responses.states, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <button class="copy-btn" @click="copyToClipboard(responses.states, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.states"></code></pre>
             </div>
           </div>
@@ -153,7 +153,7 @@
           </div>
 
           <div class="endpoint-actions">
-            <button class="btn btn-primary" @@click="callHarborsAPI()" :disabled="loading.harbors || !inputs.state">
+            <button class="btn btn-primary" @click="callHarborsAPI()" :disabled="loading.harbors || !inputs.state">
               <span v-show="loading.harbors">⏳ Carregando...</span>
               <span v-show="!loading.harbors">🚀 Executar</span>
             </button>
@@ -162,7 +162,7 @@
           <div v-show="responses.harbors" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
-              <button class="copy-btn" @@click="copyToClipboard(responses.harbors, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <button class="copy-btn" @click="copyToClipboard(responses.harbors, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.harbors"></code></pre>
             </div>
           </div>
@@ -192,7 +192,7 @@
           </div>
 
           <div class="endpoint-actions">
-            <button class="btn btn-primary" @@click="callHarborByIdAPI()"
+            <button class="btn btn-primary" @click="callHarborByIdAPI()"
               :disabled="loading.harborById || !inputs.harborId">
               <span v-show="loading.harborById">⏳ Carregando...</span>
               <span v-show="!loading.harborById">🚀 Executar</span>
@@ -202,7 +202,7 @@
           <div v-show="responses.harborById" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
-              <button class="copy-btn" @@click="copyToClipboard(responses.harborById, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <button class="copy-btn" @click="copyToClipboard(responses.harborById, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.harborById"></code></pre>
             </div>
           </div>
@@ -243,7 +243,7 @@
           </div>
 
           <div class="endpoint-actions">
-            <button class="btn btn-primary" @@click="callTabuaMareAPI()"
+            <button class="btn btn-primary" @click="callTabuaMareAPI()"
               :disabled="loading.tabuaMare || !inputs.harbor || !inputs.month || !inputs.days">
               <span v-show="loading.tabuaMare">⏳ Carregando...</span>
               <span v-show="!loading.tabuaMare">🚀 Executar</span>
@@ -253,7 +253,7 @@
           <div v-show="responses.tabuaMare" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
-              <button class="copy-btn" @@click="copyToClipboard(responses.tabuaMare, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <button class="copy-btn" @click="copyToClipboard(responses.tabuaMare, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.tabuaMare"></code></pre>
             </div>
           </div>
@@ -282,11 +282,11 @@
           </div>
 
           <div class="endpoint-actions">
-            <button class="btn btn-primary" @@click="callNearestedHarborAPI()" :disabled="loading.nearestedState || !inputs.stateNearested || !inputs.latLngNearestedState">
+            <button class="btn btn-primary" @click="callNearestedHarborAPI()" :disabled="loading.nearestedState || !inputs.stateNearested || !inputs.latLngNearestedState">
               <span v-show="loading.nearestedState">⏳ Carregando...</span>
               <span v-show="!loading.nearestedState">🚀 Executar</span>
             </button>
-            <button class="button-yellow" @@click="useMyLocationNearestedState()" :disabled="loading.nearestedState">
+            <button class="button-yellow" @click="useMyLocationNearestedState()" :disabled="loading.nearestedState">
               📍 Pegar minha localização
             </button>
           </div>
@@ -294,7 +294,7 @@
           <div v-show="responses.nearestedState" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
-              <button class="copy-btn" @@click="copyToClipboard(responses.nearestedState, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <button class="copy-btn" @click="copyToClipboard(responses.nearestedState, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.nearestedState"></code></pre>
             </div>
           </div>
@@ -319,11 +319,11 @@
           </div>
 
           <div class="endpoint-actions">
-            <button class="btn btn-primary" @@click="callNearestIndependentAPI()" :disabled="loading.nearestIndependent || !inputs.latLngIndependent">
+            <button class="btn btn-primary" @click="callNearestIndependentAPI()" :disabled="loading.nearestIndependent || !inputs.latLngIndependent">
               <span v-show="loading.nearestIndependent">⏳ Carregando...</span>
               <span v-show="!loading.nearestIndependent">🚀 Executar</span>
             </button>
-            <button class="button-yellow" @@click="useMyLocationNearestIndependent()" :disabled="loading.nearestIndependent">
+            <button class="button-yellow" @click="useMyLocationNearestIndependent()" :disabled="loading.nearestIndependent">
               📍 Pegar minha localização
             </button>
           </div>
@@ -331,7 +331,7 @@
           <div v-show="responses.nearestIndependent" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
-              <button class="copy-btn" @@click="copyToClipboard(responses.nearestIndependent, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <button class="copy-btn" @click="copyToClipboard(responses.nearestIndependent, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.nearestIndependent"></code></pre>
             </div>
           </div>
@@ -368,11 +368,11 @@
           </div>
 
           <div class="endpoint-actions">
-            <button class="btn btn-primary" @@click="callGeoTabuaMareAPI()" :disabled="loading.geoTabuaGeo || !inputs.latLngGeo || !inputs.stateGeo || !inputs.monthGeo || !inputs.daysGeo">
+            <button class="btn btn-primary" @click="callGeoTabuaMareAPI()" :disabled="loading.geoTabuaGeo || !inputs.latLngGeo || !inputs.stateGeo || !inputs.monthGeo || !inputs.daysGeo">
               <span v-show="loading.geoTabuaGeo">⏳ Carregando...</span>
               <span v-show="!loading.geoTabuaGeo">🚀 Executar</span>
             </button>
-            <button class="button-yellow" @@click="useMyLocationGeoTabua()" :disabled="loading.geoTabuaGeo">
+            <button class="button-yellow" @click="useMyLocationGeoTabua()" :disabled="loading.geoTabuaGeo">
               📍 Pegar minha localização
             </button>
           </div>
@@ -380,7 +380,7 @@
           <div v-show="responses.geoTabuaGeo" class="response-section">
             <h4>📄 Resposta:</h4>
             <div class="code-block">
-              <button class="copy-btn" @@click="copyToClipboard(responses.geoTabuaGeo, ${'$'}event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <button class="copy-btn" @click="copyToClipboard(responses.geoTabuaGeo, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.geoTabuaGeo"></code></pre>
             </div>
           </div>
@@ -390,7 +390,7 @@
         <div v-show="error" class="error-card">
           <div class="error-header">
             <h4>⚠️ Erro na Requisição</h4>
-            <button class="close-btn" @@click="error = ''">×</button>
+            <button class="close-btn" @click="error = ''">×</button>
           </div>
           <p>{{ error }}</p>
         </div>
@@ -399,7 +399,7 @@
   </main>
 
   <!-- Footer -->
-  @app.footer()
+  ${ footer }
 
   <!-- Contact Modal -->
   <dialog id="contact-modal" class="modal">
@@ -438,6 +438,7 @@
   </dialog>
 
   <!-- Scripts -->
+   <#noparse>
   <script>
     const { createApp } = PetiteVue;
 
@@ -479,17 +480,17 @@
         this.error = '';
 
         try {
-          const response = await fetch(`/api/${'$'}{this.apiVersion}/states`);
+          const response = await fetch(`/api/${this.apiVersion}/states`);
           const data = await response.json();
           this.responses.states = JSON.stringify(data, null, 2);
           // Highlight code after update
-          this.${'$'}nextTick(() => {
+          this.$nextTick(() => {
             if (typeof Prism !== 'undefined') {
               Prism.highlightAll();
             }
           });
         } catch (err) {
-          this.error = `Erro ao buscar estados: ${'$'}{err.message}`;
+          this.error = `Erro ao buscar estados: ${err.message}`;
         } finally {
           this.loading.states = false;
         }
@@ -500,18 +501,18 @@
         this.loading.tabuaMare = true;
         this.error = '';
         try {
-          const response = await fetch(`/api/${'$'}{this.apiVersion}/tabua-mare/${'$'}{this.inputs.harbor.toLowerCase()}/${'$'}{this.inputs.month}/[${'$'}{this.inputs.days}]`);
+          const response = await fetch(`/api/${this.apiVersion}/tabua-mare/${this.inputs.harbor.toLowerCase()}/${this.inputs.month}/[${this.inputs.days}]`);
           const data = await response.json();
           this.responses.tabuaMare = JSON.stringify(data, null, 2);
 
           // Highlight code after update
-          this.${'$'}nextTick(() => {
+          this.$nextTick(() => {
             if (typeof Prism !== 'undefined') {
               Prism.highlightAll();
             }
           });
         } catch (err) {
-          this.error = `Erro ao buscar tabua mare: ${'$'}{err.message}`;
+          this.error = `Erro ao buscar tabua mare: ${err.message}`;
         } finally {
           this.loading.tabuaMare = false;
         }
@@ -524,18 +525,18 @@
         this.error = '';
 
         try {
-          const response = await fetch(`/api/${'$'}{this.apiVersion}/harbor_names/${'$'}{this.inputs.state.toLowerCase()}`);
+          const response = await fetch(`/api/${this.apiVersion}/harbor_names/${this.inputs.state.toLowerCase()}`);
           const data = await response.json();
           this.responses.harbors = JSON.stringify(data, null, 2);
 
           // Highlight code after update
-          this.${'$'}nextTick(() => {
+          this.$nextTick(() => {
             if (typeof Prism !== 'undefined') {
               Prism.highlightAll();
             }
           });
         } catch (err) {
-          this.error = `Erro ao buscar portos: ${'$'}{err.message}`;
+          this.error = `Erro ao buscar portos: ${err.message}`;
         } finally {
           this.loading.harbors = false;
         }
@@ -563,13 +564,13 @@
           let url;
           if (this.apiVersion === 'v2') {
              const formattedIds = ids.join(',');
-             url = `/api/${'$'}{this.apiVersion}/harbors/[${'$'}{formattedIds}]`;
+             url = `/api/${this.apiVersion}/harbors/[${formattedIds}]`;
           } else {
              const numericIds = ids.filter(id => !isNaN(id));
              if (numericIds.length === 0) {
                 throw new Error('IDs devem ser numéricos na V1');
              }
-             url = `/api/${'$'}{this.apiVersion}/harbors/[${'$'}{numericIds.join(',')}]`;
+             url = `/api/${this.apiVersion}/harbors/[${numericIds.join(',')}]`;
           }
 
           const response = await fetch(url);
@@ -577,7 +578,7 @@
           this.responses.harborById = JSON.stringify(data, null, 2);
 
           // Highlight code after update
-          this.${'$'}nextTick(() => {
+          this.$nextTick(() => {
             if (typeof Prism !== 'undefined') {
               Prism.highlightAll();
             }
@@ -611,7 +612,7 @@
         })
       },
       async getStateCodeFromLatLng(lat, lng) {
-        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${'$'}{lat}&lon=${'$'}{lng}`)
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
         const j = await r.json()
         const s = j.address?.state || ''
         return this.mapStateNameToCode(s)
@@ -623,9 +624,9 @@
           const { lat, lng } = await this.getCurrentLatLng()
           const code = await this.getStateCodeFromLatLng(lat, lng)
           this.inputs.stateNearested = code
-          this.inputs.latLngNearestedState = `[${'$'}{lat},${'$'}{lng}]`
+          this.inputs.latLngNearestedState = `[${lat},${lng}]`
         } catch (err) {
-          this.error = `Erro ao obter localização: ${'$'}{err.message}`
+          this.error = `Erro ao obter localização: ${err.message}`
         } finally {
           this.loading.nearestedState = false
         }
@@ -635,9 +636,9 @@
         this.error = ''
         try {
           const { lat, lng } = await this.getCurrentLatLng()
-          this.inputs.latLngIndependent = `[${'$'}{lat},${'$'}{lng}]`
+          this.inputs.latLngIndependent = `[${lat},${lng}]`
         } catch (err) {
-          this.error = `Erro ao obter localização: ${'$'}{err.message}`
+          this.error = `Erro ao obter localização: ${err.message}`
         } finally {
           this.loading.nearestIndependent = false
         }
@@ -648,10 +649,10 @@
         try {
           const { lat, lng } = await this.getCurrentLatLng()
           const code = await this.getStateCodeFromLatLng(lat, lng)
-          this.inputs.latLngGeo = `[${'$'}{lat},${'$'}{lng}]`
+          this.inputs.latLngGeo = `[${lat},${lng}]`
           this.inputs.stateGeo = code
         } catch (err) {
-          this.error = `Erro ao obter localização: ${'$'}{err.message}`
+          this.error = `Erro ao obter localização: ${err.message}`
         } finally {
           this.loading.geoTabuaGeo = false
         }
@@ -661,12 +662,12 @@
         this.loading.nearestedState = true
         this.error = ''
         try {
-          const response = await fetch(`/api/${'$'}{this.apiVersion}/nearested-harbor/${'$'}{this.inputs.stateNearested.toLowerCase()}/${'$'}{this.inputs.latLngNearestedState}`)
+          const response = await fetch(`/api/${this.apiVersion}/nearested-harbor/${this.inputs.stateNearested.toLowerCase()}/${this.inputs.latLngNearestedState}`)
           const data = await response.json()
           this.responses.nearestedState = JSON.stringify(data, null, 2)
-          this.${'$'}nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
+          this.$nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
         } catch (err) {
-          this.error = `Erro ao buscar porto mais próximo: ${'$'}{err.message}`
+          this.error = `Erro ao buscar porto mais próximo: ${err.message}`
         } finally {
           this.loading.nearestedState = false
         }
@@ -676,12 +677,12 @@
         this.loading.nearestIndependent = true
         this.error = ''
         try {
-          const response = await fetch(`/api/${'$'}{this.apiVersion}/nearest-harbor-independent-state/${'$'}{this.inputs.latLngIndependent}`)
+          const response = await fetch(`/api/${this.apiVersion}/nearest-harbor-independent-state/${this.inputs.latLngIndependent}`)
           const data = await response.json()
           this.responses.nearestIndependent = JSON.stringify(data, null, 2)
-          this.${'$'}nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
+          this.$nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
         } catch (err) {
-          this.error = `Erro ao buscar porto mais próximo: ${'$'}{err.message}`
+          this.error = `Erro ao buscar porto mais próximo: ${err.message}`
         } finally {
           this.loading.nearestIndependent = false
         }
@@ -691,12 +692,12 @@
         this.loading.geoTabuaGeo = true
         this.error = ''
         try {
-          const response = await fetch(`/api/${'$'}{this.apiVersion}/geo-tabua-mare/${'$'}{this.inputs.latLngGeo}/${'$'}{this.inputs.stateGeo.toLowerCase()}/${'$'}{this.inputs.monthGeo}/[${'$'}{this.inputs.daysGeo}]`)
+          const response = await fetch(`/api/${this.apiVersion}/geo-tabua-mare/${this.inputs.latLngGeo}/${this.inputs.stateGeo.toLowerCase()}/${this.inputs.monthGeo}/[${this.inputs.daysGeo}]`)
           const data = await response.json()
           this.responses.geoTabuaGeo = JSON.stringify(data, null, 2)
-          this.${'$'}nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
+          this.$nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
         } catch (err) {
-          this.error = `Erro ao buscar tábua de maré: ${'$'}{err.message}`
+          this.error = `Erro ao buscar tábua de maré: ${err.message}`
         } finally {
           this.loading.geoTabuaGeo = false
         }
@@ -763,6 +764,7 @@
       }
     });
   </script>
+  </#noparse>
 </body>
 
 </html>

@@ -36,3 +36,18 @@ pub mut:
 	mean_level                  f32
 	months                      []DTOMonthData
 }
+
+// DTOTabuaMareV1 is the main DTO for V1 that holds the complete tide table for a specific harbor and year.
+pub struct DTOTabuaMareV1 {
+pub mut:
+	id                          int
+	id_harbor_state             string
+	year                        int
+	harbor_name                 string
+	state                       string
+	timezone                    string
+	card                        string
+	data_collection_institution string
+	mean_level                  f32
+	months                      []DTOMonthData
+}

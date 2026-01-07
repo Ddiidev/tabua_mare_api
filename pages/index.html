@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    @app.open_graph()
+    ${ og }
 
     <title>Tábua de Marés - API Brasileira</title>
     <link
@@ -14,10 +14,10 @@
     />
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css"
     />
     <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
-    <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
+    <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap"
       rel="stylesheet"
@@ -79,7 +79,7 @@
 
   <body v-scope>
     <!-- Header -->
-    ${ app.navbar('/') }
+    ${ navbar }
 
     <!-- Hero Section -->
     <main class="container">
@@ -120,7 +120,7 @@
               >
               <button
                 class="secondary outline"
-                @@click="showStatesDropdown = !showStatesDropdown"
+                @click="showStatesDropdown = !showStatesDropdown"
               >
                 Todos os Estados
                 <svg
@@ -271,7 +271,7 @@
           <article>
             <div class="social-links">
               <a
-                href="https://www.youtube.com/@@mais.foco42"
+                href="https://www.youtube.com/@mais.foco42"
                 target="_blank"
                 class="social-link"
               >
@@ -328,16 +328,16 @@
     </main>
 
     <!-- Footer -->
-    @app.footer()
+    ${ footer }
 
     <!-- Contact Modal -->
-    <dialog v-show="showContactModal" @@click="showContactModal = false">
-      <article @@click.stop>
+    <dialog v-show="showContactModal" @click="showContactModal = false">
+      <article @click.stop>
         <header>
           <button
             aria-label="Close"
             rel="prev"
-            @@click="showContactModal = false"
+            @click="showContactModal = false"
           ></button>
           <h3>Contato</h3>
         </header>
@@ -345,11 +345,11 @@
         <div class="grid">
           <div>
             <strong>Email:</strong>
-            <p>contato@@tabuamare.com.br</p>
+            <p>contato@tabuamare.com.br</p>
           </div>
           <div>
             <strong>Suporte Técnico:</strong>
-            <p>suporte@@tabuamare.com.br</p>
+            <p>suporte@tabuamare.com.br</p>
           </div>
         </div>
       </article>

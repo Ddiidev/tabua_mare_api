@@ -5,6 +5,7 @@ import veb
 import shareds.web_ctx
 import shareds.infradb
 import shareds.conf_env
+import leafscale.veemarker
 import shareds.components_view
 
 struct App {
@@ -53,26 +54,64 @@ fn main() {
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
 	dump(ctx.ip())
-	return $veb.html('./pages/index.html')
+	mut data := map[string]veemarker.Any{}
+	data['navbar'] = app.navbar('/')
+	data['og'] = app.open_graph(data)
+	data['footer'] = app.footer()
+
+	mut engine := veemarker.new_engine(veemarker.EngineConfig{
+		template_dir:  './pages'
+		cache_enabled: true
+	})
+
+	return ctx.html(engine.render('index.html', data) or { '' })
 }
 
 @['/docs']
 pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
+	mut data := map[string]veemarker.Any{}
+
+	mut engine := veemarker.new_engine(veemarker.EngineConfig{
+		template_dir:  './pages'
+		cache_enabled: true
+	})
+	data['og'] = app.open_graph(data)
+	data['navbar'] = app.navbar('/docs')
+	data['footer'] = app.footer()
+
 	url_env := rlock app.env {
 		app.env.url_env
 	}
-	return $veb.html('./pages/docs.html')
+	data['url_env'] = url_env
+	return ctx.html(engine.render('docs.html', data) or { '' })
 }
 
 @['/playground']
 pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
-	// url_normatin := veb.raw(r'https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&addressdetails=1')
-	return $veb.html('./pages/playground.html')
+	mut data := map[string]veemarker.Any{}
+	data['navbar'] = app.navbar('/playground')
+	data['og'] = app.open_graph(data)
+	data['footer'] = app.footer()
+
+	mut engine := veemarker.new_engine(veemarker.EngineConfig{
+		template_dir:  './pages'
+		cache_enabled: true
+	})
+	return ctx.html(engine.render('playground.html', data) or { '' })
 }
 
 @['/apoiar']
 pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
-	return $veb.html('./pages/apoiar.html')
+	mut data := map[string]veemarker.Any{}
+	data['navbar'] = app.navbar('/apoiar')
+	data['og'] = app.open_graph(data)
+	data['footer'] = app.footer()
+
+	mut engine := veemarker.new_engine(veemarker.EngineConfig{
+		template_dir:  './pages'
+		cache_enabled: true
+	})
+	return ctx.html(engine.render('apoiar.html', data) or { '' })
 }
 
 @['/ping'; head]

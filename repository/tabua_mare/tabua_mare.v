@@ -92,7 +92,7 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 // get_tabua_mare_by_month_days Retorna os dados da tábua de maré de um determinado porto, mês e dias
 @[deprecated: 'Use get_tabua_mare_by_month_days ao invés de get_tabua_mare_by_month_days_v1, isso porque get_tabua_mare_by_month_days_v1 busca por id do banco, o get_tabua_mare_by_month_days busca por id do estado']
 @[deprecated_after: '2026-02-22']
-pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor_id int, month int, days []int) !types.ResultValues[dto.DTOTabuaMare] {
+pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor_id int, month int, days []int) !types.ResultValues[dto.DTOTabuaMareV1] {
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
 
@@ -140,7 +140,9 @@ pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor
 		return error('Nenhum dado de porto encontrado para o ID especificado')
 	}
 
-	result := dto.DTOTabuaMare{
+	result := dto.DTOTabuaMareV1{
+		id:                          harbor.data[0].id
+		id_harbor_state:             harbor.data[0].harbor_id
 		year:                        harbor.data[0].year
 		card:                        harbor.data[0].card
 		harbor_name:                 harbor.data[0].harbor_name
@@ -157,7 +159,7 @@ pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor
 		]
 	}
 
-	return types.ResultValues[dto.DTOTabuaMare]{
+	return types.ResultValues[dto.DTOTabuaMareV1]{
 		data:  [result]
 		total: 1
 	}

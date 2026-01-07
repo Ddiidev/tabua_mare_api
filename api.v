@@ -47,7 +47,7 @@ pub fn (mut api APIController) list_states(mut ctx web_ctx.WsCtx) veb.Result {
 //'
 @['/harbor_names/:state']
 pub fn (mut api APIController) list_harbor_name_by_states(mut ctx web_ctx.WsCtx, state string) veb.Result {
-	res := repo_habor_mare.list_harbor_name_by_states(mut api.pool_conn, state) or {
+	res := repo_habor_mare.list_harbor_name_by_states_v1(mut api.pool_conn, state) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'error: ${err}'))
 	}

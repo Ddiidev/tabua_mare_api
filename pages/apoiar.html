@@ -6,12 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apoiar - Tábua de Marés API</title>
 
-  @app.open_graph()
+  ${ og }
 
   <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
   <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
-  <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
+  <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet" />
   <style>
     body,
@@ -92,7 +92,7 @@
 
 <body v-scope>
   <!-- Header -->
-  ${ app.navbar('/apoiar') }
+  ${ navbar }
 
   <!-- Main Content -->
   <main class="container">
@@ -126,7 +126,7 @@
         <div class="pix-container">
           <h3>Faça uma transferência via PIX</h3>
           <p>Chave PIX (e-mail):</p>
-          <div class="pix-key">contato@@devtu.qzz.io</div>
+          <div class="pix-key">contato@devtu.qzz.io</div>
           <p>Envie qualquer valor que desejar</p>
 
           <!-- QR Code PIX -->
@@ -144,7 +144,7 @@
 
           <p>
             <small>Após a transferência, envie um e-mail para
-              contato@@devtu.qzz.io informando sua contribuição para receber
+              contato@devtu.qzz.io informando sua contribuição para receber
               um agradecimento especial.</small>
           </p>
         </div>
@@ -166,12 +166,14 @@
       <div class="tool-card">
         <img src="/pages/assets/xpdf-icon.png" alt="XpdfReader" style="height: 48px; margin-bottom: 8px" />
         <h4>XpdfReader - pdftotext</h4>
-        <a href="https://www.xpdfreader.com/pdftotext-man.html" target="_blank">Conversor de pdf em texto <img src="/pages/assets/link.svg" /></a>
+        <a href="https://www.xpdfreader.com/pdftotext-man.html" target="_blank">Conversor de pdf em texto <img
+            src="/pages/assets/link.svg" /></a>
       </div>
       <div class="tool-card">
         <img src="/pages/assets/logo-icons8-full.svg" alt="Icons8" style="height: 48px; margin-bottom: 8px" />
         <h4>Icons8</h4>
-        <a href="https://icons8.com.br/license" target="_blank">Ícones e Ilustrações (licença) <img src="/pages/assets/link.svg" /></a>
+        <a href="https://icons8.com.br/license" target="_blank">Ícones e Ilustrações (licença) <img
+            src="/pages/assets/link.svg" /></a>
       </div>
       <div class="tool-card">
         <img src="https://raw.githubusercontent.com/vlang/v-logo/refs/heads/master/dist/v-logo_32x32.svg" alt="Vlang"
@@ -182,7 +184,8 @@
       <div class="tool-card">
         <img src="/pages/assets/petie-vue.svg" alt="Petite-Vue" style="height: 66px; margin-bottom: 8px" />
         <h4>PetiteVue</h4>
-        <a href="https://github.com/vuejs/petite-vue" target="_blank">Minimal-Frontend <img src="/pages/assets/link.svg" /> </a>
+        <a href="https://github.com/vuejs/petite-vue" target="_blank">Minimal-Frontend <img
+            src="/pages/assets/link.svg" /> </a>
       </div>
       <div class="tool-card">
         <img src="https://picocss.com/favicon.ico" alt="PicoCSS" style="height: 48px; margin-bottom: 8px" />
@@ -193,7 +196,7 @@
   </section>
 
   <!-- Footer -->
-  @app.footer()
+  ${ footer }
 
   <script>
     const { createApp } = PetiteVue;
@@ -216,6 +219,7 @@
       justify-content: center;
       margin-top: 1.5rem;
     }
+
     .tool-card {
       background: #f5f5f5;
       border-radius: 10px;

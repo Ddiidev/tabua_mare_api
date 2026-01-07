@@ -3,5 +3,5 @@ Module {
 	description: ''
 	version: '0.0.0'
 	license: 'MIT'
-	dependencies: []
+	dependencies: ['leafscale.veemarker']
 }

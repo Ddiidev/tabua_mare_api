@@ -6,15 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Documentação - Tábua de Marés API</title>
 
-  @app.open_graph()
+  ${ og }
 
   <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@picocss/pico@@2/css/pico.cyan.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
   <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-ghcolors.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-  <script src="https://unpkg.com/petite-vue@@0.4.1/dist/petite-vue.iife.js"></script>
+  <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Spectral&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Kode+Mono&display=swap" rel="stylesheet" />
   <style>
@@ -38,7 +38,7 @@
 
 <body v-scope>
   <!-- Header -->
-  ${ app.navbar('/docs') }
+  ${ navbar }
 
   <!-- Main Content -->
   <main class="container">
@@ -48,7 +48,7 @@
         <h1>📚 Documentação da API</h1>
         <p>Guia completo para integração com a Tábua de Marés API</p>
         <div class="docs-actions">
-          <button class="btn btn-primary" @@click="showQuickStart = true">
+          <button class="btn btn-primary" @click="showQuickStart = true">
             ⚡ Quick Start
           </button>
           <button class="button-yellow">
@@ -61,14 +61,15 @@
     <div class="docs-layout">
       <!-- Sidebar -->
       <aside class="docs-sidebar">
-        <div class="version-selector" style="margin-bottom: 20px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-           <label style="display: block; font-weight: bold; margin-bottom: 5px;">Versão da API:</label>
-           <label style="display: block; cursor: pointer; margin-bottom: 5px;">
-             <input type="radio" name="apiVersionDocs" value="v1" v-model="apiVersion"> V1 (Depreciada)
-           </label>
-           <label style="display: block; cursor: pointer;">
-             <input type="radio" name="apiVersionDocs" value="v2" v-model="apiVersion"> V2 (Atual)
-           </label>
+        <div class="version-selector"
+          style="margin-bottom: 20px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+          <label style="display: block; font-weight: bold; margin-bottom: 5px;">Versão da API:</label>
+          <label style="display: block; cursor: pointer; margin-bottom: 5px;">
+            <input type="radio" name="apiVersionDocs" value="v1" v-model="apiVersion"> V1 (Depreciada)
+          </label>
+          <label style="display: block; cursor: pointer;">
+            <input type="radio" name="apiVersionDocs" value="v2" v-model="apiVersion"> V2 (Atual)
+          </label>
         </div>
         <nav style="
                 display: flex;
@@ -82,9 +83,12 @@
           <a href="#list-states" class="sub-item" onclick="scrollToSection('#list-states')">Listar Estados</a>
           <a href="#list-harbors" class="sub-item" onclick="scrollToSection('#list-harbors')">Listar Portos</a>
           <a href="#get-harbor" class="sub-item" onclick="scrollToSection('#get-harbor')">Obter Porto</a>
-          <a href="#nearested-harbor" class="sub-item" onclick="scrollToSection('#nearested-harbor')">Porto mais próximo (estado)</a>
-          <a href="#nearest-harbor-independent" class="sub-item" onclick="scrollToSection('#nearest-harbor-independent')">Porto mais próximo (independente)</a>
-          <a href="#geo-tabua-mare" class="sub-item" onclick="scrollToSection('#geo-tabua-mare')">Tábua por geolocalização</a>
+          <a href="#nearested-harbor" class="sub-item" onclick="scrollToSection('#nearested-harbor')">Porto mais próximo
+            (estado)</a>
+          <a href="#nearest-harbor-independent" class="sub-item"
+            onclick="scrollToSection('#nearest-harbor-independent')">Porto mais próximo (independente)</a>
+          <a href="#geo-tabua-mare" class="sub-item" onclick="scrollToSection('#geo-tabua-mare')">Tábua por
+            geolocalização</a>
           <a href="#get-tabua-mare" class="sub-item" onclick="scrollToSection('#get-tabua-mare')">Tábua de Maré</a>
           <a href="#errors" onclick="scrollToSection('#errors')">Códigos de Erro</a>
         </nav>
@@ -111,7 +115,8 @@
           <div class="info-box">
             <p><strong>🌐 Base URL:</strong> <code>${url_env}/api/{{apiVersion}}</code></p>
             <p><strong>📊 Formato:</strong> JSON</p>
-            <p><strong>🚀 Status:</strong> <span v-if="apiVersion === 'v2'">Ativo (Recomendado)</span><span v-else style="color: orange">Depreciado</span></p>
+            <p><strong>🚀 Status:</strong> <span v-if="apiVersion === 'v2'">Ativo (Recomendado)</span><span v-else
+                style="color: orange">Depreciado</span></p>
           </div>
 
           <h3>✨ Características</h3>
@@ -280,9 +285,11 @@ curl -X GET "${url_env}/api/{{apiVersion}}/harbor_names/pb"</code></pre>
               <h3 class="endpoint-title">Obter Portos por IDs</h3>
               <span class="method-badge">GET</span>
             </div>
-            
+
             <div v-if="apiVersion === 'v1'" class="info-box warning" style="margin-top: 10px;">
-              <p>⚠️ <strong>Depreciado:</strong> A V1 utiliza IDs numéricos do porto vinculados diretamente ao banco de dados. Recomendamos a migração para a <strong>V2</strong>, que utiliza IDs baseados no estado (ex: 'pb01') referenciados ao ano corrente, tornando a integração mais estável e segura!</p>
+              <p>⚠️ <strong>Depreciado:</strong> A V1 utiliza IDs numéricos do porto vinculados diretamente ao banco de
+                dados. Recomendamos a migração para a <strong>V2</strong>, que utiliza IDs baseados no estado (ex:
+                'pb01') referenciados ao ano corrente, tornando a integração mais estável e segura!</p>
             </div>
 
             <p>
@@ -297,7 +304,7 @@ curl -X GET "${url_env}/api/{{apiVersion}}/harbor_names/pb"</code></pre>
             <h4>📋 Parâmetros:</h4>
             <ul>
               <li>
-                <strong>ids</strong> 
+                <strong>ids</strong>
                 <span v-if="apiVersion === 'v2'">(string): IDs dos portos (ex: [pb01, pe02])</span>
                 <span v-else>(integer): IDs numéricos (ex: [1,2,3])</span>
               </li>
@@ -324,9 +331,10 @@ curl -X GET "${url_env}/api/{{apiVersion}}/harbor/[1]"</code></pre>
               </h3>
               <span class="method-badge">GET</span>
             </div>
-            
+
             <div v-if="apiVersion === 'v1'" class="info-box warning" style="margin-top: 10px;">
-              <p>⚠️ <strong>Depreciado:</strong> A V1 utiliza IDs numéricos do porto legados. Na <strong>V2</strong>, os IDs são estruturados por estado e ano corrente, garantindo maior segurança e consistência nos dados.</p>
+              <p>⚠️ <strong>Depreciado:</strong> A V1 utiliza IDs numéricos do porto legados. Na <strong>V2</strong>, os
+                IDs são estruturados por estado e ano corrente, garantindo maior segurança e consistência nos dados.</p>
             </div>
 
             <p>
@@ -340,7 +348,8 @@ curl -X GET "${url_env}/api/{{apiVersion}}/harbor/[1]"</code></pre>
 
             <h4>📋 Parâmetros:</h4>
             <ul>
-              <li><strong>harbor</strong> <span v-if="apiVersion === 'v2'">(string): ID do porto (ex: 'pb01')</span><span v-else>(integer): ID numérico (ex: 1)</span></li>
+              <li><strong>harbor</strong> <span v-if="apiVersion === 'v2'">(string): ID do porto (ex:
+                  'pb01')</span><span v-else>(integer): ID numérico (ex: 1)</span></li>
               <li><strong>month</strong> (integer): Mês desejado (1-12)</li>
               <li>
                 <strong>days</strong> (string): Array de dias no formato
@@ -507,11 +516,11 @@ curl -X GET "${url_env}/api/{{apiVersion}}/tabua-mare/1/1/[1,2,3]"</code></pre>
     </div>
 
     <!-- Quick Start Modal -->
-    <dialog :open="showQuickStart" @@click="showQuickStart = false">
-      <div class="modal-content" @@click.stop>
+    <dialog :open="showQuickStart" @click="showQuickStart = false">
+      <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>⚡ Quick Start</h3>
-          <button class="close-btn" @@click="showQuickStart = false">×</button>
+          <button class="close-btn" @click="showQuickStart = false">×</button>
         </div>
         <div>
           <h4>1. Primeira requisição:</h4>
@@ -530,14 +539,14 @@ curl -X GET "${url_env}/api/{{apiVersion}}/tabua-mare/1/1/[1,2,3]"</code></pre>
   </main>
 
   <!-- Footer -->
-  @app.footer()
+  ${ footer }
 
   <!-- Contact Modal -->
-  <div v-show="showContactModal" class="modal-overlay" @@click="showContactModal = false">
-    <div class="modal" @@click.stop>
+  <div v-show="showContactModal" class="modal-overlay" @click="showContactModal = false">
+    <div class="modal" @click.stop>
       <div class="modal-header">
         <h3>Entre em Contato</h3>
-        <button class="modal-close" @@click="showContactModal = false" aria-label="Fechar">
+        <button class="modal-close" @click="showContactModal = false" aria-label="Fechar">
           <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -556,7 +565,7 @@ curl -X GET "${url_env}/api/{{apiVersion}}/tabua-mare/1/1/[1,2,3]"</code></pre>
               <path
                 d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
             </svg>
-            <span>contato@@devtu.qzz.io</span>
+            <span>contato@devtu.qzz.io</span>
           </div>
 
           <div class="contact-item">
@@ -572,12 +581,12 @@ curl -X GET "${url_env}/api/{{apiVersion}}/tabua-mare/1/1/[1,2,3]"</code></pre>
               <path
                 d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
             </svg>
-            <span>@@tabuamare_api</span>
+            <span>@tabuamare_api</span>
           </div>
         </div>
 
         <div class="modal-actions">
-          <button class="btn btn-primary" @@click="showContactModal = false">
+          <button class="btn btn-primary" @click="showContactModal = false">
             Entendi
           </button>
         </div>

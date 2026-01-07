@@ -39,3 +39,30 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 		total: harbor_name.len
 	}
 }
+
+// list_harbor_name_by_states_v1 Lista os nomes dos portos por estado (V1 - retorna ID do banco)
+pub fn list_harbor_name_by_states_v1(mut pool_conn pool.ConnectionPool, state string) !types.ResultValues[dto.DTOHaborMareListHaborNameByStateV1] {
+	conn := pool_conn.get()!
+	mut db := conn as db_provider.DB
+	db.reset()!
+	year := time.now().year
+
+	mut qb := orm.new_query[entities.DataMare](db)
+
+	harbor_name := qb
+		.where('year = ? && state = ?', year, state)!
+		.select('id', 'harbor_name', 'data_collection_institution', 'year')!
+		.query()!
+		.map(dto.DTOHaborMareListHaborNameByStateV1{
+			id:                          it.id
+			year:                        it.year
+			harbor_name:                 it.harbor_name
+			data_collection_institution: it.data_collection_institution
+		})
+	pool_conn.put(conn) or {}
+
+	return types.ResultValues{
+		data:  harbor_name
+		total: harbor_name.len
+	}
+}
