@@ -1,6 +1,5 @@
 module components_view
 
-import veb
 import time
 import leafscale.veemarker
 

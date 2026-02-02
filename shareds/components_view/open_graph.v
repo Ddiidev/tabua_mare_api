@@ -1,6 +1,5 @@
 module components_view
 
-import veb
 import leafscale.veemarker
 
 pub fn (cv ComponentsView) open_graph(data map[string]veemarker.Any) string {
