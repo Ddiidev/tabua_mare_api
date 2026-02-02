@@ -18,6 +18,11 @@ import repository.tabua_mare.dto
 pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id string, month int, days []int) !types.ResultValues[dto.DTOTabuaMare] {
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
+	defer {
+		pool_conn.put(conn) or {
+			println(err.msg())
+		}
+	}
 
 	mut qb_month := orm.new_query[entities.MonthData](db)
 	mut qb_harbor := orm.new_query[entities.DataMare](db)
@@ -63,8 +68,6 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 		}
 	}
 
-	pool_conn.put(conn) or { dump(err) }
-
 	result := dto.DTOTabuaMare{
 		id:                          harbor[0].id_harbor_state
 		year:                        harbor[0].year
@@ -95,6 +98,11 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor_id int, month int, days []int) !types.ResultValues[dto.DTOTabuaMareV1] {
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
+	defer {
+		pool_conn.put(conn) or {
+			println(err.msg())
+		}
+	}
 
 	mut qb_month := orm.new_query[entities.MonthData](db)
 
@@ -133,8 +141,6 @@ pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor
 			})
 		}
 	}
-
-	pool_conn.put(conn) or { dump(err) }
 
 	if harbor.data.len == 0 {
 		return error('Nenhum dado de porto encontrado para o ID especificado')

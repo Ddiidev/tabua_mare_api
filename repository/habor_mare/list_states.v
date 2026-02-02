@@ -17,7 +17,11 @@ import shareds.types
 pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string] {
 	conn := pool_conn.get()!
 	mut db := conn as db_provider.DB
-	db.reset()!
+	defer {
+		pool_conn.put(conn) or {
+			println(err.msg())
+		}
+	}
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
@@ -28,7 +32,7 @@ pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string
 		.query()!
 		.map(it.state))
 
-	pool_conn.put(conn) or {}
+	
 
 	return types.ResultValues[string]{
 		data:  distinct_states

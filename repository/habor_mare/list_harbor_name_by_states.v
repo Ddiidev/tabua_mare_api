@@ -17,7 +17,12 @@ import repository.habor_mare.dto
 pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state string) !types.ResultValues[dto.DTOHaborMareListHaborNameByState] {
 	conn := pool_conn.get()!
 	mut db := conn as db_provider.DB
-	db.reset()!
+	defer {
+		pool_conn.put(conn) or {
+			println(err.msg())
+		}
+	}
+	
 	year := time.now().year
 
 	mut qb := orm.new_query[entities.DataMare](db)
@@ -32,7 +37,6 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 			harbor_name:                 it.harbor_name
 			data_collection_institution: it.data_collection_institution
 		})
-	pool_conn.put(conn) or {}
 
 	return types.ResultValues{
 		data:  harbor_name
@@ -44,7 +48,11 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 pub fn list_harbor_name_by_states_v1(mut pool_conn pool.ConnectionPool, state string) !types.ResultValues[dto.DTOHaborMareListHaborNameByStateV1] {
 	conn := pool_conn.get()!
 	mut db := conn as db_provider.DB
-	db.reset()!
+	defer {
+		pool_conn.put(conn) or {
+			println(err.msg())
+		}
+	}
 	year := time.now().year
 
 	mut qb := orm.new_query[entities.DataMare](db)
@@ -59,7 +67,6 @@ pub fn list_harbor_name_by_states_v1(mut pool_conn pool.ConnectionPool, state st
 			harbor_name:                 it.harbor_name
 			data_collection_institution: it.data_collection_institution
 		})
-	pool_conn.put(conn) or {}
 
 	return types.ResultValues{
 		data:  harbor_name

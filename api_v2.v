@@ -90,7 +90,7 @@ pub fn (mut api APIControllerV2) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx,
 	lat := geo_latlng[0] or { 0.0 }
 	lng := geo_latlng[1] or { 0.0 }
 
-	// TODO: Depois deixar isso dentro do método de get_tabua_mare_by_month_days
+	// TODO: Depois mover isso para dentro do método de get_tabua_mare_by_month_days
 	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state_v2(mut api.pool_conn,
 		lat, lng, state) or {
 		ctx.res.set_status(.not_found)

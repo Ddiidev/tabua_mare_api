@@ -20,6 +20,11 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
+	defer {
+		pool_conn.put(conn) or {
+			println(err.msg())
+		}
+	}
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
@@ -54,8 +59,6 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 		}
 	}
 
-	pool_conn.put(conn) or { dump(err) }
-
 	return types.ResultValues[dto.DTOHaborMareGetHarborV2]{
 		data:  data_harbors
 		total: data_harbors.len
@@ -71,6 +74,11 @@ pub fn get_harbor_by_ids_v1(mut pool_conn pool.ConnectionPool, ids []int) !types
 
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
+	defer {
+		pool_conn.put(conn) or {
+			println(err.msg())
+		}
+	}
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
@@ -104,8 +112,6 @@ pub fn get_harbor_by_ids_v1(mut pool_conn pool.ConnectionPool, ids []int) !types
 			})
 		}
 	}
-
-	pool_conn.put(conn) or { dump(err) }
 
 	return types.ResultValues[dto.DTOHaborMareGetHarbor]{
 		data:  data_harbors
