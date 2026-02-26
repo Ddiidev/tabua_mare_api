@@ -11,6 +11,7 @@ services:
     restart: always
     environment:
       - PORT=4048
+      - DB_SQLITE_PATH=/app/data/taubinha.sqlite
     deploy:
       resources:
         limits:
@@ -25,12 +26,14 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+      - sqlite-data:/app/data
 
   tabua-mare2:
     image: tabua-mare-app:latest
     restart: always
     environment:
       - PORT=4048
+      - DB_SQLITE_PATH=/app/data/taubinha.sqlite
     deploy:
       resources:
         limits:
@@ -45,6 +48,7 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+      - sqlite-data:/app/data
 
   tabua-mare3:
     build:
@@ -54,6 +58,7 @@ services:
     restart: always
     environment:
       - PORT=4048
+      - DB_SQLITE_PATH=/app/data/taubinha.sqlite
     deploy:
       resources:
         limits:
@@ -68,12 +73,14 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+      - sqlite-data:/app/data
 
   tabua-mare4:
     image: tabua-mare-app:latest
     restart: always
     environment:
       - PORT=4048
+      - DB_SQLITE_PATH=/app/data/taubinha.sqlite
     deploy:
       resources:
         limits:
@@ -88,6 +95,7 @@ services:
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+      - sqlite-data:/app/data
 
   nginx:
     image: nginx:latest
@@ -135,3 +143,6 @@ services:
     command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+
+volumes:
+  sqlite-data:

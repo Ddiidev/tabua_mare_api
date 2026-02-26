@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     build-essential \
-    libpq-dev \
     libsqlite3-dev \
     ca-certificates \
     libssl-dev \
@@ -37,7 +36,7 @@ COPY . .
 
 RUN v version
 
-RUN v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d use_openssl -prod . -o TabuaMareAPI
+RUN v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d using_sqlite -d use_openssl -prod . -o TabuaMareAPI
 
 # ============================================
 # Stage 2: Runtime - Apenas executável e deps
@@ -49,7 +48,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Instalar apenas runtime dependencies (não build tools)
 RUN apt-get update && apt-get install -y \
     libssl1.1 \
-    libpq5 \
     libsqlite3-0 \
     ca-certificates \
     curl \
@@ -67,11 +65,14 @@ COPY --from=builder /app/TabuaMareAPI .
 COPY --from=builder /app/pages ./pages
 COPY --from=builder /app/cache ./cache
 
+# SQLite fonte — copiado para o volume compartilhado pelo entrypoint na primeira inicialização
+COPY --from=builder /app/taubinha.sqlite ./taubinha.sqlite
+
+COPY dockerfiles/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 # Porta padrão
 EXPOSE 4048
 ENV PORT=4048
 
-# Executar aplicação via GDB em modo batch
-# Configura o GDB para ignorar sinais do GC (SIG40, SIGPWR, etc) e só parar em erros reais
-# CMD ["sh", "-c", "gdb -batch -ex 'handle SIG32 nostop noprint pass' -ex 'handle SIG39 nostop noprint pass' -ex 'handle SIG40 nostop noprint pass' -ex 'handle SIGPWR nostop noprint pass' -ex 'handle SIGXCPU nostop noprint pass' -ex run -ex bt --args ./TabuaMareAPI $PORT"]
-CMD ["sh", "-c", "./TabuaMareAPI $PORT"]
+ENTRYPOINT ["./entrypoint.sh"]
