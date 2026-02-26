@@ -67,7 +67,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 
 // get_harbor_by_ids Pega o porto por ids
 @[deprecated: 'Ao invés deste use get_harbor_by_ids, isso porque get_harbor_by_ids_v1 busca por id do banco, o get_harbor_by_ids busca por id do estado']
-@[deprecated_after: '2026-02-22']
+@[deprecated_after: '2026-04-22']
 pub fn get_harbor_by_ids_v1(mut pool_conn pool.ConnectionPool, ids []int) !types.ResultValues[dto.DTOHaborMareGetHarbor] {
 	mut ids_ordered := ids.clone()
 	ids_ordered.sort()
