@@ -170,3 +170,4 @@ services:
 
 volumes:
   sqlite-data:
+    external: true
