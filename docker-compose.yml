@@ -126,14 +126,10 @@ services:
     container_name: tabua-mare-nginx
     restart: always
     depends_on:
-      tabua-mare1:
-        condition: service_healthy
-      tabua-mare2:
-        condition: service_healthy
-      tabua-mare3:
-        condition: service_healthy
-      tabua-mare4:
-        condition: service_healthy
+      - tabua-mare1
+      - tabua-mare2
+      - tabua-mare3
+      - tabua-mare4
     expose:
       - 9090
     ports:
