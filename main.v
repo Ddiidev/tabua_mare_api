@@ -32,7 +32,7 @@ fn main() {
 		env: env
 	}
 
-	infradb.apply_startup_migrations()!
+	infradb.apply_startup_migrations() or { eprintln('Startup migration skipped: ${err}') }
 
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
