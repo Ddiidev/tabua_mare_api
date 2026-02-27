@@ -4,16 +4,24 @@ set -e
 # Funcao para aguardar um servico ficar healthy usando docker compose
 wait_healthy() {
   local service=$1
-  local container_id
-  container_id=$(docker compose ps -q "$service" 2>/dev/null)
-  if [ -z "$container_id" ]; then
-    echo "ERRO: container do servico $service nao encontrado!"
-    return 1
-  fi
-  until [ "$(docker inspect --format='{{.State.Health.Status}}' "$container_id" 2>/dev/null)" = "healthy" ]; do
+  local max_wait=120
+  local waited=0
+  while [ $waited -lt $max_wait ]; do
+    local container_id
+    container_id=$(docker compose ps -q "$service" 2>/dev/null)
+    if [ -n "$container_id" ]; then
+      local status
+      status=$(docker inspect --format='{{.State.Health.Status}}' "$container_id" 2>/dev/null)
+      if [ "$status" = "healthy" ]; then
+        echo "$service healthy!"
+        return 0
+      fi
+    fi
     sleep 2
+    waited=$((waited + 2))
   done
-  echo "$service healthy!"
+  echo "TIMEOUT: $service nao ficou healthy em ${max_wait}s"
+  return 1
 }
 
 # Build nova imagem

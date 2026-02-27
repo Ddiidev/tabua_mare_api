@@ -14,6 +14,10 @@ pub fn apply_startup_migrations() ! {
 		defer {
 			db.close() or {}
 		}
+		// WAL mode allows concurrent reads while writing (essential with multiple containers)
+		// busy_timeout makes SQLite wait instead of immediately failing when locked
+		db.exec('PRAGMA journal_mode=WAL;') or {}
+		db.exec('PRAGMA busy_timeout=5000;') or {}
 
 		ensure_geo_hash_column(mut db)!
 		ensure_geo_hash_indexes(mut db)!

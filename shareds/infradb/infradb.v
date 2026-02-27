@@ -26,7 +26,9 @@ $if using_sqlite ? {
 	fn create_conn() !&pool.ConnectionPoolable {
 		env := conf_env.load_env()
 
-		db := db_provider.connect(env.db_sqlite_path)!
+		mut db := db_provider.connect(env.db_sqlite_path)!
+		db.exec('PRAGMA journal_mode=WAL;') or {}
+		db.exec('PRAGMA busy_timeout=5000;') or {}
 
 		return &db
 	}
