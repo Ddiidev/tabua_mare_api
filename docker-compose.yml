@@ -20,6 +20,12 @@ services:
         reservations:
           cpus: "0.2"
           memory: 160M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4048/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     container_name: tabua-mare-app1
     networks:
       - tabua-mare-network
@@ -42,6 +48,12 @@ services:
         reservations:
           cpus: "0.2"
           memory: 160M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4048/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     container_name: tabua-mare-app2
     networks:
       - tabua-mare-network
@@ -67,6 +79,12 @@ services:
         reservations:
           cpus: "0.2"
           memory: 160M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4048/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     container_name: tabua-mare-app3
     networks:
       - tabua-mare-network
@@ -89,6 +107,12 @@ services:
         reservations:
           cpus: "0.2"
           memory: 160M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4048/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     container_name: tabua-mare-app4
     networks:
       - tabua-mare-network
@@ -102,10 +126,14 @@ services:
     container_name: tabua-mare-nginx
     restart: always
     depends_on:
-      - tabua-mare1
-      - tabua-mare2
-      - tabua-mare3
-      - tabua-mare4
+      tabua-mare1:
+        condition: service_healthy
+      tabua-mare2:
+        condition: service_healthy
+      tabua-mare3:
+        condition: service_healthy
+      tabua-mare4:
+        condition: service_healthy
     expose:
       - 9090
     ports:
