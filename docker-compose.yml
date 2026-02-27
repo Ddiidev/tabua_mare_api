@@ -171,3 +171,4 @@ services:
 volumes:
   sqlite-data:
     external: true
+    name: tabua_mare_sqlite-data
