@@ -254,8 +254,8 @@ const state_latlng_map = {
 // }
 
 pub fn test_find_nearest_harbor_within_same_state() ! {
+	infradb.apply_startup_migrations()!
 	mut pool_conn := infradb.new()!
-	conn := pool_conn.get()!
 
 	for state, latlngs in state_latlng_map {
 		for i, latlng in latlngs {
@@ -268,6 +268,23 @@ pub fn test_find_nearest_harbor_within_same_state() ! {
 			}
 
 			assert nearest_harbor.state == state.to_lower(), 'state: ${state}[${i}] | nearest_harbor: ${nearest_harbor}'
+		}
+	}
+}
+
+pub fn test_find_nearest_harbor_id_within_same_state() ! {
+	infradb.apply_startup_migrations()!
+	mut pool_conn := infradb.new()!
+
+	for state, latlngs in state_latlng_map {
+		for i, latlng in latlngs {
+			harbor_id := repo_habor_mare.find_nearest_harbor_id_within_same_state(mut pool_conn,
+				latlng.lat, latlng.lng, state) or {
+				assert false, 'state: ${state} | error: ${err}'
+				break
+			}
+
+			assert harbor_id.starts_with(state.to_lower()), 'state: ${state}[${i}] | harbor_id: ${harbor_id}'
 		}
 	}
 }

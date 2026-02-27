@@ -31,6 +31,9 @@ fn main() {
 	mut app := &App{
 		env: env
 	}
+
+	infradb.apply_startup_migrations()!
+
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!
 		env:       env
