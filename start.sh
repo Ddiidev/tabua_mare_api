@@ -3,12 +3,13 @@ set -euo pipefail
 
 API1_PORT="3330"
 API2_PORT="3340"
-NGINX_PORT="9090"
+NGINX_PORT="${PORT:-9090}"
 DATA_DIR="${DATA_DIR:-/app/data}"
 SQLITE_SOURCE="${SQLITE_SOURCE:-/app/taubinha.sqlite}"
 DB_SQLITE_PATH="${DB_SQLITE_PATH:-${DATA_DIR}/taubinha.sqlite}"
 SUPERVISOR_TEMPLATE="/app/dockerfiles/supervisord.single.conf"
 SUPERVISOR_TARGET="/etc/supervisor/conf.d/tabua-mare.conf"
+NGINX_TEMPLATE="/etc/nginx/conf.d/tabua-mare-single.conf"
 
 echo "[startup] API1_PORT=${API1_PORT}, API2_PORT=${API2_PORT}, NGINX_PORT=${NGINX_PORT}"
 
@@ -23,6 +24,7 @@ export DB_SQLITE_PATH
 export URL_ENV="${URL_ENV:-http://localhost:${NGINX_PORT}}"
 
 cp "${SUPERVISOR_TEMPLATE}" "${SUPERVISOR_TARGET}"
+sed -i "s/__PUBLIC_PORT__/${NGINX_PORT}/g" "${NGINX_TEMPLATE}"
 
 if [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
   cat <<EOF >> "${SUPERVISOR_TARGET}"
