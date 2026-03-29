@@ -134,7 +134,28 @@ A aplicação iniciará e servirá:
 - API em `http://localhost:3330/api/v1`
 - Páginas: `http://localhost:3330/`, `/docs`, `/playground`, `/apoiar`
 
-### Produção (Docker Compose)
+### Produção (Dockerfile único)
+
+1. Construa a imagem usando o `Dockerfile` na raiz:
+
+```bash
+docker build -t tabua-mare-api-single .
+```
+
+2. Suba o container expondo a porta pública do nginx:
+
+```bash
+docker run --rm -p 9090:9090 \
+  -e CLOUDFLARE_TUNNEL_TOKEN=seu_token_opcional \
+  tabua-mare-api-single
+```
+
+- O container sobe **duas instâncias** da API nas portas internas `3330` e `3340`.
+- O **nginx** expõe a aplicação em `9090`.
+- O **cloudflared** só inicia se `CLOUDFLARE_TUNNEL_TOKEN` for informado.
+- O banco SQLite é copiado para `/app/data/taubinha.sqlite` na primeira inicialização.
+
+### Produção legada (Docker Compose)
 
 1. Copie o arquivo `.env.template` para `.env` e ajuste variáveis conforme necessário.
 2. Construa e suba os serviços:
@@ -143,8 +164,10 @@ A aplicação iniciará e servirá:
 docker compose up -d --build
 ```
 
+- O fluxo legado continua usando `docker-compose.yml`.
+- O compose usa `dockerfiles/Dockerfile.compose`.
 - Nginx é configurado automaticamente a partir de `nginx/`.
-- Variável `PORT` controla a porta externa (padrão `8080`).
+- A porta pública continua sendo `9090`.
 - Opcional: `CLOUDFLARE_TUNNEL_TOKEN` para habilitar Cloudflare Tunnel.
 
 ## Apoie o projeto

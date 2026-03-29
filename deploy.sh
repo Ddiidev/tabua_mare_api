@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# Script legado: este fluxo continua exclusivo do modo docker-compose.
 # Funcao para aguardar um servico ficar healthy usando docker compose
 wait_healthy() {
   local service=$1
@@ -23,6 +24,8 @@ wait_healthy() {
   echo "TIMEOUT: $service nao ficou healthy em ${max_wait}s"
   return 1
 }
+
+echo "Iniciando deploy legado via docker compose..."
 
 # Build nova imagem
 docker compose build

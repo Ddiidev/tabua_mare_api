@@ -1,46 +1,49 @@
 #!/bin/bash
 set -euo pipefail
 
-# Configurações e defaults
-PORT="${PORT:-8080}"
-API1_PORT="${API1_PORT:-4048}"
-API2_PORT="${API2_PORT:-4049}"
-NGINX_CONF="/etc/nginx/conf.d/maisfoco.conf"
+API1_PORT="3330"
+API2_PORT="3340"
+NGINX_PORT="9090"
+DATA_DIR="${DATA_DIR:-/app/data}"
+SQLITE_SOURCE="${SQLITE_SOURCE:-/app/taubinha.sqlite}"
+DB_SQLITE_PATH="${DB_SQLITE_PATH:-${DATA_DIR}/taubinha.sqlite}"
+SUPERVISOR_TEMPLATE="/app/dockerfiles/supervisord.single.conf"
+SUPERVISOR_TARGET="/etc/supervisor/conf.d/tabua-mare.conf"
 
-echo "[startup] PORT=${PORT}, API1_PORT=${API1_PORT}, API2_PORT=${API2_PORT}"
+echo "[startup] API1_PORT=${API1_PORT}, API2_PORT=${API2_PORT}, NGINX_PORT=${NGINX_PORT}"
 
-# Ajustar a porta de escuta do Nginx: garantir listen 80; e adicionar listen $PORT se necessário
-if [ -f "$NGINX_CONF" ]; then
-  # Garantir que exista 'listen 80;'
-  if ! grep -qE 'listen\s+80;' "$NGINX_CONF"; then
-    sed -ri 's/(server\s*\{)/\1\n    listen 80;/' "$NGINX_CONF"
-  fi
-  # Adicionar também 'listen ${PORT};' se for diferente de 80 e ainda não existir
-  if [ "$PORT" != "80" ] && ! grep -qE "listen\s+${PORT};" "$NGINX_CONF"; then
-    sed -ri "s/(server\\s*\\{)/\\1\\n    listen ${PORT};/" "$NGINX_CONF"
-  fi
+mkdir -p "${DATA_DIR}" /var/run/nginx /var/log/nginx /etc/supervisor/conf.d
+
+if [ ! -f "${DB_SQLITE_PATH}" ]; then
+  echo "[startup] Copiando SQLite inicial para ${DB_SQLITE_PATH}"
+  cp "${SQLITE_SOURCE}" "${DB_SQLITE_PATH}"
 fi
 
-# Iniciar as instâncias da aplicação (em background)
-echo "[startup] Iniciando TabuaMareAPI nas portas ${API1_PORT} e ${API2_PORT}"
-./TabuaMareAPI "${API1_PORT}" &
-API1_PID=$!
-./TabuaMareAPI "${API2_PORT}" &
-API2_PID=$!
+export DB_SQLITE_PATH
+export URL_ENV="${URL_ENV:-http://localhost:${NGINX_PORT}}"
 
-# Iniciar Cloudflare Tunnel (opcional) se token estiver disponível
+cp "${SUPERVISOR_TEMPLATE}" "${SUPERVISOR_TARGET}"
+
 if [ -n "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
-  echo "[startup] Iniciando Cloudflare Tunnel"
-  cloudflared --no-autoupdate tunnel run --token "${CLOUDFLARE_TUNNEL_TOKEN}" &
-  CF_PID=$!
+  cat <<EOF >> "${SUPERVISOR_TARGET}"
+
+[program:cloudflared]
+command=/usr/bin/cloudflared --no-autoupdate tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+autostart=true
+autorestart=true
+startsecs=3
+priority=40
+stdout_logfile=/dev/fd/1
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/fd/2
+stderr_logfile_maxbytes=0
+EOF
+  echo "[startup] Cloudflare Tunnel habilitado"
 else
   echo "[startup] CLOUDFLARE_TUNNEL_TOKEN não definido; o tunnel não será iniciado."
 fi
 
-# Preparar diretórios do Nginx e validar configuração
-mkdir -p /var/run/nginx
 nginx -t
 
-echo "[startup] Iniciando Nginx escutando em 80 e (se aplicável) em ${PORT}"
-# Executa o Nginx em foreground como PID 1
-exec nginx -g 'daemon off;'
+echo "[startup] Iniciando supervisord"
+exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
