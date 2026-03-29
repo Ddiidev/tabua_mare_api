@@ -151,7 +151,8 @@ docker run --rm -p 9090:9090 \
 ```
 
 - O container sobe **duas instâncias** da API nas portas internas `3330` e `3340`.
-- O **nginx** expõe a aplicação em `9090`.
+- O **nginx** expõe a aplicação em `9090` por padrão.
+- Em plataformas que injetam `PORT` (como subdomínios gerenciados), o container passa a escutar nessa porta automaticamente.
 - O **cloudflared** só inicia se `CLOUDFLARE_TUNNEL_TOKEN` for informado.
 - O banco SQLite é copiado para `/app/data/taubinha.sqlite` na primeira inicialização.
 
