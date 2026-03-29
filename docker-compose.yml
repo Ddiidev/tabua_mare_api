@@ -6,7 +6,7 @@ services:
   tabua-mare1:
     build:
       context: .
-      dockerfile: dockerfiles/Dockerfile.tabuamare
+      dockerfile: dockerfiles/Dockerfile.compose
     image: tabua-mare-app:latest
     restart: always
     environment:
@@ -65,7 +65,7 @@ services:
   tabua-mare3:
     build:
       context: .
-      dockerfile: dockerfiles/Dockerfile.tabuamare
+      dockerfile: dockerfiles/Dockerfile.compose
     image: tabua-mare-app:latest
     restart: always
     environment:
