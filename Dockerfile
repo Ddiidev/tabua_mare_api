@@ -68,10 +68,11 @@ RUN chmod +x ./start.sh && \
     mkdir -p /app/data /var/run/nginx /var/log/nginx /etc/supervisor/conf.d && \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
 
+ENV PORT=3000
 ENV DB_SQLITE_PATH=/app/data/taubinha.sqlite
-ENV URL_ENV=http://localhost:9090
+ENV URL_ENV=http://localhost:3000
 
-EXPOSE 9090
+EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD ["/bin/sh", "-c", "curl -fsS http://127.0.0.1:${PORT:-9090}/api-health || exit 1"]
