@@ -70,7 +70,7 @@ RUN chmod +x ./start.sh && \
 
 ENV PORT=3000
 ENV DB_SQLITE_PATH=/app/data/taubinha.sqlite
-ENV URL_ENV=http://localhost:3000
+ENV URL_ENV=https://tabuamare.devtu.qzz.io
 
 EXPOSE 3000
 
