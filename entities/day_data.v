@@ -7,5 +7,5 @@ pub mut:
 	month_data_id int
 	weekday_name  string
 	day           int
-	hours         []HourData @[fkey: 'day_data_id'; sql: '-']
+	hours         []HourData @[fkey: 'day_data_id'; skip]
 }
