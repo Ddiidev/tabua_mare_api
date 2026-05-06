@@ -1,7 +1,7 @@
 module conf_env
 
 import os
-import dotenv
+import ken0x0a.dotenv
 
 // EnvConfig representa todas as variáveis de ambiente do arquivo .env
 // Contém todas as configurações necessárias para a aplicação funcionar corretamente
