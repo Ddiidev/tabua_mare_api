@@ -58,8 +58,8 @@ pub fn (mut api APIController) list_harbor_name_by_states(mut ctx web_ctx.WsCtx,
 // get_harbors_by_ids Retorna informações de um/mais portos específico pelo seu ID
 //'
 @['/harbors/:ids']
-pub fn (mut api APIController) get_harbors_by_ids(mut ctx web_ctx.WsCtx, ids types.IntRangeArr) veb.Result {
-	res := repo_habor_mare.get_harbor_by_ids_v1(mut api.pool_conn, ids.ints()) or {
+pub fn (mut api APIController) get_harbors_by_ids(mut ctx web_ctx.WsCtx, ids string) veb.Result {
+	res := repo_habor_mare.get_harbor_by_ids_v1(mut api.pool_conn, types.IntRangeArr(ids).ints()) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'error: ${err}'))
 	}
@@ -69,9 +69,9 @@ pub fn (mut api APIController) get_harbors_by_ids(mut ctx web_ctx.WsCtx, ids typ
 
 // get_tabua_mare Retorna o tábua (tabela) da mare de um porto específico para um mês e dias específicos.
 @['/tabua-mare/:harbor/:month/:days']
-pub fn (mut api APIController) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id int, month int, days types.IntRangeArr) veb.Result {
+pub fn (mut api APIController) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id int, month int, days string) veb.Result {
 	result := repo_tabua_mare.get_tabua_mare_by_month_days_v1(mut api.pool_conn, harbor_id,
-		month, days.ints()) or {
+		month, types.IntRangeArr(days).ints()) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'error: ${err}'))
 	}
@@ -81,8 +81,8 @@ pub fn (mut api APIController) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id i
 
 // get_tabua_mare Retorna o tábua (tabela) da mare do porto mais próximo dentro do mesmo estado baseado em sua localização. Em um mês e dias específicos.
 @['/geo-tabua-mare/:lat_lng/:state/:month/:days']
-pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, lat_lng types.FloatArr, state string, month int, days types.IntRangeArr) veb.Result {
-	geo_latlng := lat_lng.list_float()
+pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, lat_lng string, state string, month int, days types.IntRangeArr) veb.Result {
+	geo_latlng := types.FloatArr(lat_lng).list_float()
 	lat := geo_latlng[0] or { 0.0 }
 	lng := geo_latlng[1] or { 0.0 }
 
@@ -104,8 +104,8 @@ pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, l
 
 // get_nearest_harbor retorna os dados do porto mais próximo com base nas coordenadas geográficas.
 @['/nearested-harbor/:state/:lat_lng']
-pub fn (mut api APIController) get_nearest_harbor_by_state(mut ctx web_ctx.WsCtx, state string, lat_lng types.FloatArr) veb.Result {
-	geo_latlng := lat_lng.list_float()
+pub fn (mut api APIController) get_nearest_harbor_by_state(mut ctx web_ctx.WsCtx, state string, lat_lng string) veb.Result {
+	geo_latlng := types.FloatArr(lat_lng).list_float()
 	lat := geo_latlng[0] or { 0.0 }
 	lng := geo_latlng[1] or { 0.0 }
 
@@ -120,8 +120,8 @@ pub fn (mut api APIController) get_nearest_harbor_by_state(mut ctx web_ctx.WsCtx
 
 // get_nearest_harbor retorna os dados do porto mais próximo com base nas coordenadas geográficas.
 @['/nearest-harbor-independent-state/:lat_lng']
-pub fn (mut api APIController) get_nearest_harbor(mut ctx web_ctx.WsCtx, lat_lng types.FloatArr) veb.Result {
-	geo_latlng := lat_lng.list_float()
+pub fn (mut api APIController) get_nearest_harbor(mut ctx web_ctx.WsCtx, lat_lng string) veb.Result {
+	geo_latlng := types.FloatArr(lat_lng).list_float()
 	lat := geo_latlng[0] or { 0.0 }
 	lng := geo_latlng[1] or { 0.0 }
 
