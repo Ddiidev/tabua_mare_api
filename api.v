@@ -81,7 +81,7 @@ pub fn (mut api APIController) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id i
 
 // get_tabua_mare Retorna o tábua (tabela) da mare do porto mais próximo dentro do mesmo estado baseado em sua localização. Em um mês e dias específicos.
 @['/geo-tabua-mare/:lat_lng/:state/:month/:days']
-pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, lat_lng string, state string, month int, days types.IntRangeArr) veb.Result {
+pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, lat_lng string, state string, month int, days string) veb.Result {
 	geo_latlng := types.FloatArr(lat_lng).list_float()
 	lat := geo_latlng[0] or { 0.0 }
 	lng := geo_latlng[1] or { 0.0 }
@@ -93,8 +93,9 @@ pub fn (mut api APIController) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx, l
 		return ctx.json(types.failure[string](404, 'Nenhum porto encontrado perto das coordenadas fornecidas.'))
 	}
 
+	parsed_days := types.IntRangeArr(days).ints()
 	result := repo_tabua_mare.get_tabua_mare_by_month_days_v1(mut api.pool_conn, nearest_harbor.id,
-		month, days.ints()) or {
+		month, parsed_days) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'error: ${err}'))
 	}
