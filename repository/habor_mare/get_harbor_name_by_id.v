@@ -39,6 +39,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 
 	mut data_harbors := []dto.DTOHaborMareGetHarborV2{}
 	for harbor in harbors {
+		filtered_geo := geo_location.filter(it.data_mare_id == harbor.id)
 		data_harbors << dto.DTOHaborMareGetHarborV2{
 			id:                          harbor.id_harbor_state
 			year:                        harbor.year
@@ -48,7 +49,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 			mean_level:                  harbor.mean_level
 			harbor_name:                 harbor.harbor_name
 			data_collection_institution: harbor.data_collection_institution
-			geo_location:                geo_location.filter(it.data_mare_id == harbor.id).map(dto.GeoLocation{
+			geo_location:                filtered_geo.map(dto.GeoLocation{
 				lat:           it.lat
 				lng:           it.lng
 				decimal_lat:   it.decimal_lat
@@ -67,7 +68,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 
 // get_harbor_by_ids Pega o porto por ids
 @[deprecated: 'Ao invés deste use get_harbor_by_ids, isso porque get_harbor_by_ids_v1 busca por id do banco, o get_harbor_by_ids busca por id do estado']
-@[deprecated_after: '2026-04-22']
+@[deprecated_after: '2026-10-22']
 pub fn get_harbor_by_ids_v1(mut pool_conn pool.ConnectionPool, ids []int) !types.ResultValues[dto.DTOHaborMareGetHarbor] {
 	mut ids_ordered := ids.clone()
 	ids_ordered.sort()
@@ -92,6 +93,7 @@ pub fn get_harbor_by_ids_v1(mut pool_conn pool.ConnectionPool, ids []int) !types
 
 	mut data_harbors := []dto.DTOHaborMareGetHarbor{}
 	for harbor in harbors {
+		filtered_geo := geo_location.filter(it.data_mare_id == harbor.id)
 		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id
 			harbor_id:                   harbor.id_harbor_state
@@ -102,7 +104,7 @@ pub fn get_harbor_by_ids_v1(mut pool_conn pool.ConnectionPool, ids []int) !types
 			mean_level:                  harbor.mean_level
 			harbor_name:                 harbor.harbor_name
 			data_collection_institution: harbor.data_collection_institution
-			geo_location:                geo_location.filter(it.data_mare_id == harbor.id).map(dto.GeoLocation{
+			geo_location:                filtered_geo.map(dto.GeoLocation{
 				lat:           it.lat
 				lng:           it.lng
 				decimal_lat:   it.decimal_lat
