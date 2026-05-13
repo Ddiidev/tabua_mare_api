@@ -61,11 +61,11 @@ COPY --from=builder /app/taubinha.sqlite ./taubinha.sqlite
 
 COPY --from=builder /app/start.sh ./start.sh
 COPY --from=builder /app/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder /app/dockerfiles/nginx.single.conf /etc/nginx/conf.d/tabua-mare-single.conf
+COPY --from=builder /app/dockerfiles/nginx.single.conf /app/dockerfiles/nginx.single.conf
 COPY --from=builder /app/dockerfiles/supervisord.single.conf /app/dockerfiles/supervisord.single.conf
 
 RUN chmod +x ./start.sh && \
-    mkdir -p /app/data /var/run/nginx /var/log/nginx /etc/supervisor/conf.d && \
+    mkdir -p /app/data /app/supervisor-conf /app/nginx-conf /var/run/nginx /var/log/nginx && \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
 
 ENV PORT=3000
