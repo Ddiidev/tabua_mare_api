@@ -117,8 +117,8 @@ pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 	return ctx.html(engine.render('apoiar.html', data) or { '' })
 }
 
-@['/ping'; head]
+@['/ping'; get; head]
 pub fn (app &App) ping(mut ctx web_ctx.WsCtx) veb.Result {
-	ctx.conn.write_string('HTTP/1.1 200 OK') or {}
-	return ctx.no_content()
+    ctx.res.set_status(.ok)
+    return ctx.no_content()
 }
