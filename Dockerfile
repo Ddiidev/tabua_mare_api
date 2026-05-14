@@ -42,8 +42,6 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-RUN adduser --system --no-create-home --group nginx || true
-
 RUN set -eux; \
     mkdir -p --mode=0755 /usr/share/keyrings; \
     curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg; \
@@ -51,6 +49,9 @@ RUN set -eux; \
     apt-get update; \
     apt-get install -y cloudflared; \
     rm -rf /var/lib/apt/lists/*
+
+ENV NGINX_PID_DIR=/tmp
+ENV SUPERVISOR_PID_DIR=/tmp
 
 WORKDIR /app
 
@@ -65,7 +66,7 @@ COPY --from=builder /app/dockerfiles/nginx.single.conf /app/dockerfiles/nginx.si
 COPY --from=builder /app/dockerfiles/supervisord.single.conf /app/dockerfiles/supervisord.single.conf
 
 RUN chmod +x ./start.sh && \
-    mkdir -p /app/data /app/supervisor-conf /app/nginx-conf /var/run/nginx /var/log/nginx && \
+    mkdir -p /app/data /app/supervisor-conf /app/nginx-conf /tmp/nginx && \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
 
 ENV PORT=3000

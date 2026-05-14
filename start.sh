@@ -15,7 +15,7 @@ SUPERVISORD_CONF="/app/supervisor-conf/supervisord.conf"
 
 echo "[startup] API1_PORT=${API1_PORT}, API2_PORT=${NGINX_PORT}, NGINX_PORT=${NGINX_PORT}"
 
-mkdir -p "${DATA_DIR}" /var/run/nginx /var/log/nginx /app/supervisor-conf /app/nginx-conf
+mkdir -p "${DATA_DIR}" /tmp/nginx /app/supervisor-conf /app/nginx-conf
 
 if [ ! -f "${DB_SQLITE_PATH}" ]; then
   echo "[startup] Copiando SQLite inicial para ${DB_SQLITE_PATH}"
@@ -33,7 +33,7 @@ cat > "${SUPERVISORD_CONF}" << 'SUPERVISORD_EOF'
 nodaemon=true
 logfile=/dev/null
 logfile_maxbytes=0
-pidfile=/var/run/supervisord.pid
+pidfile=/tmp/supervisord.pid
 
 [include]
 files = /app/supervisor-conf/tabua-mare.conf
