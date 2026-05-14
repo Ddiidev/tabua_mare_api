@@ -66,7 +66,9 @@ COPY --from=builder /app/dockerfiles/nginx.single.conf /app/dockerfiles/nginx.si
 COPY --from=builder /app/dockerfiles/supervisord.single.conf /app/dockerfiles/supervisord.single.conf
 
 RUN chmod +x ./start.sh && \
-    mkdir -p /app/data /app/supervisor-conf /app/nginx-conf /tmp/nginx && \
+    mkdir -p /app/data /app/supervisor-conf /app/nginx-conf /tmp/nginx/client_temp /tmp/nginx/client_body_temp /tmp/nginx/proxy_temp /tmp/nginx/fastcgi_temp /tmp/nginx/uwsgi_temp /tmp/nginx/scgi_temp && \
+    chmod -R 777 /var/lib/nginx 2>/dev/null || true && \
+    chown -R www-data:www-data /var/lib/nginx 2>/dev/null || true && \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
 
 ENV PORT=3000
