@@ -13,9 +13,11 @@ NGINX_TEMPLATE="/app/dockerfiles/nginx.single.conf"
 NGINX_TARGET="/app/nginx-conf/tabua-mare.conf"
 SUPERVISORD_CONF="/app/supervisor-conf/supervisord.conf"
 
-echo "[startup] API1_PORT=${API1_PORT}, API2_PORT=${NGINX_PORT}, NGINX_PORT=${NGINX_PORT}"
+echo "[startup] API1_PORT=${API1_PORT}, API2_PORT=${API2_PORT}, NGINX_PORT=${NGINX_PORT}"
 
 mkdir -p "${DATA_DIR}" /tmp/nginx/client_temp /tmp/nginx/client_body_temp /tmp/nginx/proxy_temp /tmp/nginx/fastcgi_temp /tmp/nginx/uwsgi_temp /tmp/nginx/scgi_temp /app/supervisor-conf /app/nginx-conf
+
+mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi 2>/dev/null || true
 
 if [ -d /var/log/nginx ]; then
   ln -sf /dev/stderr /var/log/nginx/error.log 2>/dev/null || true
