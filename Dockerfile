@@ -27,7 +27,7 @@ RUN v install && \
 COPY . .
 
 RUN v version && \
-    v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d using_sqlite -d use_openssl -prod . -o TabuaMareAPI
+    v -cc gcc -g -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d using_sqlite -d use_openssl . -o TabuaMareAPI
 
 FROM ubuntu:20.04
 
@@ -38,6 +38,7 @@ RUN apt-get update && apt-get install -y \
     libsqlite3-0 \
     ca-certificates \
     curl \
+    binutils \
     nginx \
     supervisor \
     && rm -rf /var/lib/apt/lists/*
