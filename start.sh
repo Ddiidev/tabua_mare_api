@@ -15,7 +15,12 @@ SUPERVISORD_CONF="/app/supervisor-conf/supervisord.conf"
 
 echo "[startup] API1_PORT=${API1_PORT}, API2_PORT=${NGINX_PORT}, NGINX_PORT=${NGINX_PORT}"
 
-mkdir -p "${DATA_DIR}" /tmp/nginx /app/supervisor-conf /app/nginx-conf
+mkdir -p "${DATA_DIR}" /tmp/nginx/client_temp /tmp/nginx/client_body_temp /tmp/nginx/proxy_temp /tmp/nginx/fastcgi_temp /tmp/nginx/uwsgi_temp /tmp/nginx/scgi_temp /app/supervisor-conf /app/nginx-conf
+
+if [ -d /var/log/nginx ]; then
+  ln -sf /dev/stderr /var/log/nginx/error.log 2>/dev/null || true
+  ln -sf /dev/stdout /var/log/nginx/access.log 2>/dev/null || true
+fi
 
 if [ ! -f "${DB_SQLITE_PATH}" ]; then
   echo "[startup] Copiando SQLite inicial para ${DB_SQLITE_PATH}"
