@@ -65,11 +65,24 @@ COPY --from=builder /app/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /app/dockerfiles/nginx.single.conf /app/dockerfiles/nginx.single.conf
 COPY --from=builder /app/dockerfiles/supervisord.single.conf /app/dockerfiles/supervisord.single.conf
 
-RUN chmod +x ./start.sh && \
-    mkdir -p /app/data /app/supervisor-conf /app/nginx-conf /tmp/nginx/client_temp /tmp/nginx/client_body_temp /tmp/nginx/proxy_temp /tmp/nginx/fastcgi_temp /tmp/nginx/uwsgi_temp /tmp/nginx/scgi_temp && \
-    mkdir -p /var/lib/nginx/body /var/lib/nginx/proxy /var/lib/nginx/fastcgi /var/lib/nginx/uwsgi /var/lib/nginx/scgi && \
-    chmod -R 777 /var/lib/nginx && \
-    chmod -R 777 /var/log/nginx 2>/dev/null || true && \
+RUN set -eux; \
+    chmod +x ./start.sh; \
+    mkdir -p \
+      /app/data \
+      /tmp/tabua-mare/supervisor-conf \
+      /tmp/tabua-mare/nginx-conf \
+      /tmp/nginx/client_body_temp \
+      /tmp/nginx/proxy_temp \
+      /tmp/nginx/fastcgi_temp \
+      /tmp/nginx/uwsgi_temp \
+      /tmp/nginx/scgi_temp \
+      /var/lib/nginx/body \
+      /var/lib/nginx/proxy \
+      /var/lib/nginx/fastcgi \
+      /var/lib/nginx/uwsgi \
+      /var/lib/nginx/scgi; \
+    chmod -R a+rwX /app/data /tmp/tabua-mare /tmp/nginx /var/lib/nginx; \
+    chmod -R a+rwX /var/log/nginx 2>/dev/null || true; \
     rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
 
 ENV PORT=3000
