@@ -36,6 +36,12 @@
           </svg>
           GitHub
         </a>
+
+        <#if is_logged_in>
+          <a href="/auth/logout" class="contrast" style="color: #f9c74f">Logout</a>
+        <#else>
+          <a href="/auth/google" class="contrast" style="color: #f9c74f">Login</a>
+        <#/if>
       </div>
     </nav>
 
@@ -59,6 +65,12 @@
           </svg>
           GitHub
         </a>
+
+        <#if is_logged_in>
+          <a href="/auth/logout" class="contrast" style="color: #f9c74f">Logout</a>
+        <#else>
+          <a href="/auth/google" class="contrast" style="color: #f9c74f">Login</a>
+        <#/if>
       </div>
     </div>
   </div>

@@ -5,6 +5,7 @@ import pool
 import shareds.types
 import shareds.web_ctx
 import shareds.conf_env
+import shareds.rate_limit
 import repository.habor_mare as repo_habor_mare
 import repository.tabua_mare as repo_tabua_mare
 
@@ -12,6 +13,8 @@ import repository.tabua_mare as repo_tabua_mare
 pub struct APIControllerV2 {
 	veb.Middleware[web_ctx.WsCtx]
 	env conf_env.EnvConfig
+pub:
+	pool_conn_pg &pool.ConnectionPool = unsafe { nil }
 mut:
 	pool_conn &pool.ConnectionPool
 }
@@ -29,6 +32,18 @@ fn (mut api APIControllerV2) init_cors() {
 			'Priority', 'Sec-Ch-Ua', 'Sec-Ch-Ua-Mobile', 'Sec-Ch-Ua-Platform', 'Sec-Gpc',
 			'X-Forwarded-For', 'X-Forwarded-Host', 'X-Forwarded-Proto']
 		allow_credentials: true
+	}))
+}
+
+// init_rate_limit aplica o middleware de rate-limit (por IP/api_key, minuto + mes)
+// usando o pool PostgreSQL externo (contadores e creditos persistidos).
+fn (mut api APIControllerV2) init_rate_limit(env conf_env.EnvConfig) {
+	if unsafe { api.pool_conn_pg == nil } {
+		return
+	}
+	api.use(rate_limit.rate_limit_middleware(rate_limit.RateLimitOpts{
+		pool_conn_pg: api.pool_conn_pg
+		env:          env
 	}))
 }
 

@@ -9,7 +9,8 @@ pub fn (cv ComponentsView) navbar(current_page string) string {
 		dev_mode:     true
 	})
 	return engine.render('navbar.html', {
-		'is_root':      is_root
-		'current_page': current_page
+		'is_root':       is_root
+		'current_page':  current_page
+		'is_logged_in':  false
 	}) or { '' }
 }

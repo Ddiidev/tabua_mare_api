@@ -151,12 +151,34 @@
 
           <div class="info-box">
             <p>
-              <strong>🎉 Uso Livre:</strong> Esta API não requer
-              autenticação e é de uso público.
+              <strong>🎉 Uso Livre:</strong> A API é de uso público. O plano free
+              não requer autenticação (limite por IP).
             </p>
             <p>
-              <strong>⚡ Limite:</strong> 500 requisições por minuto por IP
-              para garantir qualidade do serviço.
+              <strong>⚡ Limites (free, por IP):</strong> 64 requisições por minuto
+              e 20.000 requisições por mês.
+            </p>
+            <p>
+              <strong>🔐 Planos pagos (por api_key):</strong>
+            </p>
+            <ul>
+              <li><strong>R$ 5/mês:</strong> 512 req/min + 250.000 req/mês</li>
+              <li><strong>R$ 10/mês:</strong> 2.560 req/min + ilimitado req/mês</li>
+            </ul>
+            <p>
+              Envie a api_key no header <code>Authorization: Bearer &lt;api_key&gt;</code>
+              ou <code>X-Api-Key</code>.
+            </p>
+            <p>
+              <strong>🔒 Login Google:</strong> Faça login em <a href="/auth/google">/auth/google</a>
+              para gerenciar sua conta e api_keys.
+            </p>
+          </div>
+          <div class="info-box warning">
+            <p>
+              <strong>⚠️ V1 Depreciada:</strong> A <strong>V1</strong> foi
+              descontinuada e responde <strong>410 Gone</strong>. Use a
+              <strong>V2</strong>. Veja as diferenças abaixo.
             </p>
           </div>
         </section>

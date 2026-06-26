@@ -53,18 +53,16 @@ URL_ENV=http://localhost:3330
 - **`main.v`** — starts the `veb` server, registers two API controllers and static file serving. The `App` struct handles HTML page routes (`/`, `/docs`, `/playground`, `/apoiar`).
 - **`api.v`** — `APIController` for `/api/v1` (deprecated; harbor IDs are integers).
 - **`api_v2.v`** — `APIControllerV2` for `/api/v2` (current; harbor IDs are strings like `pb01`).
+- **`api.v`** — `APIController` for `/api/v1` (deprecated; all handlers respond 410 Gone with link to /docs).
+- **`auth_controller.v`** — `AuthController` for `/auth` (Google OAuth login, callback, logout, /me).
 
 ### Key Architectural Patterns
 
-**Database backend (conditional compilation):**
-```v
-$if using_sqlite ? {
-    import db.sqlite as db_provider
-} $else {
-    import db.pg as db_provider
-}
-```
-All repository files and `infradb.v` use this pattern. Build with `-d using_sqlite` to use SQLite locally.
+**Two database backends (split persistence):**
+- **SQLite** (`shareds/infradb`) — tide data (data_mare, month_data, day_data, hour_data, geo_location). Always-on.
+- **PostgreSQL external** (`shareds/infradb_pg`) — users, user_identities, session_tokens, api_keys, rate_limit_counters, monthly_credits, tabuamare_dash tables. Always-on (independent of `-d using_sqlite`). Postgres is external (env vars `DB_*` from the system environment, not from `.env` file).
+
+Repositories of maré use SQLite (`db.sqlite`); repositories of auth/dash/rate_limit use PostgreSQL (`db.pg`). Do not cross pools.
 
 **Connection pool usage** — every repository function must call `.get()` and defer `.put()`:
 ```v
@@ -107,10 +105,17 @@ tests/         — integration tests (_test.v files, require DB)
 ### V1 vs V2 Difference
 
 The only structural difference between V1 and V2 is how harbor IDs are handled:
-- **V1**: harbor IDs are database integers (`harbor_id int`)
+- **V1**: harbor IDs are database integers (`harbor_id int`) — **deprecated, all handlers respond 410 Gone** with message "API v1 depreciada; use a v2. Docs: /docs".
 - **V2**: harbor IDs are state-prefixed strings (`harbor_id string`, e.g., `"pb01"`)
 
-V1 functions are annotated `@[deprecated_after: '2026-04-22']`. New endpoints should only be added to V2.
+V1 is kept registered (responds 410, no data) to avoid free rate-limit bypass and to guide clients to migrate. New endpoints should only be added to V2.
+
+### Authentication & Rate Limiting
+
+- **Google OAuth login** — `/auth/google` redirects to Google consent; `/auth/google/callback` exchanges code, upserts user in PostgreSQL, issues JWT (HS256), sets HttpOnly cookie. `/auth/logout` clears cookie. `/auth/me` returns current user.
+- **JWT** — custom HS256 implementation in `domain/auth_user/jwt.v` (not `veb.auth`). Stateless; `SESSION_SECRET` env var signs tokens.
+- **Rate limiting** — middleware in `shareds/rate_limit/middleware.v`, applied to `/api/v2/*`. Free (by IP): 64 req/min + 20k req/month. Paid (by api_key): 512/2560 req/min + 250k/unlimited req/month. Counters and monthly credits persisted in PostgreSQL (`rate_limit_counters`, `monthly_credits` tables). nginx has no rate-limit (removed `limit_req_zone`); the app is the sole rate-limit layer.
+- **api_key** — sent via `Authorization: Bearer <key>` or `X-Api-Key` header; identifies paid plans.
 
 ### Production Deployment
 
