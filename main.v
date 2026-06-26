@@ -4,6 +4,7 @@ import os
 import veb
 import shareds.web_ctx
 import shareds.infradb
+import shareds.infradb_pg
 import shareds.conf_env
 import leafscale.veemarker
 import shareds.components_view
@@ -33,21 +34,36 @@ fn main() {
 	}
 
 	infradb.apply_startup_migrations() or { eprintln('Startup migration skipped: ${err}') }
+	infradb_pg.apply_pg_startup_migrations() or { eprintln('PG startup migration skipped: ${err}') }
+
+	pool_conn_pg := infradb_pg.new() or {
+		eprintln('PostgreSQL (auth/dash) pool indisponivel: ${err}')
+		unsafe { nil }
+	}
 
 	mut api_controller := &APIController{
-		pool_conn: infradb.new()!
+		pool_conn: infradb.new()!,
 		env:       env
 	}
 
 	mut api_controller_v2 := &APIControllerV2{
-		pool_conn: infradb.new()!
-		env:       env
+		pool_conn:    infradb.new()!,
+		pool_conn_pg: pool_conn_pg,
+		env:          env
+	}
+
+	mut auth_controller := &AuthController{
+		pool_conn_pg: pool_conn_pg
+		env:          env
 	}
 
 	api_controller.init_cors()
+	api_controller_v2.init_cors()
+	api_controller_v2.init_rate_limit(env)
 
 	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
 	app.register_controller[APIControllerV2, web_ctx.WsCtx]('/api/v2', mut api_controller_v2)!
+	app.register_controller[AuthController, web_ctx.WsCtx]('/auth', mut auth_controller)!
 	app.mount_static_folder_at('./pages/assets', '/pages/assets')!
 
 	println('Starting Tabua Mare API on port ${port}')

@@ -3,12 +3,7 @@ module tabua_mare
 import orm
 import time
 import pool
-
-$if using_sqlite ? {
-	import db.sqlite as db_provider
-} $else {
-	import db.pg as db_provider
-}
+import db.sqlite as db_provider
 import entities
 import shareds.types
 import repository.habor_mare
@@ -118,7 +113,7 @@ pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor
 	mut qb_hours := orm.new_query[entities.HourData](db)
 
 	if month_data.len == 0 {
-		return error('Nenhum dado mensal encontrado para o porto e mês especificados')
+		return error('Nenhum dado mensal encontrado para o porto e mês especificado')
 	}
 
 	mut days_data := qb_month_days

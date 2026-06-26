@@ -2,14 +2,11 @@ module infradb
 
 import pool
 import time
-
-$if using_sqlite ? {
-	import db.sqlite as db_provider
-} $else {
-	import db.pg as db_provider
-}
+import db.sqlite
 import shareds.conf_env
 
+// new cria um pool de conexões para o SQLite (dados de maré da API).
+// Sempre-on (independente de flags de compilação). PostgreSQL (auth/dash) fica em shareds.infradb_pg.
 pub fn new() !&pool.ConnectionPool {
 	config := pool.ConnectionPoolConfig{
 		max_conns:      10
@@ -22,29 +19,12 @@ pub fn new() !&pool.ConnectionPool {
 	return pool.new_connection_pool(create_conn, config)!
 }
 
-$if using_sqlite ? {
-	fn create_conn() !&pool.ConnectionPoolable {
-		env := conf_env.load_env()
+fn create_conn() !&pool.ConnectionPoolable {
+	env := conf_env.load_env()
 
-		mut db := db_provider.connect(env.db_sqlite_path)!
-		db.exec('PRAGMA journal_mode=WAL;') or {}
-		db.exec('PRAGMA busy_timeout=5000;') or {}
+	mut db := sqlite.connect(env.db_sqlite_path)!
+	db.exec('PRAGMA journal_mode=WAL;') or {}
+	db.exec('PRAGMA busy_timeout=5000;') or {}
 
-		return &db
-	}
-} $else {
-	fn create_conn() !&pool.ConnectionPoolable {
-		env := conf_env.load_env()
-
-		config := db_provider.Config{
-			host:     env.db_host
-			port:     env.db_port.int()
-			user:     env.db_user
-			password: env.db_pass
-			dbname:   env.db_database
-		}
-		db := db_provider.connect(config)!
-
-		return &db
-	}
+	return &db
 }

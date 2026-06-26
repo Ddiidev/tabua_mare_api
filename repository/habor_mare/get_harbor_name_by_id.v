@@ -3,12 +3,7 @@ module habor_mare
 import orm
 import pool
 import time
-
-$if using_sqlite ? {
-	import db.sqlite as db_provider
-} $else {
-	import db.pg as db_provider
-}
+import db.sqlite as db_provider
 import entities
 import shareds.types
 import repository.habor_mare.dto
