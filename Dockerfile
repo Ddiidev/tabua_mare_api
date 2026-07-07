@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     libsqlite3-dev \
+    libpq-dev \
     ca-certificates \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -36,6 +37,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     libssl1.1 \
     libsqlite3-0 \
+    libpq5 \
     ca-certificates \
     curl \
     binutils \

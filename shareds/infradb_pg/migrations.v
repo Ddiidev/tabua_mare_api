@@ -7,13 +7,17 @@ import shareds.conf_env
 // no PostgreSQL externo. Idempotente (IF NOT EXISTS). Não-fatal no main.
 pub fn apply_pg_startup_migrations() ! {
 	env := conf_env.load_env()
-	mut db := pg.connect(pg.Config{
-		host:     env.db_host
-		port:     env.db_port.int()
-		user:     env.db_user
-		password: env.db_pass
-		dbname:   env.db_database
-	})!
+	mut db := if env.postgresql_conn_str != '' {
+		pg.connect_with_conninfo(env.postgresql_conn_str)!
+	} else {
+		pg.connect(pg.Config{
+			host:     env.db_host
+			port:     env.db_port.int()
+			user:     env.db_user
+			password: env.db_pass
+			dbname:   env.db_database
+		})!
+	}
 	defer {
 		db.close() or {}
 	}
@@ -70,6 +74,10 @@ fn ensure_users_tables(mut db pg.DB) ! {
 		revoked_at TIMESTAMP
 	);')!
 	db.exec('CREATE INDEX IF NOT EXISTS idx_api_keys_value ON api_keys(key_value);')!
+
+	// Adiciona colunas Stripe ao users (idempotente)
+	db.exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT NOT NULL DEFAULT \'\';')!
+	db.exec('ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT NOT NULL DEFAULT \'\';')!
 }
 
 fn ensure_rate_limit_tables(mut db pg.DB) ! {

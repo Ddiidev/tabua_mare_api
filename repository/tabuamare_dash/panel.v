@@ -1,6 +1,5 @@
 module tabuamare_dash
 
-import pool
 import db.pg
 
 // PanelData agrega dados para o painel do usuario (dashboard).
@@ -11,10 +10,10 @@ pub:
 }
 
 // get_panel_data retorna os dados agregados do painel para um usuario.
-pub fn get_panel_data(mut pool_conn pool.ConnectionPool, user_id int) !PanelData {
-	plan_status := get_plan_status(mut pool_conn, user_id)!
+pub fn get_panel_data(mut db pg.DB, user_id int) !PanelData {
+	plan_status := get_plan_status(mut db, user_id)!
 	bucket := 'key:user:${user_id}'
-	usage := get_usage_month(mut pool_conn, bucket) or {
+	usage := get_usage_month(mut db, bucket) or {
 		UsageSummary{
 			bucket: bucket
 			used:   0
