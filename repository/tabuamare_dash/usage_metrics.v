@@ -1,6 +1,5 @@
 module tabuamare_dash
 
-import pool
 import db.pg
 
 // UsageSummary resume o uso de um bucket (ip ou api_key) no mes corrente.
@@ -14,13 +13,7 @@ pub:
 }
 
 // get_usage_month retorna o resumo de uso do bucket no mes corrente.
-pub fn get_usage_month(mut pool_conn pool.ConnectionPool, bucket string) !UsageSummary {
-	conn := pool_conn.get()!
-	mut db := conn as pg.DB
-	defer {
-		pool_conn.put(conn) or { println(err.msg()) }
-	}
-
+pub fn get_usage_month(mut db pg.DB, bucket string) !UsageSummary {
 	month_key := current_month_key()
 	rows := db.exec_param_many('SELECT bucket, used, lim, remaining, plan FROM monthly_credits WHERE bucket = ($1) AND month_key = ($2) LIMIT 1',
 		[bucket, month_key])!

@@ -1,35 +1,94 @@
 module infradb_pg
 
-import pool
-import time
 import db.pg
+import net.urllib
+import sync
 import shareds.conf_env
 
-// new cria um pool de conexões para o PostgreSQL externo (auth/dash/contadores/credits).
-// Sempre-on (independente de -d using_sqlite).
-pub fn new() !&pool.ConnectionPool {
-	config := pool.ConnectionPoolConfig{
-		max_conns:      10
-		min_idle_conns: 2
-		max_lifetime:   time.hour
-		idle_timeout:   1 * time.minute
-		get_timeout:    15 * time.second
-	}
+// PgConn e' a conexao PostgreSQL (pg.DB tem pool interno thread-safe).
+// Usamos uma unica &pg.DB em vez de pool.ConnectionPool do V (bug em V 0.5.1).
+pub type PgConn = &pg.DB
 
-	return pool.new_connection_pool(create_conn, config)!
+// PgHolder envolve a &pg.DB para que closures de middleware capturem o holder
+// (struct wrapper) em vez da &pg.DB direta, evitando o bug de captura de
+// referencia &pg.DB em closures no V 0.5.1 (handler trava no primeiro acesso).
+pub struct PgHolder {
+mut:
+	lock sync.Mutex
+	db   &pg.DB = unsafe { nil }
 }
 
-fn create_conn() !&pool.ConnectionPoolable {
+// new cria e retorna um holder com a conexao PG (e guarda a conexao internamente).
+// Retorna none se a conexao falhar (o app continua; auth/rate-limit fica desligado).
+pub fn new() ?&PgHolder {
 	env := conf_env.load_env()
 
-	config := pg.Config{
+	mut db := if env.postgresql_conn_str != '' {
+		pg.connect_with_conninfo(env.postgresql_conn_str) or { return none }
+	} else {
+		pg.connect(pg_config_from_env(env)) or { return none }
+	}
+
+	return &PgHolder{
+		db: unsafe { &db }
+	}
+}
+
+// db retorna a conexao PG do holder (thread-safe).
+pub fn (mut h PgHolder) db() &pg.DB {
+	h.lock.lock()
+	defer {
+		h.lock.unlock()
+	}
+	return h.db
+}
+
+// raw retorna a conexao PG bruta (para repositories que usam mut db pg.DB).
+pub fn (mut h PgHolder) raw() &pg.DB {
+	return h.db
+}
+
+// pg_config_from_env constroi um pg.Config a partir das vars individuais (DB_*).
+fn pg_config_from_env(env conf_env.EnvConfig) pg.Config {
+	return pg.Config{
 		host:     env.db_host
 		port:     env.db_port.int()
 		user:     env.db_user
 		password: env.db_pass
 		dbname:   env.db_database
 	}
-	db := pg.connect(config)!
+}
 
-	return &db
+// pg_config_from_connstr parseia uma URI postgresql://... em pg.Config.
+// Formato esperado: postgresql://user:pass@host:port/dbname?sslmode=...
+pub fn pg_config_from_connstr(connstr string) !pg.Config {
+	url := urllib.parse(connstr)!
+	mut host := ''
+	mut port := 0
+	if url.host != '' {
+		// url.host pode ser "host:port"
+		parts := url.host.split(':')
+		host = parts[0]
+		if parts.len > 1 {
+			port = parts[1].int()
+		}
+	}
+	mut user := ''
+	mut password := ''
+	if u := url.user {
+		user = u.username
+		password = u.password
+	}
+	mut dbname := ''
+	// path vem como "/dbname"; remove a barra inicial
+	if url.path.len > 1 {
+		dbname = url.path[1..]
+	}
+	return pg.Config{
+		host:     host
+		port:     port
+		user:     user
+		password: password
+		dbname:   dbname
+	}
 }

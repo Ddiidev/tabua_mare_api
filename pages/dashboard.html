@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="cyan">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Tábua de Marés API</title>
+
+  ${ og }
+
+  <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
+  <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+  <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet" />
+  <style>
+    body,
+    h1,
+    h2,
+    h3,
+    p,
+    a {
+      font-family: "Spectral", serif;
+    }
+
+    .dashboard-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      background-color: var(--card-background-color);
+      border-radius: 10px;
+      margin-bottom: 2rem;
+    }
+
+    .user-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-info h2 {
+      margin: 0;
+    }
+
+    .user-info p {
+      margin: 0.25rem 0 0 0;
+      opacity: 0.7;
+    }
+
+    .plan-badge {
+      display: inline-block;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-left: 0.5rem;
+    }
+
+    .plan-free {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+
+    .plan-plan5 {
+      background-color: #f9c74f;
+      color: #333;
+    }
+
+    .plan-plan10 {
+      background-color: #277da1;
+      color: #fff;
+    }
+
+    .plan-planannual {
+      background-color: #43aa8b;
+      color: #fff;
+    }
+
+    .section-card {
+      background-color: var(--card-background-color);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .api-key-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0 0;
+    }
+
+    .api-key-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    }
+
+    .api-key-item:last-child {
+      border-bottom: none;
+    }
+
+    .api-key-value {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: rgba(0, 0, 0, 0.04);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      word-break: break-all;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .api-key-value.hidden {
+      filter: blur(4px);
+      cursor: pointer;
+    }
+
+    .api-key-label {
+      font-weight: bold;
+      min-width: 120px;
+    }
+
+    .btn-copy {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .btn-revoke {
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+      background-color: #e5383b;
+      border-color: #e5383b;
+      color: #fff;
+    }
+
+    .btn-logout {
+      background-color: transparent;
+      border: 1px solid #e5383b;
+      color: #e5383b;
+    }
+
+    .btn-logout:hover {
+      background-color: #e5383b;
+      color: #fff;
+    }
+
+    .new-key-result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: rgba(249, 199, 79, 0.15);
+      border: 1px solid #f9c74f;
+      border-radius: 8px;
+    }
+
+    .new-key-value {
+      font-family: monospace;
+      word-break: break-all;
+      font-size: 0.9rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      opacity: 0.6;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 1.5rem;
+      opacity: 0.6;
+    }
+
+    .alert-error {
+      color: #e5383b;
+      padding: 0.5rem 0;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: end;
+    }
+
+    .form-row>div {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .button-yellow {
+      background-color: #f9c74f;
+      border-color: #f9c74f;
+    }
+
+    .button-yellow:hover {
+      background-color: #f8b500;
+      border-color: #f8b500;
+    }
+
+    [v-cloak] {
+      display: none;
+    }
+
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .subscription-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .plan-card {
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      background: var(--card-background-color);
+    }
+
+    .plan-card.current {
+      border-color: #43aa8b;
+      background: rgba(67, 170, 139, 0.05);
+    }
+
+    .plan-card h4 {
+      margin: 0 0 0.5rem 0;
+    }
+
+    .plan-card .price {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin: 0.5rem 0;
+    }
+
+    .plan-card .limits {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+
+<body v-scope>
+  ${ navbar }
+
+  <!-- v-effect chama onMount() uma vez apos montagem (PetiteVue nao tem mounted()) -->
+  <div v-if="!_mounted" v-effect="_mounted = true; onMount()" style="display:none"></div>
+
+  <main class="container">
+    <div class="dashboard-container" v-cloak>
+      <!-- Perfil + Logout -->
+      <div class="user-card" v-if="user">
+        <img :src="user.avatar_url || ''" class="user-avatar" v-if="user.avatar_url" alt="avatar" />
+        <div class="user-info">
+          <h2>{{ user.name }} <span class="plan-badge" :class="'plan-' + user.plan">{{ user.plan }}</span></h2>
+          <p>{{ user.email }}</p>
+          <p class="plan-usage"><small>Uso do plano este mês: {{ fmtNum(rateLimit ? rateLimit.used_monthly : 0) }} / {{ rateLimit && rateLimit.limit_monthly != 0 ? fmtNum(rateLimit.limit_monthly) : (rateLimit ? 'ilimitado' : '0') }}</small></p>
+        </div>
+        <a href="/auth/logout" role="button" class="outline btn-logout">Logout</a>
+      </div>
+
+      <div class="loading" v-if="!user && !loadError">Carregando perfil...</div>
+      <div class="alert-error" v-if="loadError">{{ loadError }}</div>
+
+      <!-- Planos -->
+      <div class="section-card" v-if="user">
+        <h3>Planos</h3>
+        <p><small>Assine um plano para ter limites maiores na API.</small></p>
+        <div class="plans-grid">
+          <div class="plan-card" :class="{ current: user.plan === 'free' }">
+            <h4>Free</h4>
+            <div class="price">Grátis</div>
+            <div class="limits">24 req/min · 32k req/mês</div>
+            <button class="outline" disabled v-if="user.plan === 'free'">Plano atual</button>
+          </div>
+          <div class="plan-card" :class="{ current: user.plan === 'plan5' }">
+            <h4>Plan 5</h4>
+            <div class="price">R$ 5/mês</div>
+            <div class="limits">128 req/min · 256k req/mês</div>
+            <button class="button-yellow" @click="checkout('plan5')" :disabled="checkoutLoading === 'plan5'"
+              v-if="user.plan !== 'plan5'">Assinar</button>
+            <button class="outline" disabled v-if="user.plan === 'plan5'">Plano atual</button>
+          </div>
+          <div class="plan-card" :class="{ current: user.plan === 'plan10' }">
+            <h4>Plan 10</h4>
+            <div class="price">R$ 10/mês</div>
+            <div class="limits">256 req/min · ilimitado/mês</div>
+            <button class="button-yellow" @click="checkout('plan10')" :disabled="checkoutLoading === 'plan10'"
+              v-if="user.plan !== 'plan10'">Assinar</button>
+            <button class="outline" disabled v-if="user.plan === 'plan10'">Plano atual</button>
+          </div>
+          <div class="plan-card" :class="{ current: user.plan === 'planannual' }">
+            <h4>Plan Anual</h4>
+            <div class="price">R$ 70/ano</div>
+            <div class="limits">256 req/min · ilimitado/mês</div>
+            <button class="button-yellow" @click="checkout('planannual')" :disabled="checkoutLoading === 'planannual'"
+              v-if="user.plan !== 'planannual'">Assinar</button>
+            <button class="outline" disabled v-if="user.plan === 'planannual'">Plano atual</button>
+          </div>
+        </div>
+        <div class="alert-error" v-if="checkoutError">{{ checkoutError }}</div>
+
+        <!-- Gerenciamento de assinatura (só para planos pagos) -->
+        <div class="subscription-actions" v-if="user && user.plan !== 'free'">
+          <button class="outline" @click="openBillingPortal" :disabled="portalLoading">
+            {{ portalLoading ? 'Abrindo...' : 'Gerenciar assinatura' }}
+          </button>
+          <button class="btn-revoke" @click="cancelSubscription" :disabled="cancelLoading">
+            {{ cancelLoading ? 'Cancelando...' : 'Cancelar assinatura' }}
+          </button>
+        </div>
+        <div class="alert-error" v-if="portalError">{{ portalError }}</div>
+        <div class="alert-error" v-if="cancelError">{{ cancelError }}</div>
+        <div class="new-key-result" v-if="paymentMessage" style="margin-top: 1rem;">{{ paymentMessage }}</div>
+      </div>
+
+      <!-- API Keys -->
+      <div class="section-card" v-if="user">
+        <h3>Minhas API Keys</h3>
+        <p>
+          <small>Use uma API Key no header <code>Authorization: Bearer &lt;sua_key&gt;</code> para acessar os
+              endpoints pagos com limites maiores.</small>
+        </p>
+
+        <!-- Criar nova key -->
+        <details>
+          <summary role="button" class="button-yellow">Gerar nova API Key</summary>
+          <form @submit.prevent="createKey" style="margin-top: 1rem;">
+            <div class="form-row">
+              <div>
+                <label for="label">Label</label>
+                <input id="label" v-model="newLabel" placeholder="Ex: Produção" />
+              </div>
+              <div>
+                <label for="plan">Plano</label>
+                <select id="plan" v-model="newPlan">
+                  <option value="free" v-if="isPlanAllowed('free')">Free</option>
+                  <option value="plan5" v-if="isPlanAllowed('plan5')">Plan 5</option>
+                  <option value="plan10" v-if="isPlanAllowed('plan10')">Plan 10</option>
+                </select>
+              </div>
+              <div>
+                <button type="submit" :disabled="creating">Gerar</button>
+              </div>
+            </div>
+            <div class="alert-error" v-if="createError">{{ createError }}</div>
+          </form>
+
+          <div class="new-key-result" v-if="newKey">
+            <p><strong>API Key criada! Copie agora — ela não será mostrada novamente:</strong></p>
+            <div class="new-key-value">{{ newKey.key_value }}</div>
+            <button class="btn-copy" @click="copyText(newKey.key_value)">Copiar</button>
+          </div>
+        </details>
+
+        <!-- Lista de keys -->
+        <ul class="api-key-list" v-if="keys.length > 0">
+          <li class="api-key-item" v-for="k in keys" :key="k.id">
+            <span class="api-key-label">{{ k.label || '(sem label)' }}</span>
+            <span class="api-key-value masked">{{ maskKey(k.key_value) }}</span>
+            <span class="plan-badge" :class="'plan-' + k.plan" v-if="k.plan">{{ k.plan }}</span>
+            <button class="btn-copy" @click="copyText(k.key_value)" v-if="!k.revoked">Copiar</button>
+            <button class="btn-revoke" @click="revokeKey(k)" :disabled="k.revoked">
+              {{ k.revoked ? 'Revogada' : 'Revogar' }}
+            </button>
+          </li>
+        </ul>
+
+        <div class="empty-state" v-if="keys.length === 0 && !loadingKeys">
+          Nenhuma API Key ainda. Gere a primeira acima.
+        </div>
+      </div>
+
+      <!-- Rate Limit -->
+      <div class="section-card" v-if="user">
+        <h3>Uso e Limites</h3>
+        <div v-if="rateLimit" class="rate-limit-card">
+          <p><strong>Plano:</strong> <span class="plan-badge" :class="'plan-' + (testApiKey ? (rateLimit.plan || 'free') : 'free')">{{ testApiKey ? (rateLimit.plan || 'free') : 'free' }}</span></p>
+          <div class="limit-row">
+            <span>Requisições/min:</span>
+            <span>{{ fmtNum(rateLimit.limit_rpm) }}</span>
+          </div>
+          <div class="limit-row">
+            <span>Requisições/mês:</span>
+            <span>{{ rateLimit.limit_monthly == 0 ? 'ilimitado' : fmtNum(rateLimit.limit_monthly) }}</span>
+          </div>
+        </div>
+        <div class="empty-state" v-if="!rateLimit">Carregando limites...</div>
+        <details style="margin-top: 1rem;">
+          <summary role="button" class="outline">Testar limite de RPM</summary>
+          <div style="margin-top: 1rem;">
+            <div class="form-row">
+              <div>
+                <label for="rpmCount">Requisições</label>
+                <input id="rpmCount" type="number" v-model.number="testRpmCount" min="1" max="2000" />
+              </div>
+              <div>
+                <button class="outline" @click="runRpmTest(testRpmCount)" :disabled="rpmTestRunning">
+                  {{ rpmTestRunning ? 'Testando...' : 'Disparar' }}
+                </button>
+                <button class="btn-revoke" @click="stopRpmTest" :disabled="!rpmTestRunning">
+                  Parar
+                </button>
+              </div>
+            </div>
+            <div style="margin-top: 0.5rem;">
+              <label for="rpmApiKey">Chave de API (opcional)</label>
+              <input id="rpmApiKey" v-model.trim="testApiKey" @change="loadRateLimit" placeholder="tm_live_..." style="width: 100%;" />
+            </div>
+
+            <div v-if="rpmTestResult" style="margin-top: 0.5rem; white-space: pre-line; font-family: monospace; font-size: 0.85rem;">
+              {{ rpmTestResult }}
+            </div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </main>
+
+  ${ footer }
+
+  <script>
+    const { createApp } = PetiteVue;
+
+    const app = createApp({
+      user: null,
+      loadError: '',
+      keys: [],
+      loadingKeys: true,
+      newLabel: '',
+      newPlan: 'free',
+      newKey: null,
+      creating: false,
+      createError: '',
+      checkoutLoading: '',
+      checkoutError: '',
+      portalLoading: false,
+      portalError: '',
+      cancelLoading: false,
+      cancelError: '',
+      paymentMessage: '',
+      rateLimit: null,
+      rpmTestRunning: false,
+      rpmTestResult: '',
+      rpmTestStop: false,
+      testRpmCount: 130,
+      testApiKey: '',
+      _mounted: false,
+
+      async init() {
+        try {
+          const res = await fetch('/auth/me', { credentials: 'same-origin' });
+          if (!res.ok) {
+            this.loadError = 'Sessão expirada. Faça login novamente.';
+            return;
+          }
+          const body = await res.json();
+          const arr = body.data || body;
+          this.user = Array.isArray(arr) ? arr[0] : arr;
+          await this.loadKeys();
+          await this.loadRateLimit();
+
+          // apos retorno do Stripe, mostra status do pagamento
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('payment') === 'success') {
+            this.paymentMessage = 'Pagamento confirmado! Atualizando seu plano...';
+            // recarrega apos alguns segundos para dar tempo do webhook processar
+            setTimeout(() => window.location.href = '/dashboard', 3500);
+          } else if (params.get('payment') === 'cancel') {
+            this.paymentMessage = 'Pagamento cancelado. Você continua no plano atual.';
+          }
+        } catch (e) {
+          this.loadError = 'Erro: ' + e.message;
+        }
+      },
+
+      async loadKeys() {
+        this.loadingKeys = true;
+        try {
+          const res = await fetch('/auth/api-keys', { credentials: 'same-origin' });
+          if (res.ok) {
+            const body = await res.json();
+            const arr = body.data || body;
+            this.keys = (arr || []).map(k => ({ ...k }));
+          }
+        } catch (e) {
+          // silencioso
+        } finally {
+          this.loadingKeys = false;
+        }
+      },
+
+      async createKey() {
+        this.creating = true;
+        this.createError = '';
+        this.newKey = null;
+        try {
+          const res = await fetch('/auth/api-keys', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ label: this.newLabel, plan: this.newPlan })
+          });
+          const body = await res.json();
+          if (!res.ok) {
+            this.createError = (body && body.message) ? body.message : 'Erro ao criar key';
+            return;
+          }
+          const arr = body.data || body;
+          this.newKey = Array.isArray(arr) ? arr[0] : arr;
+          this.newLabel = '';
+          this.newPlan = 'free';
+          await this.loadKeys();
+        } catch (e) {
+          this.createError = 'Erro: ' + e.message;
+        } finally {
+          this.creating = false;
+        }
+      },
+
+      async revokeKey(k) {
+        if (!confirm('Revogar esta API Key? Ação irreversível.')) return;
+        try {
+          const res = await fetch('/auth/api-keys/' + k.id, {
+            method: 'DELETE',
+            credentials: 'same-origin'
+          });
+          if (res.ok) {
+            await this.loadKeys();
+          }
+        } catch (e) {
+          // silencioso
+        }
+      },
+
+      async checkout(plan) {
+        this.checkoutLoading = plan;
+        this.checkoutError = '';
+        try {
+          const baseUrl = window.location.origin + '/dashboard';
+          const successUrl = baseUrl + '?payment=success&plan=' + encodeURIComponent(plan);
+          const cancelUrl = baseUrl + '?payment=cancel';
+          const res = await fetch('/auth/checkout', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plan: plan, success_url: successUrl, cancel_url: cancelUrl })
+          });
+          const body = await res.json();
+          if (res.ok) {
+            const arr = body.data || body;
+            const data = Array.isArray(arr) ? arr[0] : arr;
+            if (data && data.checkout_url) {
+              window.location.href = data.checkout_url;
+              return;
+            }
+          }
+          this.checkoutError = (body && body.message) ? body.message : 'Erro ao iniciar checkout';
+        } catch (e) {
+          this.checkoutError = 'Erro: ' + e.message;
+        } finally {
+          this.checkoutLoading = '';
+        }
+      },
+
+      async openBillingPortal() {
+        this.portalLoading = true;
+        this.portalError = '';
+        try {
+          const res = await fetch('/auth/billing-portal', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const body = await res.json();
+          if (res.ok) {
+            const arr = body.data || body;
+            const data = Array.isArray(arr) ? arr[0] : arr;
+            if (data && data.url) {
+              window.location.href = data.url;
+              return;
+            }
+          }
+          this.portalError = (body && body.message) ? body.message : 'Erro ao abrir portal';
+        } catch (e) {
+          this.portalError = 'Erro: ' + e.message;
+        } finally {
+          this.portalLoading = false;
+        }
+      },
+
+      async cancelSubscription() {
+        if (!confirm('Cancelar a assinatura? Você voltará ao plano Free imediatamente.')) return;
+        this.cancelLoading = true;
+        this.cancelError = '';
+        try {
+          const res = await fetch('/auth/cancel-subscription', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const body = await res.json();
+          if (res.ok) {
+            const arr = body.data || body;
+            const data = Array.isArray(arr) ? arr[0] : arr;
+            if (data && data.portal_required) {
+              // sem subscription_id salvo: abre o portal
+              await this.openBillingPortal();
+              return;
+            }
+            alert('Assinatura cancelada. Você foi movido para o plano Free.');
+            await this.init();
+            return;
+          }
+          this.cancelError = (body && body.message) ? body.message : 'Erro ao cancelar assinatura';
+        } catch (e) {
+          this.cancelError = 'Erro: ' + e.message;
+        } finally {
+          this.cancelLoading = false;
+        }
+      },
+
+      copyText(text) {
+        navigator.clipboard.writeText(text).then(() => {
+          // feedback mínimo
+        }).catch(() => {});
+      },
+
+      isPlanAllowed(keyPlan) {
+        const userPlan = this.user && this.user.plan ? this.user.plan : 'free';
+        if (keyPlan === 'free') return true;
+        if (keyPlan === 'plan5') return ['plan5', 'plan10', 'planannual'].includes(userPlan);
+        if (keyPlan === 'plan10') return ['plan10', 'planannual'].includes(userPlan);
+        return false;
+      },
+
+      maskKey(key) {
+        if (!key || key.length < 8) return '••••••••';
+        const first = key.slice(0, 4);
+        const last = key.slice(-4);
+        return first + '••••' + last;
+      },
+
+      async loadRateLimit() {
+        try {
+          const opts = { credentials: 'same-origin' };
+          if (this.testApiKey) {
+            opts.headers = { 'Authorization': 'Bearer ' + this.testApiKey };
+          }
+          const res = await fetch('/auth/rate-limit-status', opts);
+          if (res.ok) {
+            const body = await res.json();
+            const arr = body.data || body;
+            const data = Array.isArray(arr) ? arr[0] : arr;
+            if (data) {
+              this.rateLimit = {
+                ...data,
+                limit_rpm: parseInt(data.limit_rpm, 10),
+                used_rpm: parseInt(data.used_rpm, 10),
+                remaining_rpm: parseInt(data.remaining_rpm, 10),
+                limit_monthly: parseInt(data.limit_monthly, 10),
+                used_monthly: parseInt(data.used_monthly, 10),
+                remaining_monthly: parseInt(data.remaining_monthly, 10)
+              };
+            }
+          }
+        } catch (e) {
+          // silencioso
+        }
+      },
+
+      async runRpmTest(count) {
+        this.rpmTestRunning = true;
+        this.rpmTestStop = false;
+        this.rpmTestResult = 'Iniciando...';
+        let ok = 0;
+        let blocked = 0;
+        let firstBlock = -1;
+        const total = count || 130;
+        let i = 0;
+        while (i < total && !this.rpmTestStop) {
+          const batchSize = Math.min(5, total - i);
+          const promises = [];
+          for (let b = 0; b < batchSize; b++) {
+            const opts = { credentials: 'same-origin' };
+            if (this.testApiKey) {
+              opts.headers = { 'Authorization': 'Bearer ' + this.testApiKey };
+            }
+            promises.push(fetch('/api/v2/states', opts)
+              .then(res => ({ status: res.status }))
+              .catch(() => ({ status: 0 })));
+          }
+          const results = await Promise.all(promises);
+          for (const r of results) {
+            i++;
+            if (r.status === 429) {
+              blocked++;
+              if (firstBlock === -1) firstBlock = i;
+            } else if (r.status > 0) {
+              ok++;
+            }
+          }
+          this.rpmTestResult = 'Enviadas: ' + i + '/' + total + '\nOK: ' + ok + '\nBloqueadas (429): ' + blocked + (firstBlock > 0 ? '\nPrimeiro 429 na requisição: ' + firstBlock : '');
+        }
+        await this.loadRateLimit();
+        const usedMonthly = this.rateLimit ? this.rateLimit.used_monthly : 0;
+        const limitMonthly = this.rateLimit ? this.rateLimit.limit_monthly : 0;
+        const limitStr = limitMonthly == 0 ? 'ilimitado' : this.fmtNum(limitMonthly);
+        this.rpmTestResult = (this.rpmTestStop ? 'Parado pelo usuário.\n' : '') + 'Total: ' + i + '/' + total + '\nOK: ' + ok + '\nBloqueadas (429): ' + blocked + (firstBlock > 0 ? '\nPrimeiro 429 na requisição: ' + firstBlock : '') + '\nUso do plano este mês: ' + this.fmtNum(usedMonthly) + ' / ' + limitStr;
+        this.rpmTestRunning = false;
+      },
+
+      fmtNum(n) {
+        return (n || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      },
+
+      stopRpmTest() {
+        this.rpmTestStop = true;
+      },
+
+      // chamado pelo v-effect apos montagem
+      onMount() {
+        this.init();
+      }
+    });
+    app.mount();
+  </script>
+</body>
+
+</html>

@@ -88,8 +88,11 @@ Observações:
 
 ## Limites e uso
 
-- Uso livre: não é necessária chave de API.
-- Limite: 500 requisições por minuto por IP.
+- Anônimo (sem conta): 5 req/min, ilimitado/mês.
+- Free (com conta, por IP): 24 req/min, 32k req/mês.
+- Plan 5 (R$ 5/mês, api_key): 128 req/min, 256k req/mês.
+- Plan 10 (R$ 10/mês, api_key): 256 req/min, ilimitado/mês.
+- Plan Anual (R$ 70/ano, api_key): 256 req/min, ilimitado/mês.
 
 ## Executando localmente
 

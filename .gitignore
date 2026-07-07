@@ -1,6 +1,7 @@
 # Binaries for programs and plugins
 main
 tabua_mare_api
+TabuaMareAPI
 *.exe
 *.exe~
 *.so
@@ -22,6 +23,9 @@ bin/
 
 # vweb and database
 *.db
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
 *.js
 
 # Ignore files

@@ -1,6 +1,5 @@
 module auth
 
-import pool
 import db.pg
 import repository.auth.dto
 
@@ -18,13 +17,7 @@ pub:
 // upsert_by_provider cria ou atualiza um usuario a partir de uma identidade provider.
 // Se (provider, provider_uid) existe, atualiza name/email/avatar e retorna o user.
 // Se nao, cria user + user_identity e retorna.
-pub fn upsert_by_provider(mut pool_conn pool.ConnectionPool, provider string, provider_uid string, email string, name string, avatar_url string, raw_json string) !UpsertResult {
-	conn := pool_conn.get()!
-	mut db := conn as pg.DB
-	defer {
-		pool_conn.put(conn) or { println(err.msg()) }
-	}
-
+pub fn upsert_by_provider(mut db pg.DB, provider string, provider_uid string, email string, name string, avatar_url string, raw_json string) !UpsertResult {
 	// tenta buscar identidade existente
 	rows := db.exec_param_many('SELECT user_id FROM user_identities WHERE provider = ($1) AND provider_uid = ($2) LIMIT 1',
 		[provider, provider_uid])!
@@ -66,25 +59,48 @@ pub fn upsert_by_provider(mut pool_conn pool.ConnectionPool, provider string, pr
 	}
 }
 
-// find_by_id retorna um usuario pelo id.
-pub fn find_by_id(mut pool_conn pool.ConnectionPool, user_id int) !dto.User {
-	conn := pool_conn.get()!
-	mut db := conn as pg.DB
-	defer {
-		pool_conn.put(conn) or { println(err.msg()) }
-	}
+// set_stripe_customer_id atualiza o stripe_customer_id do usuario.
+pub fn set_stripe_customer_id(mut db pg.DB, user_id int, customer_id string) ! {
+	db.exec_param_many('UPDATE users SET stripe_customer_id = ($1), updated_at = now() WHERE id = ($2)',
+		[customer_id, user_id.str()])!
+}
 
-	rows := db.exec_param('SELECT id, email, name, avatar_url, plan FROM users WHERE id = ($1) LIMIT 1', user_id.str())!
+// set_stripe_subscription_id atualiza o stripe_subscription_id do usuario.
+pub fn set_stripe_subscription_id(mut db pg.DB, user_id int, subscription_id string) ! {
+	db.exec_param_many('UPDATE users SET stripe_subscription_id = ($1), updated_at = now() WHERE id = ($2)',
+		[subscription_id, user_id.str()])!
+}
+
+// update_plan atualiza o plano do usuario.
+pub fn update_plan(mut db pg.DB, user_id int, plan string) ! {
+	db.exec_param_many('UPDATE users SET plan = ($1), updated_at = now() WHERE id = ($2)',
+		[plan, user_id.str()])!
+}
+
+// find_plan_by_id retorna apenas o plano do usuario.
+pub fn find_plan_by_id(mut db pg.DB, user_id int) !string {
+	rows := db.exec_param('SELECT plan FROM users WHERE id = ($1) LIMIT 1', user_id.str())!
+	if rows.len == 0 {
+		return error('usuario nao encontrado')
+	}
+	return str_from_row(rows[0], 0)
+}
+
+// find_by_id retorna um usuario pelo id.
+pub fn find_by_id(mut db pg.DB, user_id int) !dto.User {
+	rows := db.exec_param('SELECT id, email, name, avatar_url, plan, stripe_customer_id, stripe_subscription_id FROM users WHERE id = ($1) LIMIT 1', user_id.str())!
 	if rows.len == 0 {
 		return error('usuario nao encontrado')
 	}
 	r := rows[0]
 	return dto.User{
-		id:         int_from_row(r, 0)
-		email:      str_from_row(r, 1)
-		name:       str_from_row(r, 2)
-		avatar_url: str_from_row(r, 3)
-		plan:       str_from_row(r, 4)
+		id:                     int_from_row(r, 0)
+		email:                  str_from_row(r, 1)
+		name:                   str_from_row(r, 2)
+		avatar_url:             str_from_row(r, 3)
+		plan:                   str_from_row(r, 4)
+		stripe_customer_id:     str_from_row(r, 5)
+		stripe_subscription_id: str_from_row(r, 6)
 	}
 }
 

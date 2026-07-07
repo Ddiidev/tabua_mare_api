@@ -13,8 +13,6 @@ import repository.tabua_mare as repo_tabua_mare
 pub struct APIControllerV2 {
 	veb.Middleware[web_ctx.WsCtx]
 	env conf_env.EnvConfig
-pub:
-	pool_conn_pg &pool.ConnectionPool = unsafe { nil }
 mut:
 	pool_conn &pool.ConnectionPool
 }
@@ -36,14 +34,10 @@ fn (mut api APIControllerV2) init_cors() {
 }
 
 // init_rate_limit aplica o middleware de rate-limit (por IP/api_key, minuto + mes)
-// usando o pool PostgreSQL externo (contadores e creditos persistidos).
+// usando a conexao PostgreSQL (contadores e creditos persistidos).
 fn (mut api APIControllerV2) init_rate_limit(env conf_env.EnvConfig) {
-	if unsafe { api.pool_conn_pg == nil } {
-		return
-	}
 	api.use(rate_limit.rate_limit_middleware(rate_limit.RateLimitOpts{
-		pool_conn_pg: api.pool_conn_pg
-		env:          env
+		env: env
 	}))
 }
 

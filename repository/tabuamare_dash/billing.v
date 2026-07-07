@@ -1,6 +1,5 @@
 module tabuamare_dash
 
-import pool
 import db.pg
 import repository.auth.dto
 
@@ -13,13 +12,7 @@ pub:
 }
 
 // get_plan_status retorna o plano do usuario e suas api_keys ativas.
-pub fn get_plan_status(mut pool_conn pool.ConnectionPool, user_id int) !PlanStatus {
-	conn := pool_conn.get()!
-	mut db := conn as pg.DB
-	defer {
-		pool_conn.put(conn) or { println(err.msg()) }
-	}
-
+pub fn get_plan_status(mut db pg.DB, user_id int) !PlanStatus {
 	rows := db.exec_param('SELECT plan FROM users WHERE id = ($1) LIMIT 1', user_id.str())!
 	plan := if rows.len > 0 {
 		if v := rows[0].vals[0] { v } else { 'free' }

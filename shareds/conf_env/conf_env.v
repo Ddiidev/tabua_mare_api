@@ -13,6 +13,7 @@ pub:
 	db_port                   string
 	db_user                   string
 	db_pass                   string
+	postgresql_conn_str       string
 	url_env                   string
 	new_relic_key             string
 	current_port              string
@@ -33,6 +34,13 @@ pub:
 	rate_limit_free_monthly   int
 	rate_limit_plan5_monthly  int
 	rate_limit_plan10_monthly int
+	rate_limit_anon_rpm       int
+	rate_limit_anon_monthly  int
+	stripe_secret_key         string
+	stripe_webhook_secret     string
+	stripe_price_plan5        string
+	stripe_price_plan10       string
+	stripe_price_planannual   string
 }
 
 // load_env carrega as variáveis de ambiente primeiro do sistema operacional e, se não encontradas,
@@ -53,6 +61,7 @@ pub fn load_env() EnvConfig {
 		db_port:                   get_env_or('DB_PORT', env_map, '').trim_space()
 		db_user:                   get_env_or('DB_USER', env_map, '').trim_space()
 		db_pass:                   get_env_or('DB_PASS', env_map, '').trim_space()
+		postgresql_conn_str:       get_env_or('POSTGRESQL_CONN_STR', env_map, '').trim_space()
 		new_relic_key:             get_env_or('NEW_RELIC_KEY', env_map, '').trim_space()
 		url_env:                   get_env_or('URL_ENV', env_map, '').trim_space()
 		google_client_id:          get_env_or('GOOGLE_CLIENT_ID', env_map, '').trim_space()
@@ -69,12 +78,19 @@ pub fn load_env() EnvConfig {
 		session_cookie_name:       get_env_or('SESSION_COOKIE_NAME', env_map, 'tm_session').trim_space()
 		session_ttl_hours:         get_env_or('SESSION_TTL_HOURS', env_map, '720').int()
 		avatar_cache_ttl_minutes:  get_env_or('AVATAR_CACHE_TTL_MINUTES', env_map, '60').int()
-		rate_limit_free_rpm:       get_env_or('RATE_LIMIT_FREE_RPM', env_map, '64').int()
-		rate_limit_plan5_rpm:      get_env_or('RATE_LIMIT_PLAN5_RPM', env_map, '512').int()
-		rate_limit_plan10_rpm:     get_env_or('RATE_LIMIT_PLAN10_RPM', env_map, '2560').int()
-		rate_limit_free_monthly:   get_env_or('RATE_LIMIT_FREE_MONTHLY', env_map, '20000').int()
-		rate_limit_plan5_monthly:  get_env_or('RATE_LIMIT_PLAN5_MONTHLY', env_map, '250000').int()
+		rate_limit_free_rpm:       get_env_or('RATE_LIMIT_FREE_RPM', env_map, '24').int()
+		rate_limit_plan5_rpm:      get_env_or('RATE_LIMIT_PLAN5_RPM', env_map, '128').int()
+		rate_limit_plan10_rpm:     get_env_or('RATE_LIMIT_PLAN10_RPM', env_map, '256').int()
+		rate_limit_free_monthly:   get_env_or('RATE_LIMIT_FREE_MONTHLY', env_map, '32000').int()
+		rate_limit_plan5_monthly:  get_env_or('RATE_LIMIT_PLAN5_MONTHLY', env_map, '256000').int()
 		rate_limit_plan10_monthly: get_env_or('RATE_LIMIT_PLAN10_MONTHLY', env_map, '0').int()
+		rate_limit_anon_rpm:       get_env_or('RATE_LIMIT_ANON_RPM', env_map, '5').int()
+		rate_limit_anon_monthly:  get_env_or('RATE_LIMIT_ANON_MONTHLY', env_map, '0').int()
+		stripe_secret_key:         get_env_or('STRIPE_SECRET_KEY', env_map, '').trim_space()
+		stripe_webhook_secret:     get_env_or('STRIPE_WEBHOOK_SECRET', env_map, '').trim_space()
+		stripe_price_plan5:        get_env_or('STRIPE_PRICE_PLAN5', env_map, '').trim_space()
+		stripe_price_plan10:       get_env_or('STRIPE_PRICE_PLAN10', env_map, '').trim_space()
+		stripe_price_planannual:   get_env_or('STRIPE_PRICE_PLANANNUAL', env_map, '').trim_space()
 	}
 }
 

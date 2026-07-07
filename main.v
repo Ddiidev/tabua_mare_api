@@ -8,6 +8,7 @@ import shareds.infradb_pg
 import shareds.conf_env
 import leafscale.veemarker
 import shareds.components_view
+import domain.auth_user
 
 struct App {
 	veb.Controller
@@ -36,25 +37,19 @@ fn main() {
 	infradb.apply_startup_migrations() or { eprintln('Startup migration skipped: ${err}') }
 	infradb_pg.apply_pg_startup_migrations() or { eprintln('PG startup migration skipped: ${err}') }
 
-	pool_conn_pg := infradb_pg.new() or {
-		eprintln('PostgreSQL (auth/dash) pool indisponivel: ${err}')
-		unsafe { nil }
-	}
-
 	mut api_controller := &APIController{
 		pool_conn: infradb.new()!,
 		env:       env
 	}
 
 	mut api_controller_v2 := &APIControllerV2{
-		pool_conn:    infradb.new()!,
-		pool_conn_pg: pool_conn_pg,
-		env:          env
+		pool_conn: infradb.new()!,
+		env:       env
 	}
 
 	mut auth_controller := &AuthController{
-		pool_conn_pg: pool_conn_pg
-		env:          env
+		env:          env,
+		avatar_cache: auth_user.new_avatar_cache(env.avatar_cache_ttl_minutes)
 	}
 
 	api_controller.init_cors()
@@ -70,11 +65,25 @@ fn main() {
 	veb.run[App, web_ctx.WsCtx](mut app, port)
 }
 
+fn (app &App) is_logged_in(mut ctx web_ctx.WsCtx) bool {
+	cookie_name := rlock app.env {
+		app.env.session_cookie_name
+	}
+	secret := rlock app.env {
+		app.env.session_secret
+	}
+	if secret == '' {
+		return false
+	}
+	token := ctx.get_cookie(cookie_name) or { return false }
+	return auth_user.verify(secret, token)
+}
+
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
 	dump(ctx.ip())
 	mut data := map[string]veemarker.Any{}
-	data['navbar'] = app.navbar('/')
+	data['navbar'] = app.navbar('/', app.is_logged_in(mut ctx))
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -95,7 +104,7 @@ pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 		cache_enabled: true
 	})
 	data['og'] = app.open_graph(data)
-	data['navbar'] = app.navbar('/docs')
+	data['navbar'] = app.navbar('/docs', app.is_logged_in(mut ctx))
 	data['footer'] = app.footer()
 
 	url_env := rlock app.env {
@@ -108,7 +117,7 @@ pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 @['/playground']
 pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
-	data['navbar'] = app.navbar('/playground')
+	data['navbar'] = app.navbar('/playground', app.is_logged_in(mut ctx))
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -122,7 +131,7 @@ pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 @['/apoiar']
 pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
-	data['navbar'] = app.navbar('/apoiar')
+	data['navbar'] = app.navbar('/apoiar', app.is_logged_in(mut ctx))
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -131,6 +140,28 @@ pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 		cache_enabled: true
 	})
 	return ctx.html(engine.render('apoiar.html', data) or { '' })
+}
+
+@['/dashboard']
+pub fn (app &App) dashboard(mut ctx web_ctx.WsCtx) veb.Result {
+	if !app.is_logged_in(mut ctx) {
+		return ctx.redirect('/auth/google?next=/dashboard', veb.RedirectParams{ typ: .found })
+	}
+	mut data := map[string]veemarker.Any{}
+	data['navbar'] = app.navbar('/dashboard', true)
+	data['og'] = app.open_graph(data)
+	data['footer'] = app.footer()
+
+	url_env := rlock app.env {
+		app.env.url_env
+	}
+	data['url_env'] = url_env
+
+	mut engine := veemarker.new_engine(veemarker.EngineConfig{
+		template_dir:  './pages'
+		cache_enabled: true
+	})
+	return ctx.html(engine.render('dashboard.html', data) or { '' })
 }
 
 @['/ping'; get; head]
