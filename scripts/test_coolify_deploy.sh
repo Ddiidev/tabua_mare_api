@@ -54,6 +54,7 @@ state = {
         "app-a": {"docker_registry_image_tag": "sha-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "status": "running:healthy"},
         "app-b": {"docker_registry_image_tag": "sha-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "status": "running:healthy"},
     },
+    "deployments": {},
     "events": [],
 }
 
@@ -104,6 +105,21 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             self.reply(401, {"message": "Unauthenticated."})
             return
+        deployment_prefix = "/api/v1/deployments/"
+        if path.startswith(deployment_prefix):
+            deployment_uuid = path[len(deployment_prefix):]
+            deployment = state["deployments"].get(deployment_uuid)
+            if not deployment:
+                self.reply(404, {"message": "not found"})
+                return
+            deployment["polls"] += 1
+            if deployment["polls"] >= 2:
+                deployment["status"] = "finished"
+                state["apps"][deployment["app"]]["status"] = "running:healthy"
+            state["events"].append(f"deployment:{deployment_uuid}:{deployment['status']}")
+            save()
+            self.reply(200, {"deployment_uuid": deployment_uuid, "status": deployment["status"]})
+            return
         uuid = self.app_uuid()
         if uuid:
             state["events"].append(f"get:{uuid}")
@@ -124,7 +140,8 @@ class Handler(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length) or b"{}")
         tag = body.get("docker_registry_image_tag", "")
         state["apps"][uuid]["docker_registry_image_tag"] = tag
-        state["apps"][uuid]["status"] = "stopped"
+        # O container antigo pode continuar healthy enquanto o novo deploy esta na fila.
+        state["apps"][uuid]["status"] = "running:healthy"
         state["events"].append(f"patch:{uuid}:{tag}")
         save()
         self.reply(200, {"uuid": uuid})
@@ -137,10 +154,15 @@ class Handler(BaseHTTPRequestHandler):
         if not uuid:
             self.reply(404, {"message": "not found"})
             return
-        state["apps"][uuid]["status"] = "running:healthy"
+        deployment_uuid = f"deployment-{len(state['deployments']) + 1}"
+        state["deployments"][deployment_uuid] = {
+            "app": uuid,
+            "status": "queued",
+            "polls": 0,
+        }
         state["events"].append(f"start:{uuid}")
         save()
-        self.reply(200, {"message": "Deployment request queued."})
+        self.reply(200, {"message": "Deployment request queued.", "deployment_uuid": deployment_uuid})
 
 save()
 server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -170,8 +192,9 @@ if scenario == "success":
     assert apps["app-a"]["docker_registry_image_tag"] == target
     assert apps["app-b"]["docker_registry_image_tag"] == target
     required = [
-        f"patch:app-a:{target}", "start:app-a", "smoke:/health/ready", "smoke:/api/v2/states",
-        f"patch:app-b:{target}", "start:app-b",
+        f"patch:app-a:{target}", "start:app-a", "deployment:deployment-1:finished",
+        "smoke:/health/ready", "smoke:/api/v2/states",
+        f"patch:app-b:{target}", "start:app-b", "deployment:deployment-2:finished",
     ]
 else:
     assert apps["app-a"]["docker_registry_image_tag"] == "sha-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

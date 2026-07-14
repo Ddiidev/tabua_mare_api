@@ -3,7 +3,7 @@ set -euo pipefail
 
 readonly image_name='ghcr.io/ddiidev/tabua-mare-api'
 readonly target_tag="${1:-}"
-readonly deploy_timeout="${COOLIFY_DEPLOY_TIMEOUT:-600}"
+readonly deploy_timeout="${COOLIFY_DEPLOY_TIMEOUT:-480}"
 readonly poll_seconds="${COOLIFY_POLL_SECONDS:-5}"
 
 log() {
@@ -84,7 +84,29 @@ patch_tag() {
 }
 
 start_app() {
-	api_request POST "/applications/$1/start?force=true" >/dev/null
+	api_request POST "/applications/$1/start?force=true"
+}
+
+wait_deployment() {
+	local deployment_uuid="$1"
+	local deadline=$(( $(date +%s) + deploy_timeout ))
+	local response status
+	while (( $(date +%s) <= deadline )); do
+		response="$(api_request GET "/deployments/${deployment_uuid}" 2>/dev/null || true)"
+		if [[ -n "${response}" ]]; then
+			status="$(json_field status <<<"${response}" 2>/dev/null || true)"
+			case "${status}" in
+				finished) return 0 ;;
+				failed|cancelled-by-user)
+					log "Deployment ${deployment_uuid} terminou com ${status}"
+					return 1
+					;;
+			esac
+		fi
+		sleep "${poll_seconds}"
+	done
+	log "Timeout: deployment ${deployment_uuid} nao terminou"
+	return 1
 }
 
 wait_healthy() {
@@ -134,14 +156,21 @@ old_tag_b=''
 deploy_app() {
 	local slot="$1"
 	local uuid="$2"
+	local start_response deployment_uuid
 	log "Atualizando app ${slot} para ${target_tag}"
-	patch_tag "${uuid}" "${target_tag}" || return 1
 	if [[ "${slot}" == A ]]; then
 		touched_a=1
 	else
 		touched_b=1
 	fi
-	start_app "${uuid}" || return 1
+	patch_tag "${uuid}" "${target_tag}" || return 1
+	start_response="$(start_app "${uuid}")" || return 1
+	deployment_uuid="$(json_field deployment_uuid <<<"${start_response}" 2>/dev/null || true)"
+	[[ -n "${deployment_uuid}" ]] || {
+		log "Coolify nao retornou deployment_uuid para app ${slot}"
+		return 1
+	}
+	wait_deployment "${deployment_uuid}" || return 1
 	wait_healthy "${uuid}" "${target_tag}" || return 1
 	public_smoke
 }
@@ -150,13 +179,18 @@ restore_app() {
 	local slot="$1"
 	local uuid="$2"
 	local old_tag="$3"
+	local start_response deployment_uuid
 	log "Rollback app ${slot} para ${old_tag}"
-	patch_tag "${uuid}" "${old_tag}" && \
-		start_app "${uuid}" && \
-		wait_healthy "${uuid}" "${old_tag}"
+	patch_tag "${uuid}" "${old_tag}" || return 1
+	start_response="$(start_app "${uuid}")" || return 1
+	deployment_uuid="$(json_field deployment_uuid <<<"${start_response}" 2>/dev/null || true)"
+	[[ -n "${deployment_uuid}" ]] || return 1
+	wait_deployment "${deployment_uuid}" && wait_healthy "${uuid}" "${old_tag}"
 }
 
 rollback() {
+	[[ "${rollback_in_progress}" == 0 ]] || return 1
+	rollback_in_progress=1
 	local failed=0
 	if [[ "${touched_b}" == 1 ]]; then
 		restore_app B "${COOLIFY_APP_B_UUID}" "${old_tag_b}" || failed=1
@@ -167,8 +201,11 @@ rollback() {
 	if [[ "${failed}" == 1 ]]; then
 		log 'ERRO CRITICO: rollback incompleto; verificar Coolify imediatamente'
 	fi
+	rollback_in_progress=0
 	return "${failed}"
 }
+
+rollback_in_progress=0
 
 app_a="$(get_app "${COOLIFY_APP_A_UUID}")" || fail 'nao foi possivel ler app A'
 app_b="$(get_app "${COOLIFY_APP_B_UUID}")" || fail 'nao foi possivel ler app B'
@@ -176,6 +213,14 @@ old_tag_a="$(json_field docker_registry_image_tag <<<"${app_a}")"
 old_tag_b="$(json_field docker_registry_image_tag <<<"${app_b}")"
 [[ "${old_tag_a}" =~ ^sha-[0-9a-f]{40}$ ]] || fail 'tag anterior invalida no app A'
 [[ "${old_tag_b}" =~ ^sha-[0-9a-f]{40}$ ]] || fail 'tag anterior invalida no app B'
+
+on_signal() {
+	trap - INT TERM
+	log 'Deploy interrompido; tentando rollback antes de sair'
+	rollback || true
+	exit 130
+}
+trap on_signal INT TERM
 
 if ! deploy_app A "${COOLIFY_APP_A_UUID}"; then
 	log 'Deploy A falhou; iniciando rollback'
@@ -188,4 +233,5 @@ if ! deploy_app B "${COOLIFY_APP_B_UUID}"; then
 	exit 1
 fi
 
+trap - INT TERM
 log "Deploy concluido: A/B em ${target_tag}"
