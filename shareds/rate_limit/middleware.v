@@ -37,12 +37,12 @@ fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) 
 	ctx.plan = 'anon'
 
 	if connstr == '' {
-		return true
+		return reject_dependency(mut ctx, 'PostgreSQL nao configurado')
 	}
 
 	mut db_pg := pg.connect_with_conninfo(connstr) or {
 		eprintln('rate_limit: pg connect failed: ${err}')
-		return true
+		return reject_dependency(mut ctx, 'PostgreSQL indisponivel')
 	}
 	defer {
 		db_pg.close() or {}
@@ -54,12 +54,22 @@ fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) 
 	api_key := extract_api_key(mut ctx)
 	if api_key != '' {
 		mut key_found := true
-		key := repo_auth.find_by_key(mut db_pg, api_key) or { key_found = false; dto.ApiKey{} }
+		key := repo_auth.find_by_key(mut db_pg, api_key) or {
+			if err.msg() != 'api key nao encontrada' {
+				eprintln('rate_limit api key lookup failed: ${err}')
+				return reject_dependency(mut ctx, 'Falha ao consultar rate-limit')
+			}
+			key_found = false
+			dto.ApiKey{}
+		}
 		if key_found && !key.revoked {
 			// valida se o plano do usuario ainda permite o plano da key
 			// evita furo: usuario cancelou, mas a key antiga continua paga
 			mut effective_plan := key.plan
-			user_plan := repo_auth.find_plan_by_id(mut db_pg, key.user_id) or { '' }
+			user_plan := repo_auth.find_plan_by_id(mut db_pg, key.user_id) or {
+				eprintln('rate_limit user plan lookup failed: ${err}')
+				return reject_dependency(mut ctx, 'Falha ao consultar rate-limit')
+			}
 			if !is_plan_allowed(key.plan, user_plan) {
 				effective_plan = user_plan
 			}
@@ -76,8 +86,8 @@ fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) 
 }
 
 // plan_limits resolve o RPM e a cota mensal para um plano.
-	// sem api_key, qualquer cliente (inclusive JWT logado) usa anon por IP;
-	// free usa rate_limit_free_* somente para api_keys Free;
+// sem api_key, qualquer cliente (inclusive JWT logado) usa anon por IP;
+// free usa rate_limit_free_* somente para api_keys Free;
 // plan5/plan10/planannual usam os campos correspondentes.
 // ATENCAO: regra espelhada em pages/dashboard.html:isPlanAllowed() — nao confundir.
 pub fn plan_limits(env conf_env.EnvConfig, plan string) (int, int) {
@@ -109,7 +119,7 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 	minute_key := rl.window_key_minute()
 	exceeded_minute := rl.inc_and_check(mut db, bucket, 'minute', minute_key, limit_rpm) or {
 		eprintln('rate_limit minute check failed: ${err}')
-		false
+		return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
 	}
 	if exceeded_minute {
 		ctx.res.set_status(.too_many_requests)
@@ -121,12 +131,13 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 	// garante que a linha de creditos existe antes de qualquer operacao (decrement ou inc)
 	rl.ensure_credit_row(mut db, bucket, plan, limit_monthly) or {
 		eprintln('rate_limit ensure_credit_row failed: ${err}')
+		return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
 	}
 
 	if limit_monthly != 0 {
 		exceeded_month := rl.decrement(mut db, bucket) or {
 			eprintln('rate_limit monthly check failed: ${err}')
-			false
+			return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
 		}
 		if exceeded_month {
 			ctx.res.set_status(.too_many_requests)
@@ -138,10 +149,17 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 		// plano ilimitado: apenas conta used
 		rl.inc(mut db, bucket, 'month', rl.window_key_month()) or {
 			eprintln('rate_limit month count failed: ${err}')
+			return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
 		}
 	}
 
 	return true
+}
+
+fn reject_dependency(mut ctx web_ctx.WsCtx, message string) bool {
+	ctx.res.set_status(.service_unavailable)
+	ctx.json(types.failure[string](503, message))
+	return false
 }
 
 pub fn extract_api_key(mut ctx web_ctx.WsCtx) string {

@@ -33,13 +33,13 @@ request_code() {
 	fi
 }
 
-ready_code=000
+live_code=000
 for _ in $(seq 1 300); do
-	ready_code=$(request_code GET /health/ready)
-	[ "$ready_code" = 204 ] && break
+	live_code=$(request_code GET /health/live)
+	[ "$live_code" = 204 ] && break
 	sleep 0.05
 done
-[ "$ready_code" = 204 ]
+[ "$live_code" = 204 ]
 
 live_get=$(request_code GET /health/live)
 ready_get=$(request_code GET /health/ready)
@@ -50,12 +50,14 @@ docs_get=$(request_code GET /docs)
 playground_get=$(request_code GET /playground)
 
 [ "$live_get" = 204 ]
-[ "$ready_get" = 204 ]
+[ "$ready_get" = 503 ]
 [ "$live_head" = 204 ]
-[ "$ready_head" = 204 ]
+[ "$ready_head" = 503 ]
 [ "$ping_get" = 204 ]
 [ "$docs_get" = 200 ]
 [ "$playground_get" = 200 ]
+api_without_pg=$(request_code GET /api/v2/states)
+[ "$api_without_pg" = 503 ]
 curl -fsS "http://127.0.0.1:${port}/docs" -o "${tmp_dir}/docs.html"
 curl -fsS "http://127.0.0.1:${port}/playground" -o "${tmp_dir}/playground.html"
 grep -Fq '<link rel="canonical" href="https://tabuamare.api.br" />' \

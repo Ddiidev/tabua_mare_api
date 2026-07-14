@@ -142,7 +142,7 @@ jobs:
           SESSION_SECRET=ci-only-session-secret-with-more-than-32-bytes
           STRIPE_SECRET_KEY=sk_test_ci
           STRIPE_WEBHOOK_SECRET=whsec_ci
-          URL_ENV=https://tabuamare.api.br
+          URL_ENV=http://localhost:3330
           ENV
 
       - name: Smoke da imagem exata em A/B

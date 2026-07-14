@@ -119,6 +119,70 @@ pub fn stripe_price_ids(env_map map[string]string) StripePriceIds {
 	}
 }
 
+pub fn is_production(env EnvConfig) bool {
+	return env.url_env.trim_right('/') == 'https://tabuamare.api.br'
+}
+
+fn is_placeholder_value(value string) bool {
+	trimmed := value.trim_space()
+	lower := trimmed.to_lower()
+	if lower == ''
+		|| lower in ['change-me', 'changeme', 'replace-me', 'replaceme', 'placeholder', 'todo', 'your-secret-here'] {
+		return true
+	}
+	if lower.contains('precisa preencher') || lower.contains('placeholder')
+		|| lower.contains('replace-me') {
+		return true
+	}
+	return trimmed.starts_with('[') && trimmed.ends_with(']')
+}
+
+fn has_prefixed_payload(value string, prefix string, min_payload_len int) bool {
+	trimmed := value.trim_space()
+	return !is_placeholder_value(trimmed) && trimmed.starts_with(prefix)
+		&& trimmed.len >= prefix.len + min_payload_len
+}
+
+pub fn validate_startup(env EnvConfig) ! {
+	if !is_production(env) {
+		return
+	}
+
+	secret := env.session_secret.trim_space()
+	if secret.len < 32 || is_placeholder_value(secret) || secret.to_lower() == 'session_secret' {
+		return error('SESSION_SECRET ausente, placeholder ou fraco para producao')
+	}
+	if is_placeholder_value(env.postgresql_conn_str) {
+		return error('POSTGRESQL_CONN_STR obrigatoria em producao')
+	}
+	if is_placeholder_value(env.google_client_id) || env.google_client_id.trim_space().len < 20 {
+		return error('GOOGLE_CLIENT_ID obrigatorio em producao')
+	}
+	if is_placeholder_value(env.google_client_secret)
+		|| env.google_client_secret.trim_space().len < 16 {
+		return error('GOOGLE_CLIENT_SECRET obrigatorio em producao')
+	}
+	if env.google_redirect_uri != 'https://tabuamare.api.br/auth/google/callback' {
+		return error('GOOGLE_REDIRECT_URI deve usar o callback oficial de producao')
+	}
+	if !has_prefixed_payload(env.stripe_secret_key, 'sk_live_', 16) {
+		return error('STRIPE_SECRET_KEY deve usar sk_live_ em producao')
+	}
+	if !has_prefixed_payload(env.stripe_webhook_secret, 'whsec_', 16) {
+		return error('STRIPE_WEBHOOK_SECRET deve usar whsec_ em producao')
+	}
+	prices := [env.stripe_price_plan5, env.stripe_price_plan10, env.stripe_price_planannual]
+	price_names := ['STRIPE_PRICE_PLAN5', 'STRIPE_PRICE_PLAN10', 'STRIPE_PRICE_PLANANNUAL']
+	for index, price in prices {
+		if !has_prefixed_payload(price, 'price_', 8) {
+			return error('${price_names[index]} deve conter um price ID valido')
+		}
+	}
+	if prices[0] == prices[1] || prices[0] == prices[2] || prices[1] == prices[2] {
+		return error('Stripe prices devem ser distintos por plano')
+	}
+}
+
 // get_env obtém o valor de uma variável de ambiente específica
 // Parâmetros:
 //   key - A chave da variável de ambiente a ser buscada

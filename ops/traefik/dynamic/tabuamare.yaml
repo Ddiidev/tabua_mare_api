@@ -31,6 +31,28 @@ http:
       tls:
         certResolver: letsencrypt
 
+    tabuamare-deploy-slot-a:
+      entryPoints:
+        - https
+      rule: Host(`tabuamare.api.br`) && Header(`X-Tabuamare-Deploy-Slot`, `A`) && Header(`X-Tabuamare-Deploy-Secret`, `__DEPLOY_SMOKE_SECRET__`)
+      priority: 100
+      middlewares:
+        - tabuamare-compress
+      service: tabuamare-a
+      tls:
+        certResolver: letsencrypt
+
+    tabuamare-deploy-slot-b:
+      entryPoints:
+        - https
+      rule: Host(`tabuamare.api.br`) && Header(`X-Tabuamare-Deploy-Slot`, `B`) && Header(`X-Tabuamare-Deploy-Secret`, `__DEPLOY_SMOKE_SECRET__`)
+      priority: 100
+      middlewares:
+        - tabuamare-compress
+      service: tabuamare-b
+      tls:
+        certResolver: letsencrypt
+
     tabuamare-www:
       entryPoints:
         - https
@@ -50,6 +72,26 @@ http:
         certResolver: letsencrypt
 
   services:
+    tabuamare-a:
+      loadBalancer:
+        passHostHeader: true
+        healthCheck:
+          path: /health/ready
+          interval: 5s
+          timeout: 2s
+        servers:
+          - url: http://__APP_A_CONTAINER__:3330
+
+    tabuamare-b:
+      loadBalancer:
+        passHostHeader: true
+        healthCheck:
+          path: /health/ready
+          interval: 5s
+          timeout: 2s
+        servers:
+          - url: http://__APP_B_CONTAINER__:3330
+
     tabuamare-ab:
       loadBalancer:
         passHostHeader: true

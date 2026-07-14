@@ -27,6 +27,7 @@ jobs:
       COOLIFY_APP_B_UUID: ${{ vars.COOLIFY_APP_B_UUID }}
       PUBLIC_SMOKE_URL: https://tabuamare.api.br
       COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+      DEPLOY_SMOKE_SECRET: ${{ secrets.DEPLOY_SMOKE_SECRET }}
 
     steps:
       - name: Checkout
@@ -41,12 +42,16 @@ jobs:
             echo 'commit_sha deve conter 40 caracteres hexadecimais minusculos' >&2
             exit 1
           }
-          for name in COOLIFY_URL COOLIFY_APP_A_UUID COOLIFY_APP_B_UUID COOLIFY_TOKEN; do
+          for name in COOLIFY_URL COOLIFY_APP_A_UUID COOLIFY_APP_B_UUID COOLIFY_TOKEN DEPLOY_SMOKE_SECRET; do
             [[ -n "${!name:-}" ]] || {
               echo "Configuracao ausente: $name" >&2
               exit 1
             }
           done
+          [[ "${#DEPLOY_SMOKE_SECRET}" -ge 32 ]] || {
+            echo 'DEPLOY_SMOKE_SECRET deve ter no minimo 32 caracteres' >&2
+            exit 1
+          }
 
       - name: Atualizar A, validar e atualizar B
         env:
