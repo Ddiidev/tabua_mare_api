@@ -115,12 +115,9 @@ cp .env.template .env
 2. Configure as seguintes variáveis no arquivo `.env`:
 
 ```
-DB_DATABASE=nome_do_banco
-DB_USER=usuario_do_banco
-DB_HOST=localhost
-DB_PASS=senha_do_banco
-DB_PORT=5432
-NEW_RELIC_KEY=CHAVE
+DB_SQLITE_PATH=./taubinha.sqlite
+POSTGRESQL_CONN_STR=postgresql://usuario:senha@localhost:5432/tabuamare
+GOOGLE_REDIRECT_URI=http://localhost:3330/auth/google/callback
 URL_ENV=http://localhost:3330
 ```
 
@@ -134,33 +131,32 @@ v run . 3330
 
 A aplicação iniciará e servirá:
 
-- API em `http://localhost:3330/api/v1`
+- API em `http://localhost:3330/api/v2`
 - Páginas: `http://localhost:3330/`, `/docs`, `/playground`, `/apoiar`
 
-### Produção (Dockerfile único)
+### Imagem de produção Alpine
 
 1. Construa a imagem usando o `Dockerfile` na raiz:
 
 ```bash
-docker build -t tabua-mare-api-single .
+docker build --platform linux/amd64 -t tabua-mare-api:local .
 ```
 
-2. Suba o container expondo a porta pública do nginx:
+2. Suba uma instância com volume SQLite próprio:
 
 ```bash
-docker run --rm -p 9090:3000 \
-  -e CLOUDFLARE_TUNNEL_TOKEN=seu_token_opcional \
-  tabua-mare-api-single
+docker run --rm -p 3330:3330 \
+  --env-file .env \
+  -v tabuamare-sqlite:/app/data \
+  tabua-mare-api:local
 ```
 
-- O container sobe **duas instâncias** da API nas portas internas `3330` e `3340`.
-- O **nginx** expõe a aplicação em `3000` por padrão dentro do container.
-- Para rodar local mapeando para `9090` no host, use `-p 9090:3000`.
-- Em plataformas que injetam `PORT` (como subdomínios gerenciados), o container passa a escutar nessa porta automaticamente.
-- O **cloudflared** só inicia se `CLOUDFLARE_TUNNEL_TOKEN` for informado.
-- O banco SQLite é copiado para `/app/data/taubinha.sqlite` na primeira inicialização.
+- Alpine 3.22, `linux/amd64`, processo V como UID `10001`.
+- Uma instância por container, porta interna `3330`.
+- O seed SQLite é validado e atualizado atomicamente em `/app/data/taubinha.sqlite`.
+- Health checks: `/health/live` e `/health/ready`.
 
-### Produção legada (Docker Compose)
+### Validação local A/B
 
 1. Copie o arquivo `.env.template` para `.env` e ajuste variáveis conforme necessário.
 2. Construa e suba os serviços:
@@ -169,11 +165,15 @@ docker run --rm -p 9090:3000 \
 docker compose up -d --build
 ```
 
-- O fluxo legado continua usando `docker-compose.yml`.
-- O compose usa `dockerfiles/Dockerfile.compose`.
-- Nginx é configurado automaticamente a partir de `nginx/`.
-- A porta pública continua sendo `9090`.
-- Opcional: `CLOUDFLARE_TUNNEL_TOKEN` para habilitar Cloudflare Tunnel.
+- O Compose local sobe somente `tabuamare-a` e `tabuamare-b`.
+- Cada instância usa volume SQLite exclusivo.
+- Portas locais: `3330` e `3340`.
+
+### Produção Coolify
+
+Produção usa duas aplicações regulares Coolify baseadas na mesma imagem GHCR imutável, atrás de Cloudflare e Traefik. Não usa nginx, Cloudflare Tunnel, Swarm ou Compose de produção.
+
+Setup, firewall, DNS-01, volumes, A/B e deploy: [ops/README.md](ops/README.md).
 
 ## Apoie o projeto
 

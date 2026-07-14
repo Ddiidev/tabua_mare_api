@@ -24,10 +24,10 @@ v test tests/
 # Run a single test file
 v test tests/find_nearested_harbor_test.v
 
-# Docker production build (single-container)
-docker build -t tabua-mare-api-single .
+# Docker production build (Alpine, uma app por container)
+docker build --platform linux/amd64 -t tabua-mare-api:local .
 
-# Docker production build (legacy compose)
+# Docker Compose local A/B
 docker compose up -d --build
 ```
 
@@ -137,9 +137,9 @@ tests/             — integration tests (_test.v files, require DB)
 | Plan 10 (api_key) | 2.048 | unlimited |
 | Anual (api_key) | 2.048 | unlimited |
 
-  Counters and monthly credits persisted in PostgreSQL. Sem `api_key`, o middleware trata a requisição como anônima por IP, independentemente de JWT; a chave válida determina o plano e o bucket isolado. nginx has no rate-limit; the app is the sole rate-limit layer.
+  Counters and monthly credits persisted in PostgreSQL. Sem `api_key`, o middleware trata a requisição como anônima por IP, independentemente de JWT; a chave válida determina o plano e o bucket isolado. A aplicação é a única camada de rate-limit.
 
-  **Note on anon/free buckets sharing IPs:** due to the Cloudflare Tunnel → nginx → app proxy chain, distinct clients may collapse into the same `ip:...` bucket (tunnel egress IP). This is **accepted by design**: anon and free-no-key users share rate-limit capacity distributed by IP, even if the IP is not their real public IP. A future priority queue will enforce tier precedence on top of this.
+  **IP real em produção:** o fluxo é Cloudflare proxy → Traefik → app. `veb.Context.ip()` prioriza `CF-Connecting-IP`; esse header só é confiável porque 80/443 da origem aceitam exclusivamente ranges oficiais Cloudflare. Acesso direto ao IP deve permanecer bloqueado.
 
 - **Priority tiers (planned, not yet implemented as a queue):**
 
@@ -162,12 +162,15 @@ tests/             — integration tests (_test.v files, require DB)
 
 ### Production Deployment
 
-- **Root `Dockerfile` (official single-container path)** — runs 2 app instances inside the same container on ports `3330` and `3340`, exposes nginx on `9090`, and optionally starts `cloudflared` when `CLOUDFLARE_TUNNEL_TOKEN` is present. Process management via `supervisord`.
-- **`docker-compose.yml` (legacy path)** — 4-app topology behind nginx + cloudflared, builds from `dockerfiles/Dockerfile.compose`.
+- **Root `Dockerfile`** — Alpine 3.22 multi-stage, uma instância V por container na porta `3330`, UID 10001 e volume `/app/data`.
+- **`docker-compose.yml`** — somente validação local A/B; volumes `sqlite-a` e `sqlite-b` separados.
+- **Produção** — duas aplicações regulares Coolify usando `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`, balanceadas pelo Traefik.
+- **Fluxo público** — Cloudflare proxy → Traefik/Coolify → A ou B. Sem nginx, Cloudflare Tunnel, Swarm ou Compose de produção.
+- **Operação** — scripts e runbook em `ops/`; deploy manual sequencial em `.github/workflows/deploy-production.yml`.
 
 Production binary:
 ```
-v -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d using_sqlite -d use_openssl -prod . -o TabuaMareAPI
+v -cc gcc -ldflags "-Wl,--gc-sections -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d using_sqlite -d use_openssl -d new_veb -prod . -o TabuaMareAPI
 ```
 
 ### Templating
