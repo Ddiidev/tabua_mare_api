@@ -46,12 +46,22 @@ ready_get=$(request_code GET /health/ready)
 live_head=$(request_code HEAD /health/live)
 ready_head=$(request_code HEAD /health/ready)
 ping_get=$(request_code GET /ping)
+docs_get=$(request_code GET /docs)
+playground_get=$(request_code GET /playground)
 
 [ "$live_get" = 204 ]
 [ "$ready_get" = 204 ]
 [ "$live_head" = 204 ]
 [ "$ready_head" = 204 ]
 [ "$ping_get" = 204 ]
+[ "$docs_get" = 200 ]
+[ "$playground_get" = 200 ]
+curl -fsS "http://127.0.0.1:${port}/docs" -o "${tmp_dir}/docs.html"
+curl -fsS "http://127.0.0.1:${port}/playground" -o "${tmp_dir}/playground.html"
+grep -Fq '<link rel="canonical" href="https://tabuamare.api.br" />' \
+	"${tmp_dir}/docs.html"
+grep -Fq '<link rel="canonical" href="https://tabuamare.api.br" />' \
+	"${tmp_dir}/playground.html"
 
 started=$(date +%s)
 kill -TERM "$pid"
