@@ -7,7 +7,8 @@ x-app: &app
     dockerfile: Dockerfile
   restart: unless-stopped
   env_file:
-    - .env
+    - path: ${TABUAMARE_ENV_FILE:-.env}
+      required: false
   environment:
     PORT: "3330"
     DB_SQLITE_PATH: /app/data/taubinha.sqlite
