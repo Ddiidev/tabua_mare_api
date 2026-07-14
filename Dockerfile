@@ -1,100 +1,96 @@
-FROM ubuntu:20.04 AS builder
+FROM alpine:3.22 AS builder
 
-ENV DEBIAN_FRONTEND=noninteractive
+ARG V_COMMIT=45ae01d23168b6372f734eeb38a77360bbcf184a
+ARG VEEMARKER_COMMIT=1510ef5a7cbf980f2e075f02baada7190748e3f7
+ARG DOTENV_COMMIT=1d9477c8b1a3f5ca14b2eb042c4e6d52449b75d4
+ARG V_STRIPE_COMMIT=ccc7e4151038589d97b47e3cc7d0de44abf3247c
 
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    build-essential \
-    libsqlite3-dev \
-    libpq-dev \
+RUN apk add --no-cache \
+    build-base \
     ca-certificates \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    gc-dev \
+    git \
+    openssl-dev \
+    pax-utils \
+    pkgconf \
+    postgresql-dev \
+    sqlite-dev
 
-WORKDIR /tmp
-RUN git clone https://github.com/vlang/v && \
-    cd v && \
-    make && \
-    ./v symlink && \
-    v --version
+RUN git clone https://github.com/vlang/v.git /opt/v \
+    && git -C /opt/v checkout --detach "${V_COMMIT}" \
+    && make -C /opt/v \
+    && test "$(git -C /opt/v rev-parse HEAD)" = "${V_COMMIT}" \
+    && /opt/v/v version | grep -F 'V 0.5.2'
 
-WORKDIR /app
-COPY v.mod ./
+RUN mkdir -p /root/.vmodules/leafscale /root/.vmodules/ken0x0a \
+    && git clone https://github.com/leafscale/veemarker.git /root/.vmodules/leafscale/veemarker \
+    && git -C /root/.vmodules/leafscale/veemarker checkout --detach "${VEEMARKER_COMMIT}" \
+    && git clone https://github.com/ken0x0a/v-dotenv.git /root/.vmodules/ken0x0a/dotenv \
+    && git -C /root/.vmodules/ken0x0a/dotenv checkout --detach "${DOTENV_COMMIT}" \
+    && git clone https://github.com/Ddiidev/v-stripe.git /root/.vmodules/v_stripe \
+    && git -C /root/.vmodules/v_stripe checkout --detach "${V_STRIPE_COMMIT}" \
+    && test "$(git -C /root/.vmodules/leafscale/veemarker rev-parse HEAD)" = "${VEEMARKER_COMMIT}" \
+    && test "$(git -C /root/.vmodules/ken0x0a/dotenv rev-parse HEAD)" = "${DOTENV_COMMIT}" \
+    && test "$(git -C /root/.vmodules/v_stripe rev-parse HEAD)" = "${V_STRIPE_COMMIT}"
 
-RUN v install && \
-    v install https://github.com/ken0x0a/v-dotenv
-
+WORKDIR /src
 COPY . .
 
-RUN v version && \
-    v -cc gcc -g -ldflags "-Wl,--gc-sections -march=native -ffunction-sections -fdata-sections" -gc boehm_incr_opt -d using_sqlite -d use_openssl . -o TabuaMareAPI
+RUN /opt/v/v \
+    -cc gcc \
+    -ldflags "-Wl,--gc-sections -ffunction-sections -fdata-sections" \
+    -gc boehm_incr_opt \
+    -d using_sqlite \
+    -d use_openssl \
+    -d new_veb \
+    -prod \
+    . \
+    -o TabuaMareAPI \
+    && sha256sum taubinha.sqlite | awk '{ print $1 }' > taubinha.sqlite.sha256 \
+    && scanelf --needed --nobanner TabuaMareAPI \
+    && ldd TabuaMareAPI | tee /tmp/ldd.txt \
+    && ! grep -Fq 'not found' /tmp/ldd.txt
 
-FROM ubuntu:20.04
+FROM alpine:3.22 AS runtime
 
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y \
-    libssl1.1 \
-    libsqlite3-0 \
-    libpq5 \
+RUN apk add --no-cache \
     ca-certificates \
     curl \
-    binutils \
-    nginx \
-    supervisor \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN set -eux; \
-    mkdir -p --mode=0755 /usr/share/keyrings; \
-    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main" > /etc/apt/sources.list.d/cloudflared.list; \
-    apt-get update; \
-    apt-get install -y cloudflared; \
-    rm -rf /var/lib/apt/lists/*
-
-ENV NGINX_PID_DIR=/tmp
-ENV SUPERVISOR_PID_DIR=/tmp
+    gc \
+    libcrypto3 \
+    libgcc \
+    libpq \
+    libssl3 \
+    sqlite \
+    sqlite-libs \
+    su-exec \
+    tini \
+    tzdata \
+    && addgroup -S -g 10001 app \
+    && adduser -S -D -H -u 10001 -G app app \
+    && mkdir -p /app/data /app/seed \
+    && chown app:app /app/data /app/seed \
+    && chmod 0750 /app/data /app/seed
 
 WORKDIR /app
 
-COPY --from=builder /app/TabuaMareAPI ./
-COPY --from=builder /app/pages ./pages
-COPY --from=builder /app/cache ./cache
-COPY --from=builder /app/taubinha.sqlite ./taubinha.sqlite
+COPY --from=builder /src/TabuaMareAPI /app/TabuaMareAPI
+COPY --from=builder /src/pages /app/pages
+COPY --from=builder /src/taubinha.sqlite /app/seed/taubinha.sqlite
+COPY --from=builder /src/taubinha.sqlite.sha256 /app/seed/taubinha.sqlite.sha256
+COPY dockerfiles/entrypoint-alpine.sh /usr/local/bin/entrypoint-alpine.sh
 
-COPY --from=builder /app/start.sh ./start.sh
-COPY --from=builder /app/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY --from=builder /app/dockerfiles/nginx.single.conf /app/dockerfiles/nginx.single.conf
-COPY --from=builder /app/dockerfiles/supervisord.single.conf /app/dockerfiles/supervisord.single.conf
+RUN chmod 0755 /app/TabuaMareAPI /usr/local/bin/entrypoint-alpine.sh \
+    && chmod -R a=rX /app/pages /app/seed
 
-RUN set -eux; \
-    chmod +x ./start.sh; \
-    mkdir -p \
-      /app/data \
-      /tmp/tabua-mare/supervisor-conf \
-      /tmp/tabua-mare/nginx-conf \
-      /tmp/nginx/client_body_temp \
-      /tmp/nginx/proxy_temp \
-      /tmp/nginx/fastcgi_temp \
-      /tmp/nginx/uwsgi_temp \
-      /tmp/nginx/scgi_temp \
-      /var/lib/nginx/body \
-      /var/lib/nginx/proxy \
-      /var/lib/nginx/fastcgi \
-      /var/lib/nginx/uwsgi \
-      /var/lib/nginx/scgi; \
-    chmod -R a+rwX /app/data /tmp/tabua-mare /tmp/nginx /var/lib/nginx; \
-    chmod -R a+rwX /var/log/nginx 2>/dev/null || true; \
-    rm -f /etc/nginx/conf.d/default.conf /etc/nginx/sites-enabled/default
+ENV PORT=3330 \
+    DB_SQLITE_PATH=/app/data/taubinha.sqlite \
+    URL_ENV=https://tabuamare.api.br \
+    TZ=America/Sao_Paulo
 
-ENV PORT=3000
-ENV DB_SQLITE_PATH=/app/data/taubinha.sqlite
-ENV URL_ENV=https://tabuamare.devtu.qzz.io
+EXPOSE 3330
 
-EXPOSE 3000
+HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=3 \
+    CMD curl -fsS -o /dev/null http://127.0.0.1:${PORT}/health/ready || exit 1
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD ["/bin/sh", "-c", "curl -fsS http://127.0.0.1:${PORT:-9090}/api-health || exit 1"]
-
-ENTRYPOINT ["./start.sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint-alpine.sh"]
