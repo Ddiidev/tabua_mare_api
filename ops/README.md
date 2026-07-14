@@ -12,6 +12,7 @@ tar -C ops -cf - bootstrap_vps.sh cloudflare-origin-firewall.sh \
 ```
 
 O bootstrap fixa `AUTOUPDATE=false`. Atualizacoes futuras do Coolify ficam manuais.
+O firewall entra antes de Docker/Coolify. No boot, restaura os ultimos ranges Cloudflare validos; sem cache, bloqueia 80/443 ate obter uma lista oficial valida. As portas 8000/6001/6002 permanecem acessiveis apenas via loopback/tunnel SSH.
 
 ## 2. Primeiro admin, sem expor porta 8000
 
