@@ -35,12 +35,19 @@ pub:
 	rate_limit_plan5_monthly  int
 	rate_limit_plan10_monthly int
 	rate_limit_anon_rpm       int
-	rate_limit_anon_monthly  int
+	rate_limit_anon_monthly   int
 	stripe_secret_key         string
 	stripe_webhook_secret     string
 	stripe_price_plan5        string
 	stripe_price_plan10       string
 	stripe_price_planannual   string
+}
+
+pub struct StripePriceIds {
+pub:
+	plan5      string
+	plan10     string
+	planannual string
 }
 
 // load_env carrega as variáveis de ambiente primeiro do sistema operacional e, se não encontradas,
@@ -52,6 +59,8 @@ pub fn load_env() EnvConfig {
 	} else {
 		dotenv.parse('.env')
 	}
+
+	prices := stripe_price_ids(env_map)
 
 	// Create and populate the config struct
 	return EnvConfig{
@@ -78,19 +87,35 @@ pub fn load_env() EnvConfig {
 		session_cookie_name:       get_env_or('SESSION_COOKIE_NAME', env_map, 'tm_session').trim_space()
 		session_ttl_hours:         get_env_or('SESSION_TTL_HOURS', env_map, '720').int()
 		avatar_cache_ttl_minutes:  get_env_or('AVATAR_CACHE_TTL_MINUTES', env_map, '60').int()
-		rate_limit_free_rpm:       get_env_or('RATE_LIMIT_FREE_RPM', env_map, '24').int()
-		rate_limit_plan5_rpm:      get_env_or('RATE_LIMIT_PLAN5_RPM', env_map, '128').int()
-		rate_limit_plan10_rpm:     get_env_or('RATE_LIMIT_PLAN10_RPM', env_map, '256').int()
+		rate_limit_free_rpm:       get_env_or('RATE_LIMIT_FREE_RPM', env_map, '64').int()
+		rate_limit_plan5_rpm:      get_env_or('RATE_LIMIT_PLAN5_RPM', env_map, '512').int()
+		rate_limit_plan10_rpm:     get_env_or('RATE_LIMIT_PLAN10_RPM', env_map, '2048').int()
 		rate_limit_free_monthly:   get_env_or('RATE_LIMIT_FREE_MONTHLY', env_map, '32000').int()
 		rate_limit_plan5_monthly:  get_env_or('RATE_LIMIT_PLAN5_MONTHLY', env_map, '256000').int()
 		rate_limit_plan10_monthly: get_env_or('RATE_LIMIT_PLAN10_MONTHLY', env_map, '0').int()
-		rate_limit_anon_rpm:       get_env_or('RATE_LIMIT_ANON_RPM', env_map, '5').int()
-		rate_limit_anon_monthly:  get_env_or('RATE_LIMIT_ANON_MONTHLY', env_map, '0').int()
+		rate_limit_anon_rpm:       get_env_or('RATE_LIMIT_ANON_RPM', env_map, '16').int()
+		rate_limit_anon_monthly:   get_env_or('RATE_LIMIT_ANON_MONTHLY', env_map, '0').int()
 		stripe_secret_key:         get_env_or('STRIPE_SECRET_KEY', env_map, '').trim_space()
 		stripe_webhook_secret:     get_env_or('STRIPE_WEBHOOK_SECRET', env_map, '').trim_space()
-		stripe_price_plan5:        get_env_or('STRIPE_PRICE_PLAN5', env_map, '').trim_space()
-		stripe_price_plan10:       get_env_or('STRIPE_PRICE_PLAN10', env_map, '').trim_space()
-		stripe_price_planannual:   get_env_or('STRIPE_PRICE_PLANANNUAL', env_map, '').trim_space()
+		stripe_price_plan5:        prices.plan5
+		stripe_price_plan10:       prices.plan10
+		stripe_price_planannual:   prices.planannual
+	}
+}
+
+pub fn stripe_price_ids(env_map map[string]string) StripePriceIds {
+	$if env_dev ? {
+		return StripePriceIds{
+			plan5:      get_env_or('STRIPE_PRICE_PLAN5', env_map, '').trim_space()
+			plan10:     get_env_or('STRIPE_PRICE_PLAN10', env_map, '').trim_space()
+			planannual: get_env_or('STRIPE_PRICE_PLANANNUAL', env_map, '').trim_space()
+		}
+	} $else {
+		return StripePriceIds{
+			plan5:      'price_1TsmqjLZ5gTFc3B29AhoC9fq'
+			plan10:     'price_1TsmsxLZ5gTFc3B2xsbFW6L8'
+			planannual: 'price_1TsmtrLZ5gTFc3B2rQEaEmqY'
+		}
 	}
 }
 

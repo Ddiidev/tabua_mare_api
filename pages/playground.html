@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="cyan">
+<html lang="pt-BR" data-theme="light">
 
 <head>
   <meta charset="UTF-8" />
@@ -15,15 +15,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
   <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Kode+Mono&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
   <style>
-    body,
     h1,
     h2,
-    h3,
-    p,
-    a {
+    h3 {
       font-family: Spectral, serif;
     }
 
@@ -74,58 +70,52 @@
   ${ navbar }
 
   <!-- Playground Header -->
-  <section class="docs-hero">
+  <section class="playground-hero docs-hero" aria-labelledby="playground-title">
     <div class="container">
-      <h1>🚀 API Playground</h1>
-      <p>Teste os endpoints da Tábua de Marés API em tempo real</p>
-      
-      <div class="version-selector" style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; display: inline-block;">
-        <label style="margin-right: 15px; font-weight: bold;">Versão da API:</label>
-        <label style="margin-right: 15px; cursor: pointer;">
-          <input type="radio" name="apiVersion" value="v1" v-model="apiVersion"> V1 (Depreciada)
-        </label>
-        <label style="cursor: pointer;">
+      <p class="eyebrow">Ambiente interativo</p>
+      <h1 id="playground-title">API Playground</h1>
+      <p>Monte requisições, execute endpoints reais e inspecione o JSON sem sair da página.</p>
+
+      <div class="playground-version version-selector">
+        <span>Versão estável</span>
+        <label>
           <input type="radio" name="apiVersion" value="v2" v-model="apiVersion"> V2 (Atual)
         </label>
       </div>
 
       <div class="docs-actions">
-        <button class="btn btn-primary">
-          <a href="/" style="text-decoration: none; color: white">← Voltar ao Início</a>
-        </button>
-        <button class="button-yellow">
-          <a href="/docs" style="text-decoration: none; color: white">📚 Documentação</a>
-        </button>
+        <a href="/docs" role="button">Ler documentação</a>
+        <a href="/" role="button" class="outline">Voltar ao início</a>
       </div>
     </div>
   </section>
 
   <!-- Main Content -->
-  <main class="main">
+  <main id="main-content" class="playground-page main">
     <!-- API Testing Section -->
     <section class="docs-section">
-      <div class="container">
+      <div class="request-pane playground-list container">
         <!-- Endpoint 1: List States -->
-        <div class="endpoint-card">
+        <div class="playground-workbench endpoint-card">
           <div class="endpoint-header">
-            <h3 class="endpoint-title">🌊 Listar Estados</h3>
+            <h3 class="endpoint-title">Listar estados</h3>
             <span class="method-badge">GET</span>
           </div>
           <p>
             Retorna todos os estados costeiros do Brasil disponíveis na API.
           </p>
           
-          <div class="endpoint-url"><strong>GET</strong> /api/{{apiVersion}}/states</div>
+          <div class="endpoint-url"><strong>GET</strong> /api/v2/states</div>
 
           <div class="endpoint-actions">
             <button class="btn btn-primary" @click="callStatesAPI()" :disabled="loading.states">
               <span v-show="loading.states">⏳ Carregando...</span>
-              <span v-show="!loading.states">🚀 Executar</span>
+              <span v-show="!loading.states">Executar</span>
             </button>
           </div>
 
-          <div v-show="responses.states" class="response-section">
-            <h4>📄 Resposta:</h4>
+          <div v-show="responses.states" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
             <div class="code-block">
               <button class="copy-btn" @click="copyToClipboard(responses.states, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.states"></code></pre>
@@ -134,15 +124,15 @@
         </div>
 
         <!-- Endpoint 2: List Harbors by State -->
-        <div class="endpoint-card">
+        <div class="playground-workbench endpoint-card">
           <div class="endpoint-header">
-            <h3 class="endpoint-title">🏖️ Listar Portos por Estado</h3>
+            <h3 class="endpoint-title">Listar portos por estado</h3>
             <span class="method-badge">GET</span>
           </div>
           <p>Retorna os portos de um estado específico.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/{{apiVersion}}/harbor_names/{state}
+            <strong>GET</strong> /api/v2/harbor_names/{state}
           </div>
 
           <div class="endpoint-params">
@@ -155,12 +145,12 @@
           <div class="endpoint-actions">
             <button class="btn btn-primary" @click="callHarborsAPI()" :disabled="loading.harbors || !inputs.state">
               <span v-show="loading.harbors">⏳ Carregando...</span>
-              <span v-show="!loading.harbors">🚀 Executar</span>
+              <span v-show="!loading.harbors">Executar</span>
             </button>
           </div>
 
-          <div v-show="responses.harbors" class="response-section">
-            <h4>📄 Resposta:</h4>
+          <div v-show="responses.harbors" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
             <div class="code-block">
               <button class="copy-btn" @click="copyToClipboard(responses.harbors, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.harbors"></code></pre>
@@ -169,9 +159,9 @@
         </div>
 
         <!-- Endpoint 3: Get Harbor by IDs -->
-        <div class="endpoint-card">
+        <div class="playground-workbench endpoint-card">
           <div class="endpoint-header">
-            <h3 class="endpoint-title">⚓ Obter Portos por IDs</h3>
+            <h3 class="endpoint-title">Obter portos por IDs</h3>
             <span class="method-badge">GET</span>
           </div>
           <p>
@@ -179,15 +169,14 @@
           </p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/{{apiVersion}}/harbors/{ids}
+            <strong>GET</strong> /api/v2/harbors/{ids}
           </div>
 
           <div class="endpoint-params">
             <div class="param-group">
               <label for="harbor-id-input">IDs dos Portos:</label>
-              <input id="harbor-id-input" type="text" v-model="inputs.harborId" :placeholder="apiVersion === 'v2' ? 'ex: pb01, pe02' : 'ex: 1,27,50'" />
-              <small v-if="apiVersion === 'v2'">Digite os IDs separados por vírgula (ex: pb01,pe02)</small>
-              <small v-else>Digite os IDs separados por vírgula (ex: 1,2,3)</small>
+              <input id="harbor-id-input" type="text" v-model="inputs.harborId" placeholder="ex: pb01, pe02" />
+              <small>Digite os IDs separados por vírgula (ex: pb01,pe02)</small>
             </div>
           </div>
 
@@ -195,12 +184,12 @@
             <button class="btn btn-primary" @click="callHarborByIdAPI()"
               :disabled="loading.harborById || !inputs.harborId">
               <span v-show="loading.harborById">⏳ Carregando...</span>
-              <span v-show="!loading.harborById">🚀 Executar</span>
+              <span v-show="!loading.harborById">Executar</span>
             </button>
           </div>
 
-          <div v-show="responses.harborById" class="response-section">
-            <h4>📄 Resposta:</h4>
+          <div v-show="responses.harborById" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
             <div class="code-block">
               <button class="copy-btn" @click="copyToClipboard(responses.harborById, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.harborById"></code></pre>
@@ -209,9 +198,9 @@
         </div>
 
         <!-- Endpoint 3: Get Tábua de Maré por período -->
-        <div class="endpoint-card">
+        <div class="playground-workbench endpoint-card">
           <div class="endpoint-header">
-            <h3 class="endpoint-title">⚓ Obter Tábua de Maré por Período</h3>
+            <h3 class="endpoint-title">Obter tábua de maré por período</h3>
             <span class="method-badge">GET</span>
           </div>
           <p>
@@ -220,15 +209,14 @@
           </p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/{{apiVersion}}/tabua-mare/{harbor}/{month}/{days}
+            <strong>GET</strong> /api/v2/tabua-mare/{harbor}/{month}/{days}
           </div>
 
           <div class="endpoint-params">
             <div class="param-group">
               <label for="harbor-input">Porto:</label>
-              <input id="harbor-input" type="text" v-model="inputs.harbor" :placeholder="apiVersion === 'v2' ? 'ex: pb01' : 'ex: 1'" />
-              <small v-if="apiVersion === 'v2'">Digite o ID do porto (ex: pb01)</small>
-              <small v-else>Digite o ID do porto (ex: 1)</small>
+              <input id="harbor-input" type="text" v-model="inputs.harbor" placeholder="ex: pb01" />
+              <small>Digite o ID do porto (ex: pb01)</small>
             </div>
             <div class="param-group">
               <label for="month-input">Mês:</label>
@@ -246,12 +234,12 @@
             <button class="btn btn-primary" @click="callTabuaMareAPI()"
               :disabled="loading.tabuaMare || !inputs.harbor || !inputs.month || !inputs.days">
               <span v-show="loading.tabuaMare">⏳ Carregando...</span>
-              <span v-show="!loading.tabuaMare">🚀 Executar</span>
+              <span v-show="!loading.tabuaMare">Executar</span>
             </button>
           </div>
 
-          <div v-show="responses.tabuaMare" class="response-section">
-            <h4>📄 Resposta:</h4>
+          <div v-show="responses.tabuaMare" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
             <div class="code-block">
               <button class="copy-btn" @click="copyToClipboard(responses.tabuaMare, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.tabuaMare"></code></pre>
@@ -259,15 +247,15 @@
           </div>
         </div>
 
-        <div class="endpoint-card">
+        <div class="playground-workbench endpoint-card">
           <div class="endpoint-header">
-            <h3 class="endpoint-title">📍 Porto mais Próximo (Estado)</h3>
+            <h3 class="endpoint-title">Porto mais próximo (estado)</h3>
             <span class="method-badge">GET</span>
           </div>
           <p>Retorna o porto mais próximo dentro do estado informado.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/{{apiVersion}}/nearested-harbor/{state}/{lat_lng}
+            <strong>GET</strong> /api/v2/nearested-harbor/{state}/{lat_lng}
           </div>
 
           <div class="endpoint-params">
@@ -284,15 +272,15 @@
           <div class="endpoint-actions">
             <button class="btn btn-primary" @click="callNearestedHarborAPI()" :disabled="loading.nearestedState || !inputs.stateNearested || !inputs.latLngNearestedState">
               <span v-show="loading.nearestedState">⏳ Carregando...</span>
-              <span v-show="!loading.nearestedState">🚀 Executar</span>
+              <span v-show="!loading.nearestedState">Executar</span>
             </button>
             <button class="button-yellow" @click="useMyLocationNearestedState()" :disabled="loading.nearestedState">
-              📍 Pegar minha localização
+              Usar minha localização
             </button>
           </div>
 
-          <div v-show="responses.nearestedState" class="response-section">
-            <h4>📄 Resposta:</h4>
+          <div v-show="responses.nearestedState" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
             <div class="code-block">
               <button class="copy-btn" @click="copyToClipboard(responses.nearestedState, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.nearestedState"></code></pre>
@@ -300,15 +288,15 @@
           </div>
         </div>
 
-        <div class="endpoint-card">
+        <div class="playground-workbench endpoint-card">
           <div class="endpoint-header">
-            <h3 class="endpoint-title">📍 Porto mais Próximo (Independente)</h3>
+            <h3 class="endpoint-title">Porto mais próximo (independente)</h3>
             <span class="method-badge">GET</span>
           </div>
           <p>Retorna o porto mais próximo sem restringir por estado.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/{{apiVersion}}/nearest-harbor-independent-state/{lat_lng}
+            <strong>GET</strong> /api/v2/nearest-harbor-independent-state/{lat_lng}
           </div>
 
           <div class="endpoint-params">
@@ -321,15 +309,15 @@
           <div class="endpoint-actions">
             <button class="btn btn-primary" @click="callNearestIndependentAPI()" :disabled="loading.nearestIndependent || !inputs.latLngIndependent">
               <span v-show="loading.nearestIndependent">⏳ Carregando...</span>
-              <span v-show="!loading.nearestIndependent">🚀 Executar</span>
+              <span v-show="!loading.nearestIndependent">Executar</span>
             </button>
             <button class="button-yellow" @click="useMyLocationNearestIndependent()" :disabled="loading.nearestIndependent">
-              📍 Pegar minha localização
+              Usar minha localização
             </button>
           </div>
 
-          <div v-show="responses.nearestIndependent" class="response-section">
-            <h4>📄 Resposta:</h4>
+          <div v-show="responses.nearestIndependent" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
             <div class="code-block">
               <button class="copy-btn" @click="copyToClipboard(responses.nearestIndependent, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.nearestIndependent"></code></pre>
@@ -337,15 +325,15 @@
           </div>
         </div>
 
-        <div class="endpoint-card">
+        <div class="playground-workbench endpoint-card">
           <div class="endpoint-header">
-            <h3 class="endpoint-title">🌐 Tábua de Maré por Geolocalização</h3>
+            <h3 class="endpoint-title">Tábua de maré por geolocalização</h3>
             <span class="method-badge">GET</span>
           </div>
           <p>Obtém a tábua de maré usando coordenadas e estado.</p>
 
           <div class="endpoint-url">
-            <strong>GET</strong> /api/{{apiVersion}}/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
+            <strong>GET</strong> /api/v2/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
           </div>
 
           <div class="endpoint-params">
@@ -370,15 +358,15 @@
           <div class="endpoint-actions">
             <button class="btn btn-primary" @click="callGeoTabuaMareAPI()" :disabled="loading.geoTabuaGeo || !inputs.latLngGeo || !inputs.stateGeo || !inputs.monthGeo || !inputs.daysGeo">
               <span v-show="loading.geoTabuaGeo">⏳ Carregando...</span>
-              <span v-show="!loading.geoTabuaGeo">🚀 Executar</span>
+              <span v-show="!loading.geoTabuaGeo">Executar</span>
             </button>
             <button class="button-yellow" @click="useMyLocationGeoTabua()" :disabled="loading.geoTabuaGeo">
-              📍 Pegar minha localização
+              Usar minha localização
             </button>
           </div>
 
-          <div v-show="responses.geoTabuaGeo" class="response-section">
-            <h4>📄 Resposta:</h4>
+          <div v-show="responses.geoTabuaGeo" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
             <div class="code-block">
               <button class="copy-btn" @click="copyToClipboard(responses.geoTabuaGeo, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
               <pre><code class="language-json" v-html="responses.geoTabuaGeo"></code></pre>
@@ -386,10 +374,46 @@
           </div>
         </div>
 
+        <!-- Endpoint: Usage (cota mensal) -->
+        <div class="playground-workbench endpoint-card">
+          <div class="endpoint-header">
+            <h3 class="endpoint-title">Uso da cota mensal</h3>
+            <span class="method-badge">GET</span>
+          </div>
+          <p>Retorna o consumo atual de rate-limit (RPM e cota mensal) para a api_key informada. Não consome cota.</p>
+
+          <div class="endpoint-url">
+            <strong>GET</strong> /api/v2/usage
+          </div>
+
+          <div class="endpoint-params">
+            <div class="param-group">
+              <label for="usage-api-key">API Key:</label>
+              <input id="usage-api-key" type="password" v-model.trim="inputs.usageApiKey" placeholder="tm_live_..." style="width: 100%;" />
+              <small>Enviada via header <code>Authorization: Bearer</code></small>
+            </div>
+          </div>
+
+          <div class="endpoint-actions">
+            <button class="btn btn-primary" @click="callUsageAPI()" :disabled="loading.usage || !inputs.usageApiKey">
+              <span v-show="loading.usage">⏳ Carregando...</span>
+              <span v-show="!loading.usage">Executar</span>
+            </button>
+          </div>
+
+          <div v-show="responses.usage" class="response-pane response-section" aria-live="polite">
+            <h4>Resposta</h4>
+            <div class="code-block">
+              <button class="copy-btn" @click="copyToClipboard(responses.usage, $event)"><img width="24" height="24" src="https://img.icons8.com/material-outlined/48/copy.png" alt="copy"/></button>
+              <pre><code class="language-json" v-html="responses.usage"></code></pre>
+            </div>
+          </div>
+        </div>
+
         <!-- Error Display -->
         <div v-show="error" class="error-card">
           <div class="error-header">
-            <h4>⚠️ Erro na Requisição</h4>
+            <h4>Erro na requisição</h4>
             <button class="close-btn" @click="error = ''">×</button>
           </div>
           <p>{{ error }}</p>
@@ -452,12 +476,14 @@
         harbors: false,
         harborById: false,
         tabuaMare: false,
+        usage: false,
       },
       responses: {
         states: '',
         harbors: '',
         harborById: '',
         tabuaMare: '',
+        usage: '',
       },
       inputs: {
         state: '',
@@ -471,7 +497,8 @@
         latLngGeo: '',
         stateGeo: '',
         monthGeo: '',
-        daysGeo: ''
+        daysGeo: '',
+        usageApiKey: '',
       },
       error: '',
 
@@ -480,7 +507,7 @@
         this.error = '';
 
         try {
-          const response = await fetch(`/api/${this.apiVersion}/states`);
+          const response = await fetch(`/api/v2/states`);
           const data = await response.json();
           this.responses.states = JSON.stringify(data, null, 2);
           // Highlight code after update
@@ -501,7 +528,7 @@
         this.loading.tabuaMare = true;
         this.error = '';
         try {
-          const response = await fetch(`/api/${this.apiVersion}/tabua-mare/${this.inputs.harbor.toLowerCase()}/${this.inputs.month}/[${this.inputs.days}]`);
+          const response = await fetch(`/api/v2/tabua-mare/${this.inputs.harbor.toLowerCase()}/${this.inputs.month}/[${this.inputs.days}]`);
           const data = await response.json();
           this.responses.tabuaMare = JSON.stringify(data, null, 2);
 
@@ -525,7 +552,7 @@
         this.error = '';
 
         try {
-          const response = await fetch(`/api/${this.apiVersion}/harbor_names/${this.inputs.state.toLowerCase()}`);
+          const response = await fetch(`/api/v2/harbor_names/${this.inputs.state.toLowerCase()}`);
           const data = await response.json();
           this.responses.harbors = JSON.stringify(data, null, 2);
 
@@ -561,17 +588,8 @@
         this.error = '';
 
         try {
-          let url;
-          if (this.apiVersion === 'v2') {
-             const formattedIds = ids.join(',');
-             url = `/api/${this.apiVersion}/harbors/[${formattedIds}]`;
-          } else {
-             const numericIds = ids.filter(id => !isNaN(id));
-             if (numericIds.length === 0) {
-                throw new Error('IDs devem ser numéricos na V1');
-             }
-             url = `/api/${this.apiVersion}/harbors/[${numericIds.join(',')}]`;
-          }
+          const formattedIds = ids.join(',');
+          const url = `/api/v2/harbors/[${formattedIds}]`;
 
           const response = await fetch(url);
           const data = await response.json();
@@ -662,7 +680,7 @@
         this.loading.nearestedState = true
         this.error = ''
         try {
-          const response = await fetch(`/api/${this.apiVersion}/nearested-harbor/${this.inputs.stateNearested.toLowerCase()}/${this.inputs.latLngNearestedState}`)
+          const response = await fetch(`/api/v2/nearested-harbor/${this.inputs.stateNearested.toLowerCase()}/${this.inputs.latLngNearestedState}`)
           const data = await response.json()
           this.responses.nearestedState = JSON.stringify(data, null, 2)
           this.$nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
@@ -677,7 +695,7 @@
         this.loading.nearestIndependent = true
         this.error = ''
         try {
-          const response = await fetch(`/api/${this.apiVersion}/nearest-harbor-independent-state/${this.inputs.latLngIndependent}`)
+          const response = await fetch(`/api/v2/nearest-harbor-independent-state/${this.inputs.latLngIndependent}`)
           const data = await response.json()
           this.responses.nearestIndependent = JSON.stringify(data, null, 2)
           this.$nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
@@ -692,7 +710,7 @@
         this.loading.geoTabuaGeo = true
         this.error = ''
         try {
-          const response = await fetch(`/api/${this.apiVersion}/geo-tabua-mare/${this.inputs.latLngGeo}/${this.inputs.stateGeo.toLowerCase()}/${this.inputs.monthGeo}/[${this.inputs.daysGeo}]`)
+          const response = await fetch(`/api/v2/geo-tabua-mare/${this.inputs.latLngGeo}/${this.inputs.stateGeo.toLowerCase()}/${this.inputs.monthGeo}/[${this.inputs.daysGeo}]`)
           const data = await response.json()
           this.responses.geoTabuaGeo = JSON.stringify(data, null, 2)
           this.$nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } })
@@ -700,6 +718,24 @@
           this.error = `Erro ao buscar tábua de maré: ${err.message}`
         } finally {
           this.loading.geoTabuaGeo = false
+        }
+      },
+
+      async callUsageAPI() {
+        if (!this.inputs.usageApiKey) return;
+        this.loading.usage = true;
+        this.error = '';
+        try {
+          const response = await fetch('/api/v2/usage', {
+            headers: { 'Authorization': 'Bearer ' + this.inputs.usageApiKey }
+          });
+          const data = await response.json();
+          this.responses.usage = JSON.stringify(data, null, 2);
+          this.$nextTick(() => { if (typeof Prism !== 'undefined') { Prism.highlightAll() } });
+        } catch (err) {
+          this.error = 'Erro ao buscar uso: ' + err.message;
+        } finally {
+          this.loading.usage = false;
         }
       },
 
@@ -713,7 +749,7 @@
           await navigator.clipboard.writeText(text);
           const btn = event.target.closest('button');
           const originalContent = btn.innerHTML;
-          btn.innerText = '✅ Copiado!';
+          btn.innerText = 'Copiado!';
           setTimeout(() => btn.innerHTML = originalContent, 2000);
         } catch (err) {
           console.error('Failed to copy:', err);

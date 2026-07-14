@@ -86,6 +86,20 @@ pub fn find_plan_by_id(mut db pg.DB, user_id int) !string {
 	return str_from_row(rows[0], 0)
 }
 
+// find_id_by_stripe_customer retorna o id do usuario associado ao customer_id do Stripe.
+pub fn find_id_by_stripe_customer(mut db pg.DB, customer_id string) !int {
+	rows := db.exec_param('SELECT id FROM users WHERE stripe_customer_id = ($1) LIMIT 1',
+		customer_id)!
+	if rows.len == 0 {
+		return error('usuario nao encontrado para customer ${customer_id}')
+	}
+	uid := int_from_row(rows[0], 0)
+	if uid <= 0 {
+		return error('user_id invalido para customer ${customer_id}')
+	}
+	return uid
+}
+
 // find_by_id retorna um usuario pelo id.
 pub fn find_by_id(mut db pg.DB, user_id int) !dto.User {
 	rows := db.exec_param('SELECT id, email, name, avatar_url, plan, stripe_customer_id, stripe_subscription_id FROM users WHERE id = ($1) LIMIT 1', user_id.str())!

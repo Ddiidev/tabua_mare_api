@@ -100,7 +100,10 @@ fn ensure_monthly_credits_table(mut db pg.DB) ! {
 		lim INTEGER NOT NULL,
 		remaining INTEGER NOT NULL,
 		reset_at TIMESTAMP NOT NULL,
-		PRIMARY KEY (bucket, month_key)
+		PRIMARY KEY (bucket, month_key),
+		CHECK (remaining >= 0)
 	);')!
 	db.exec('CREATE INDEX IF NOT EXISTS idx_monthly_credits_bucket ON monthly_credits(bucket, month_key);')!
+	db.exec('ALTER TABLE monthly_credits DROP CONSTRAINT IF EXISTS monthly_credits_remaining_check;')!
+	db.exec('ALTER TABLE monthly_credits ADD CONSTRAINT monthly_credits_remaining_check CHECK (remaining >= 0);')!
 }

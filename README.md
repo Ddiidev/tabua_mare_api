@@ -88,11 +88,11 @@ Observações:
 
 ## Limites e uso
 
-- Anônimo (sem conta): 5 req/min, ilimitado/mês.
-- Free (com conta, por IP): 24 req/min, 32k req/mês.
-- Plan 5 (R$ 5/mês, api_key): 128 req/min, 256k req/mês.
-- Plan 10 (R$ 10/mês, api_key): 256 req/min, ilimitado/mês.
-- Plan Anual (R$ 70/ano, api_key): 256 req/min, ilimitado/mês.
+- Sem api_key (anônimo por IP): 16 req/min, ilimitado/mês.
+- Free com api_key: 64 req/min, 32k req/mês.
+- Plan 5 (R$ 5/mês, api_key): 512 req/min, 256k req/mês.
+- Plan 10 (R$ 10/mês, api_key): 2.048 req/min, ilimitado/mês.
+- Plan Anual (R$ 70/ano, api_key): 4.096 req/min, ilimitado/mês.
 
 ## Executando localmente
 

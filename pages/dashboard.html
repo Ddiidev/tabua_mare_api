@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="cyan">
+<html lang="pt-BR" data-theme="light">
 
 <head>
   <meta charset="UTF-8" />
@@ -12,15 +12,18 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
   <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
   <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
   <style>
-    body,
     h1,
     h2,
-    h3,
-    p,
-    a {
+    h3 {
       font-family: "Spectral", serif;
+    }
+
+    /* Reduz o tamanho padrao de todos os botoes no dashboard */
+    button:not(.btn-copy):not(.btn-revoke) {
+      padding: 0.3rem 0.7rem;
+      font-size: 0.85rem;
     }
 
     .dashboard-container {
@@ -104,15 +107,20 @@
 
     .api-key-item {
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.5rem;
+      flex-direction: column;
+      gap: 0.25rem;
       padding: 0.75rem 1rem;
       border-bottom: 1px solid rgba(0, 0, 0, 0.07);
     }
 
     .api-key-item:last-child {
       border-bottom: none;
+    }
+
+    .api-key-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .api-key-value {
@@ -122,8 +130,16 @@
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
       word-break: break-all;
+      min-width: 0;
       flex: 1;
-      min-width: 200px;
+    }
+
+    .api-key-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .api-key-value.hidden {
@@ -133,7 +149,14 @@
 
     .api-key-label {
       font-weight: bold;
-      min-width: 120px;
+      font-size: 0.8rem;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .api-key-sep {
+      color: rgba(0, 0, 0, 0.25);
+      font-weight: bold;
+      margin: 0 0.25rem;
     }
 
     .btn-copy {
@@ -219,7 +242,7 @@
 
     .plans-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 1rem;
       margin-top: 1.5rem;
     }
@@ -232,33 +255,48 @@
     }
 
     .plan-card {
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 10px;
-      padding: 1.5rem;
-      text-align: center;
-      background: var(--card-background-color);
-    }
+       border: 1px solid rgba(0, 0, 0, 0.1);
+       border-radius: 10px;
+       padding: 1.5rem;
+       text-align: center;
+       background: var(--card-background-color);
+       display: flex;
+       flex-direction: column;
+     }
 
-    .plan-card.current {
-      border-color: #43aa8b;
-      background: rgba(67, 170, 139, 0.05);
-    }
+     .plan-card .plan-card-body {
+       flex: 1;
+     }
 
-    .plan-card h4 {
-      margin: 0 0 0.5rem 0;
-    }
+     .plan-card .plan-card-footer {
+       margin-top: auto;
+       padding-top: 1rem;
+     }
 
-    .plan-card .price {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin: 0.5rem 0;
-    }
+     .plan-card .plan-card-footer button {
+       width: 100%;
+     }
 
-    .plan-card .limits {
-      font-size: 0.8rem;
-      opacity: 0.7;
-      margin-bottom: 1rem;
-    }
+     .plan-card.current {
+       border-color: #43aa8b;
+       background: rgba(67, 170, 139, 0.05);
+     }
+
+     .plan-card h4 {
+       margin: 0 0 0.5rem 0;
+     }
+
+     .plan-card .price {
+       font-size: 1.5rem;
+       font-weight: bold;
+       margin: 0.5rem 0;
+     }
+
+     .plan-card .limits {
+       font-size: 0.8rem;
+       opacity: 0.7;
+       margin-bottom: 1rem;
+     }
   </style>
 </head>
 
@@ -268,13 +306,18 @@
   <!-- v-effect chama onMount() uma vez apos montagem (PetiteVue nao tem mounted()) -->
   <div v-if="!_mounted" v-effect="_mounted = true; onMount()" style="display:none"></div>
 
-  <main class="container">
-    <div class="dashboard-container" v-cloak>
+  <main id="main-content" class="dashboard-page container">
+    <div class="dashboard-workspace dashboard-container" v-cloak>
+      <header class="dashboard-heading">
+        <p class="eyebrow">Workspace da API</p>
+        <h1>Seu consumo, suas chaves.</h1>
+        <p>Acompanhe limites, gerencie acesso e escolha capacidade sem mudar sua integração.</p>
+      </header>
       <!-- Perfil + Logout -->
-      <div class="user-card" v-if="user">
+      <div class="dashboard-identity user-card" v-if="user">
         <img :src="user.avatar_url || ''" class="user-avatar" v-if="user.avatar_url" alt="avatar" />
         <div class="user-info">
-          <h2>{{ user.name }} <span class="plan-badge" :class="'plan-' + user.plan">{{ user.plan }}</span></h2>
+          <h2>{{ user.name }} <span class="plan-badge" :class="'plan-' + user.plan">{{ planLabel(user.plan) }}</span></h2>
           <p>{{ user.email }}</p>
           <p class="plan-usage"><small>Uso do plano este mês: {{ fmtNum(rateLimit ? rateLimit.used_monthly : 0) }} / {{ rateLimit && rateLimit.limit_monthly != 0 ? fmtNum(rateLimit.limit_monthly) : (rateLimit ? 'ilimitado' : '0') }}</small></p>
         </div>
@@ -282,45 +325,63 @@
       </div>
 
       <div class="loading" v-if="!user && !loadError">Carregando perfil...</div>
-      <div class="alert-error" v-if="loadError">{{ loadError }}</div>
+      <div class="alert-error" role="alert" v-if="loadError">{{ loadError }}</div>
 
       <!-- Planos -->
-      <div class="section-card" v-if="user">
+      <div class="plans-workspace section-card" v-if="user">
         <h3>Planos</h3>
         <p><small>Assine um plano para ter limites maiores na API.</small></p>
         <div class="plans-grid">
           <div class="plan-card" :class="{ current: user.plan === 'free' }">
-            <h4>Free</h4>
-            <div class="price">Grátis</div>
-            <div class="limits">24 req/min · 32k req/mês</div>
-            <button class="outline" disabled v-if="user.plan === 'free'">Plano atual</button>
+            <div class="plan-card-body">
+              <h4>Free</h4>
+              <div class="price">Grátis</div>
+              <div class="limits">64 req/min · 32k req/mês</div>
+            </div>
+            <div class="plan-card-footer">
+              <button class="outline" disabled v-if="user.plan === 'free'">Atual</button>
+            </div>
           </div>
           <div class="plan-card" :class="{ current: user.plan === 'plan5' }">
-            <h4>Plan 5</h4>
-            <div class="price">R$ 5/mês</div>
-            <div class="limits">128 req/min · 256k req/mês</div>
-            <button class="button-yellow" @click="checkout('plan5')" :disabled="checkoutLoading === 'plan5'"
-              v-if="user.plan !== 'plan5'">Assinar</button>
-            <button class="outline" disabled v-if="user.plan === 'plan5'">Plano atual</button>
+            <div class="plan-card-body">
+              <h4>Plan 5</h4>
+              <div class="price">R$ 5/mês</div>
+              <div class="limits">512 req/min · 256k req/mês</div>
+            </div>
+            <div class="plan-card-footer">
+              <button class="button-yellow" @click="checkout('plan5')" :disabled="checkoutLoading === 'plan5'"
+                v-if="user.plan !== 'plan5'">Assinar</button>
+              <button class="outline" disabled v-if="user.plan === 'plan5'">Atual</button>
+            </div>
           </div>
           <div class="plan-card" :class="{ current: user.plan === 'plan10' }">
-            <h4>Plan 10</h4>
-            <div class="price">R$ 10/mês</div>
-            <div class="limits">256 req/min · ilimitado/mês</div>
-            <button class="button-yellow" @click="checkout('plan10')" :disabled="checkoutLoading === 'plan10'"
-              v-if="user.plan !== 'plan10'">Assinar</button>
-            <button class="outline" disabled v-if="user.plan === 'plan10'">Plano atual</button>
+            <div class="plan-card-body">
+              <h4>Plan 10</h4>
+              <div class="price">R$ 10/mês</div>
+              <div class="limits">2.048 req/min · ilimitado/mês</div>
+              <div class="annual-saving">No anual: economize R$ 50/ano</div>
+            </div>
+            <div class="plan-card-footer">
+              <button class="button-yellow" @click="checkout('plan10')" :disabled="checkoutLoading === 'plan10'"
+                v-if="user.plan !== 'plan10'">Assinar</button>
+              <button class="outline" disabled v-if="user.plan === 'plan10'">Atual</button>
+            </div>
           </div>
           <div class="plan-card" :class="{ current: user.plan === 'planannual' }">
-            <h4>Plan Anual</h4>
-            <div class="price">R$ 70/ano</div>
-            <div class="limits">256 req/min · ilimitado/mês</div>
-            <button class="button-yellow" @click="checkout('planannual')" :disabled="checkoutLoading === 'planannual'"
-              v-if="user.plan !== 'planannual'">Assinar</button>
-            <button class="outline" disabled v-if="user.plan === 'planannual'">Plano atual</button>
+            <div class="plan-card-body">
+              <h4>Plan Anual</h4>
+              <div class="price">R$ 70/ano</div>
+              <div class="limits">2.048 req/min · ilimitado/mês</div>
+              <div class="annual-saving">Economize R$ 50 por ano</div>
+            </div>
+            <div class="plan-card-footer">
+              <button class="button-yellow" @click="checkout('planannual')" :disabled="checkoutLoading === 'planannual'"
+                v-if="user.plan !== 'planannual'">Assinar</button>
+              <button class="outline" disabled v-if="user.plan === 'planannual'">Atual</button>
+            </div>
           </div>
         </div>
-        <div class="alert-error" v-if="checkoutError">{{ checkoutError }}</div>
+        <div class="alert-error" role="alert" v-if="checkoutError">{{ checkoutError }}</div>
 
         <!-- Gerenciamento de assinatura (só para planos pagos) -->
         <div class="subscription-actions" v-if="user && user.plan !== 'free'">
@@ -331,13 +392,13 @@
             {{ cancelLoading ? 'Cancelando...' : 'Cancelar assinatura' }}
           </button>
         </div>
-        <div class="alert-error" v-if="portalError">{{ portalError }}</div>
-        <div class="alert-error" v-if="cancelError">{{ cancelError }}</div>
+        <div class="alert-error" role="alert" v-if="portalError">{{ portalError }}</div>
+        <div class="alert-error" role="alert" v-if="cancelError">{{ cancelError }}</div>
         <div class="new-key-result" v-if="paymentMessage" style="margin-top: 1rem;">{{ paymentMessage }}</div>
       </div>
 
       <!-- API Keys -->
-      <div class="section-card" v-if="user">
+      <div class="key-workspace section-card" v-if="user">
         <h3>Minhas API Keys</h3>
         <p>
           <small>Use uma API Key no header <code>Authorization: Bearer &lt;sua_key&gt;</code> para acessar os
@@ -359,13 +420,14 @@
                   <option value="free" v-if="isPlanAllowed('free')">Free</option>
                   <option value="plan5" v-if="isPlanAllowed('plan5')">Plan 5</option>
                   <option value="plan10" v-if="isPlanAllowed('plan10')">Plan 10</option>
+                  <option value="planannual" v-if="isPlanAllowed('planannual')">Plan Anual</option>
                 </select>
               </div>
               <div>
                 <button type="submit" :disabled="creating">Gerar</button>
               </div>
             </div>
-            <div class="alert-error" v-if="createError">{{ createError }}</div>
+            <div class="alert-error" role="alert" v-if="createError">{{ createError }}</div>
           </form>
 
           <div class="new-key-result" v-if="newKey">
@@ -379,12 +441,17 @@
         <ul class="api-key-list" v-if="keys.length > 0">
           <li class="api-key-item" v-for="k in keys" :key="k.id">
             <span class="api-key-label">{{ k.label || '(sem label)' }}</span>
-            <span class="api-key-value masked">{{ maskKey(k.key_value) }}</span>
-            <span class="plan-badge" :class="'plan-' + k.plan" v-if="k.plan">{{ k.plan }}</span>
-            <button class="btn-copy" @click="copyText(k.key_value)" v-if="!k.revoked">Copiar</button>
-            <button class="btn-revoke" @click="revokeKey(k)" :disabled="k.revoked">
-              {{ k.revoked ? 'Revogada' : 'Revogar' }}
-            </button>
+            <div class="api-key-row">
+              <span class="api-key-value masked">{{ maskKey(k.key_value) }}</span>
+              <span class="api-key-actions">
+                <span class="plan-badge" :class="'plan-' + k.plan" v-if="k.plan">{{ planLabel(k.plan) }}</span>
+                <span class="api-key-sep" aria-hidden="true">|</span>
+                <button class="btn-copy" @click="copyText(k.key_value)" v-if="!k.revoked">Copiar</button>
+                <button class="btn-revoke" @click="revokeKey(k)" :disabled="k.revoked">
+                  {{ k.revoked ? 'Revogada' : 'Revogar' }}
+                </button>
+              </span>
+            </div>
           </li>
         </ul>
 
@@ -394,10 +461,10 @@
       </div>
 
       <!-- Rate Limit -->
-      <div class="section-card" v-if="user">
+      <div class="usage-overview section-card" v-if="user">
         <h3>Uso e Limites</h3>
         <div v-if="rateLimit" class="rate-limit-card">
-          <p><strong>Plano:</strong> <span class="plan-badge" :class="'plan-' + (testApiKey ? (rateLimit.plan || 'free') : 'free')">{{ testApiKey ? (rateLimit.plan || 'free') : 'free' }}</span></p>
+          <p><strong>Plano:</strong> <span class="plan-badge" :class="'plan-' + (testApiKey ? (rateLimit.plan || 'free') : 'free')">{{ planLabel(testApiKey ? (rateLimit.plan || 'free') : 'free') }}</span></p>
           <div class="limit-row">
             <span>Requisições/min:</span>
             <span>{{ fmtNum(rateLimit.limit_rpm) }}</span>
@@ -412,13 +479,13 @@
           <summary role="button" class="outline">Testar limite de RPM</summary>
           <div style="margin-top: 1rem;">
             <div class="form-row">
-              <div>
-                <label for="rpmCount">Requisições</label>
-                <input id="rpmCount" type="number" v-model.number="testRpmCount" min="1" max="2000" />
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="rpmCount" style="margin: 0;">Requisições</label>
+                <input id="rpmCount" type="number" v-model.number="testRpmCount" min="1" max="2000" style="width: 90px;" />
               </div>
-              <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <button class="outline" @click="runRpmTest(testRpmCount)" :disabled="rpmTestRunning">
-                  {{ rpmTestRunning ? 'Testando...' : 'Disparar' }}
+                  {{ rpmTestRunning ? 'Testando...' : 'GO!' }}
                 </button>
                 <button class="btn-revoke" @click="stopRpmTest" :disabled="!rpmTestRunning">
                   Parar
@@ -430,7 +497,7 @@
               <input id="rpmApiKey" v-model.trim="testApiKey" @change="loadRateLimit" placeholder="tm_live_..." style="width: 100%;" />
             </div>
 
-            <div v-if="rpmTestResult" style="margin-top: 0.5rem; white-space: pre-line; font-family: monospace; font-size: 0.85rem;">
+            <div class="rpm-result" aria-live="polite" v-if="rpmTestResult" style="margin-top: 0.5rem; white-space: pre-line; font-family: monospace; font-size: 0.85rem;">
               {{ rpmTestResult }}
             </div>
           </div>
@@ -599,7 +666,7 @@
             const arr = body.data || body;
             const data = Array.isArray(arr) ? arr[0] : arr;
             if (data && data.url) {
-              window.location.href = data.url;
+              window.open(data.url, '_blank');
               return;
             }
           }
@@ -648,11 +715,14 @@
         }).catch(() => {});
       },
 
+      // ATENCAO: espelha shareds/rate_limit/middleware.v:is_plan_allowed.
+      // Mudancas aqui exigem mudanca no backend.
       isPlanAllowed(keyPlan) {
         const userPlan = this.user && this.user.plan ? this.user.plan : 'free';
         if (keyPlan === 'free') return true;
         if (keyPlan === 'plan5') return ['plan5', 'plan10', 'planannual'].includes(userPlan);
         if (keyPlan === 'plan10') return ['plan10', 'planannual'].includes(userPlan);
+        if (keyPlan === 'planannual') return ['planannual'].includes(userPlan);
         return false;
       },
 
@@ -661,6 +731,12 @@
         const first = key.slice(0, 4);
         const last = key.slice(-4);
         return first + '••••' + last;
+      },
+
+      // planLabel retorna o label visual do plano (planannual -> plan∞).
+      // Internamente o valor permanece 'planannual' para Stripe, DB e logica.
+      planLabel(plan) {
+        return plan === 'planannual' ? 'plan∞' : plan;
       },
 
       async loadRateLimit() {
@@ -700,30 +776,38 @@
         let firstBlock = -1;
         const total = count || 130;
         let i = 0;
-        while (i < total && !this.rpmTestStop) {
-          const batchSize = Math.min(5, total - i);
-          const promises = [];
-          for (let b = 0; b < batchSize; b++) {
-            const opts = { credentials: 'same-origin' };
-            if (this.testApiKey) {
-              opts.headers = { 'Authorization': 'Bearer ' + this.testApiKey };
-            }
-            promises.push(fetch('/api/v2/states', opts)
-              .then(res => ({ status: res.status }))
-              .catch(() => ({ status: 0 })));
-          }
-          const results = await Promise.all(promises);
-          for (const r of results) {
-            i++;
-            if (r.status === 429) {
-              blocked++;
-              if (firstBlock === -1) firstBlock = i;
-            } else if (r.status > 0) {
-              ok++;
-            }
+        const concurrency = 5;
+        const opts = { credentials: 'same-origin' };
+        if (this.testApiKey) {
+          opts.headers = { 'Authorization': 'Bearer ' + this.testApiKey };
+        }
+        const sendOne = () => {
+          i++;
+          return fetch('/api/v2/states', opts)
+            .then(res => ({ status: res.status }))
+            .catch(() => ({ status: 0 }));
+        };
+        const onResult = (r) => {
+          if (this.rpmTestStop) return;
+          if (r.status === 429) {
+            blocked++;
+            if (firstBlock === -1) firstBlock = i;
+          } else if (r.status > 0) {
+            ok++;
           }
           this.rpmTestResult = 'Enviadas: ' + i + '/' + total + '\nOK: ' + ok + '\nBloqueadas (429): ' + blocked + (firstBlock > 0 ? '\nPrimeiro 429 na requisição: ' + firstBlock : '');
+        };
+        const inFlight = new Set();
+        while (i < total && !this.rpmTestStop) {
+          while (inFlight.size < concurrency && i < total && !this.rpmTestStop) {
+            const p = sendOne().then(r => { onResult(r); inFlight.delete(p); });
+            inFlight.add(p);
+          }
+          if (inFlight.size >= concurrency && !this.rpmTestStop) {
+            await Promise.race([...inFlight]);
+          }
         }
+        await Promise.all([...inFlight]);
         await this.loadRateLimit();
         const usedMonthly = this.rateLimit ? this.rateLimit.used_monthly : 0;
         const limitMonthly = this.rateLimit ? this.rateLimit.limit_monthly : 0;

@@ -1,264 +1,96 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="cyan">
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apoiar — Tábua de Marés API</title>
+    ${ og }
+    <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
+    <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
+    <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
+  </head>
+  <body v-scope>
+    ${ navbar }
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apoiar - Tábua de Marés API</title>
-
-  ${ og }
-
-  <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
-  <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
-  <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap" rel="stylesheet" />
-  <style>
-    body,
-    h1,
-    h2,
-    h3,
-    p,
-    a {
-      font-family: "Spectral", serif;
-    }
-
-    .button-yellow {
-      background-color: #f9c74f;
-      border-color: #f9c74f;
-    }
-
-    .button-yellow:hover {
-      background-color: #f8b500;
-      border-color: #f8b500;
-    }
-
-    .donation-container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 2rem;
-      background-color: rgba(0, 0, 0, 0.03);
-      border-radius: 10px;
-    }
-
-    .donation-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin: 2rem 0;
-      justify-content: center;
-    }
-
-    .donation-option {
-      padding: 1rem 2rem;
-      border-radius: 8px;
-      background-color: var(--card-background-color);
-      cursor: pointer;
-      transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-      text-align: center;
-    }
-
-    .donation-option:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .pix-container {
-      text-align: center;
-      margin: 2rem 0;
-      padding: 1rem;
-      background-color: var(--card-background-color);
-      border-radius: 8px;
-    }
-
-    .pix-key {
-      font-family: monospace;
-      padding: 0.5rem 1rem;
-      background-color: rgba(0, 0, 0, 0.05);
-      border-radius: 4px;
-      margin: 1rem 0;
-      display: inline-block;
-    }
-
-    .thank-you {
-      margin-top: 3rem;
-      text-align: center;
-      font-style: italic;
-    }
-  </style>
-</head>
-
-<body v-scope>
-  <!-- Header -->
-  ${ navbar }
-
-  <!-- Main Content -->
-  <main class="container">
-    <section>
-      <hgroup>
-        <h1>Apoie este Projeto</h1>
-        <p>
-          Ajude a manter a API de Tábua de Marés gratuita e em constante
-          evolução
-        </p>
-      </hgroup>
-
-      <div class="donation-container">
-        <p>
-          A API de Tábua de Marés é um projeto independente, desenvolvido com
-          paixão para democratizar o acesso facilitado a esses dados.
-        </p>
-        <p>
-          Além de permitir outros devs a construir sus próprias soluções, sem
-          precisar pagar nada por isso.
-        </p>
-        <p>
-          Todos os dados oferecidos como API pode ser encontrados facilmente
-          no formato de pdf na página oficial da marinha do Brasil
-          <a href="https://www.marinha.mil.br/cppb/tabuas_de_mare"
-            target="_blank">https://www.marinha.mil.br/cppb/tabuas_de_mare</a>, especificamente aqui:
-          <a href="https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa"
-            target="_blank">https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa</a>
-        </p>
-
-        <div class="pix-container">
-          <h3>Faça uma transferência via PIX</h3>
-          <p>Chave PIX (e-mail):</p>
-          <div class="pix-key">contato@devtu.qzz.io</div>
-          <p>Envie qualquer valor que desejar</p>
-
-          <!-- QR Code PIX -->
-          <div style="margin: 1.5rem 0">
-            <p><strong>Ou escaneie o QR Code:</strong></p>
-            <img src="/pages/assets/qrCodePix.svg" alt="QR Code PIX" style="
-                  max-width: 200px;
-                  height: auto;
-                  border: 1px solid #ddd;
-                  border-radius: 8px;
-                  padding: 10px;
-                  background-color: white;
-                " />
+    <main id="main-content" class="support-page">
+      <section class="support-layout container" aria-labelledby="support-title">
+        <div class="support-story">
+          <p class="eyebrow">Projeto independente</p>
+          <h1 id="support-title">Ajude o acesso aberto a continuar aberto.</h1>
+          <p class="support-story__lead">A Tábua de Marés API organiza dados públicos para que outros devs construam sem começar do zero.</p>
+          <div class="support-principles">
+            <div><span>01</span><strong>Uso sem chave</strong><p>Acesso inicial continua gratuito e sem cadastro.</p></div>
+            <div><span>02</span><strong>Código aberto</strong><p>Implementação disponível para inspeção e contribuição.</p></div>
+            <div><span>03</span><strong>Operação real</strong><p>Infraestrutura, domínio e manutenção têm custo contínuo.</p></div>
           </div>
-
-          <p>
-            <small>Após a transferência, envie um e-mail para
-              contato@devtu.qzz.io informando sua contribuição para receber
-              um agradecimento especial.</small>
-          </p>
+          <aside class="source-note">
+            <strong>Origem dos dados</strong>
+            <p>As tábuas também são publicadas em PDF pela Marinha do Brasil.</p>
+            <a href="https://www.marinha.mil.br/cppb/tabuas_de_mare" target="_blank" rel="noreferrer">Página oficial ↗</a>
+            <a href="https://www.marinha.mil.br/chm/dados-do-segnav/dados-de-mare-mapa" target="_blank" rel="noreferrer">Mapa de dados de maré ↗</a>
+          </aside>
         </div>
 
-        <div class="thank-you">
-          <p>Muito obrigado pelo seu apoio! 🙏</p>
-          <a href="/" role="button" class="outline">Voltar para a página inicial</a>
+        <article class="pix-panel">
+          <p class="pix-panel__label">Contribuição direta</p>
+          <h2>PIX</h2>
+          <p>Qualquer valor ajuda a manter serviço, documentação e dados acessíveis.</p>
+          <img src="/pages/assets/qrCodePix.svg" alt="QR Code PIX para contato@devtu.qzz.io" class="pix-panel__qr" />
+          <div class="pix-panel__key">
+            <span>Chave e-mail</span>
+            <code>contato@devtu.qzz.io</code>
+          </div>
+          <button type="button" class="button-sun" @click="copyPix">{{ pixCopied ? 'Chave copiada' : 'Copiar chave PIX' }}</button>
+          <p class="pix-panel__feedback" aria-live="polite">{{ pixCopied ? 'Pronto para colar no seu banco.' : '' }}</p>
+          <small>Se quiser, envie um e-mail após a transferência para receber um agradecimento.</small>
+        </article>
+      </section>
+
+      <section class="tools-section container" aria-labelledby="tools-title">
+        <div class="section-heading section-heading--split">
+          <div><p class="eyebrow">Feito com open source</p><h2 id="tools-title">Ferramentas que sustentam o projeto.</h2></div>
+          <p>Créditos e licenças fazem parte da transparência.</p>
         </div>
-      </div>
-    </section>
-  </main>
+        <div class="tools-cards">
+          <a class="tool-card" href="https://www.xpdfreader.com/pdftotext-man.html" target="_blank" rel="noreferrer">
+            <img src="/pages/assets/xpdf-icon.png" alt="" />
+            <span><strong>XpdfReader</strong><small>Conversão de PDF</small></span><b>↗</b>
+          </a>
+          <a class="tool-card" href="https://icons8.com.br/license" target="_blank" rel="noreferrer">
+            <img src="/pages/assets/logo-icons8-full.svg" alt="" />
+            <span><strong>Icons8</strong><small>Ícones e ilustrações</small></span><b>↗</b>
+          </a>
+          <a class="tool-card" href="https://vlang.io" target="_blank" rel="noreferrer">
+            <img src="https://raw.githubusercontent.com/vlang/v-logo/refs/heads/master/dist/v-logo_32x32.svg" alt="" />
+            <span><strong>V</strong><small>Linguagem e servidor</small></span><b>↗</b>
+          </a>
+          <a class="tool-card" href="https://github.com/vuejs/petite-vue" target="_blank" rel="noreferrer">
+            <img src="/pages/assets/petie-vue.svg" alt="" />
+            <span><strong>PetiteVue</strong><small>Interações no browser</small></span><b>↗</b>
+          </a>
+          <a class="tool-card" href="https://picocss.com/" target="_blank" rel="noreferrer">
+            <span class="tool-card__letter">P</span>
+            <span><strong>Pico CSS</strong><small>Base semântica</small></span><b>↗</b>
+          </a>
+        </div>
+      </section>
+    </main>
 
-  <!-- Licenças e Ferramentas -->
-  <section class="tools-section">
-    <h2 style="text-align: center; margin-top: 2rem">
-      Ferramentas & Licenças Free Utilizadas
-    </h2>
-    <div class="tools-cards">
-      <div class="tool-card">
-        <img src="/pages/assets/xpdf-icon.png" alt="XpdfReader" style="height: 48px; margin-bottom: 8px" />
-        <h4>XpdfReader - pdftotext</h4>
-        <a href="https://www.xpdfreader.com/pdftotext-man.html" target="_blank">Conversor de pdf em texto <img
-            src="/pages/assets/link.svg" /></a>
-      </div>
-      <div class="tool-card">
-        <img src="/pages/assets/logo-icons8-full.svg" alt="Icons8" style="height: 48px; margin-bottom: 8px" />
-        <h4>Icons8</h4>
-        <a href="https://icons8.com.br/license" target="_blank">Ícones e Ilustrações (licença) <img
-            src="/pages/assets/link.svg" /></a>
-      </div>
-      <div class="tool-card">
-        <img src="https://raw.githubusercontent.com/vlang/v-logo/refs/heads/master/dist/v-logo_32x32.svg" alt="Vlang"
-          style="height: 48px; margin-bottom: 8px" />
-        <h4>V Lang</h4>
-        <a href="https://vlang.io" target="_blank">Linguagem <img src="/pages/assets/link.svg" /></a>
-      </div>
-      <div class="tool-card">
-        <img src="/pages/assets/petie-vue.svg" alt="Petite-Vue" style="height: 66px; margin-bottom: 8px" />
-        <h4>PetiteVue</h4>
-        <a href="https://github.com/vuejs/petite-vue" target="_blank">Minimal-Frontend <img
-            src="/pages/assets/link.svg" /> </a>
-      </div>
-      <div class="tool-card">
-        <img src="https://picocss.com/favicon.ico" alt="PicoCSS" style="height: 48px; margin-bottom: 8px" />
-        <h4>PicoCSS</h4>
-        <a href="http://picocss.com/" target="_blank">Minimal CSS <img src="/pages/assets/link.svg" /> </a>
-      </div>
-    </div>
-  </section>
+    ${ footer }
 
-  <!-- Footer -->
-  ${ footer }
-
-  <script>
-    const { createApp } = PetiteVue;
-
-    createApp({
-      pixValue: null,
-    }).mount();
-  </script>
-
-  <style>
-    .tools-section {
-      margin-top: 3rem;
-      margin-bottom: 2rem;
-    }
-
-    .tools-cards {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      justify-content: center;
-      margin-top: 1.5rem;
-    }
-
-    .tool-card {
-      background: #f5f5f5;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      padding: 1rem 1.5rem 0.5rem;
-      text-align: center;
-      width: 160px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: box-shadow 0.2s;
-      justify-content: space-between;
-      height: 260px;
-    }
-
-    .tool-card a {
-      margin-top: auto;
-    }
-
-    .tool-card:hover {
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-      background: #e0f7fa;
-    }
-
-    .tool-card img {
-      margin-bottom: 0.5rem;
-    }
-
-    .tool-card h4 {
-      margin: 0.5rem 0 0.5rem 0;
-      font-size: 1.1rem;
-    }
-
-    .tool-card a {
-      color: #0077b6;
-      text-decoration: underline;
-      font-size: 0.95rem;
-    }
-  </style>
-</body>
-
+    <script>
+      const { createApp } = PetiteVue;
+      createApp({
+        pixCopied: false,
+        copyPix() {
+          navigator.clipboard.writeText('contato@devtu.qzz.io').then(() => {
+            this.pixCopied = true;
+            window.setTimeout(() => { this.pixCopied = false; }, 1800);
+          });
+        }
+      }).mount();
+    </script>
+  </body>
 </html>
