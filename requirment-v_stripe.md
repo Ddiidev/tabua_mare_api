@@ -63,7 +63,7 @@ Cria uma sessão temporária do Customer Portal e retorna uma URL única onde o 
   "created": 1234567890,
   "customer": "cus_xxx",
   "livemode": false,
-  "return_url": "https://tabuamare.devtu.qzz.io/dashboard",
+  "return_url": "https://tabuamare.api.br/dashboard",
   "url": "https://billing.stripe.com/session/{secret}"
 }
 ```
