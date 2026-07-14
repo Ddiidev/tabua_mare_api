@@ -1,9 +1,9 @@
 FROM alpine:3.22 AS builder
 
-ARG V_COMMIT=45ae01d23168b6372f734eeb38a77360bbcf184a
-ARG VEEMARKER_COMMIT=1510ef5a7cbf980f2e075f02baada7190748e3f7
-ARG DOTENV_COMMIT=1d9477c8b1a3f5ca14b2eb042c4e6d52449b75d4
-ARG V_STRIPE_COMMIT=ccc7e4151038589d97b47e3cc7d0de44abf3247c
+ENV V_COMMIT=45ae01d23168b6372f734eeb38a77360bbcf184a \
+    VEEMARKER_COMMIT=1510ef5a7cbf980f2e075f02baada7190748e3f7 \
+    DOTENV_COMMIT=1d9477c8b1a3f5ca14b2eb042c4e6d52449b75d4 \
+    V_STRIPE_COMMIT=ccc7e4151038589d97b47e3cc7d0de44abf3247c
 
 RUN apk add --no-cache \
     build-base \
@@ -69,8 +69,9 @@ RUN apk add --no-cache \
     && addgroup -S -g 10001 app \
     && adduser -S -D -H -u 10001 -G app app \
     && mkdir -p /app/data /app/seed \
-    && chown app:app /app/data /app/seed \
-    && chmod 0750 /app/data /app/seed
+    && chown app:app /app/data \
+    && chmod 0750 /app/data \
+    && chmod 0555 /app/seed
 
 WORKDIR /app
 
@@ -81,12 +82,15 @@ COPY --from=builder /src/taubinha.sqlite.sha256 /app/seed/taubinha.sqlite.sha256
 COPY dockerfiles/entrypoint-alpine.sh /usr/local/bin/entrypoint-alpine.sh
 
 RUN chmod 0755 /app/TabuaMareAPI /usr/local/bin/entrypoint-alpine.sh \
+    && chown -R root:root /app/seed \
     && chmod -R a=rX /app/pages /app/seed
 
 ENV PORT=3330 \
     DB_SQLITE_PATH=/app/data/taubinha.sqlite \
     URL_ENV=https://tabuamare.api.br \
     TZ=America/Sao_Paulo
+
+VOLUME ["/app/data"]
 
 EXPOSE 3330
 

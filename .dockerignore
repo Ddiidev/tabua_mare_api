@@ -27,7 +27,7 @@ bin
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
-!taubinha.sqlite
+!/taubinha.sqlite
 
 *.exe
 *.dll
