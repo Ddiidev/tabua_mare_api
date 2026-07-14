@@ -4,7 +4,7 @@
 
 Uma API pública para consultar dados precisos de marés em todo o litoral brasileiro. Interface REST simples, sem necessidade de chave de API, com cobertura nacional e exemplos práticos.
 
-- Site oficial: https://tabuamare.devtu.qzz.io/
+- Site oficial: https://tabuamare.api.br/
 - Documentação: `/docs`
 - Playground: `/playground`
 - Apoiar o projeto: `/apoiar`
@@ -32,7 +32,7 @@ A versão 2 da API traz uma mudança importante na identificação dos portos:
 
 ## Como usar a API
 
-Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estrutura de resposta, acesse: **https://tabuamare.devtu.qzz.io/docs**
+Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estrutura de resposta, acesse: **https://tabuamare.api.br/docs**
 
 ### Principais Endpoints (V2)
 
@@ -179,7 +179,7 @@ docker compose up -d --build
 
 Você pode apoiar este projeto de várias formas:
 
-- **Financeiramente**: Acesse https://tabuamare.devtu.qzz.io/apoiar para contribuir e ajudar a pagar uma VPS melhor
+- **Financeiramente**: Acesse https://tabuamare.api.br/apoiar para contribuir e ajudar a pagar uma VPS melhor
 - **Desenvolvimento**: Crie issues, pull requests ou contribua com código
 - **Divulgação**: Compartilhe o projeto com outros desenvolvedores
 
