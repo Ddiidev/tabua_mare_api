@@ -19,6 +19,17 @@ pub fn new() !&pool.ConnectionPool {
 	return pool.new_connection_pool(create_conn, config)!
 }
 
+pub fn sqlite_is_healthy(mut pool_conn pool.ConnectionPool) bool {
+	conn := pool_conn.get() or { return false }
+	defer {
+		pool_conn.put(conn) or {}
+	}
+
+	mut db := conn as sqlite.DB
+	rows := db.exec('SELECT 1;') or { return false }
+	return rows.len == 1 && rows[0].vals.len == 1 && rows[0].vals[0] == '1'
+}
+
 fn create_conn() !&pool.ConnectionPoolable {
 	env := conf_env.load_env()
 

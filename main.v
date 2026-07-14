@@ -1,8 +1,12 @@
 module main
 
 import os
+import pool
+import sync.stdatomic
+import time
 import veb
 import shareds.web_ctx
+import shareds.health
 import shareds.infradb
 import shareds.infradb_pg
 import shareds.conf_env
@@ -10,11 +14,47 @@ import leafscale.veemarker
 import shareds.components_view
 import domain.auth_user
 
+const shutdown_requested = stdatomic.new_atomic[bool](false)
+
 struct App {
 	veb.Controller
 	veb.StaticHandler
 	components_view.ComponentsView
 	env shared conf_env.EnvConfig
+mut:
+	health_state &health.State
+	health_pool  &pool.ConnectionPool
+	server_ready chan &veb.Server
+}
+
+fn request_shutdown(_ os.Signal) {
+	mut requested := shutdown_requested
+	requested.store(true)
+}
+
+fn wait_for_shutdown(state &health.State, server_ready chan &veb.Server) {
+	server := <-server_ready
+	mut requested := shutdown_requested
+	for !requested.load() {
+		time.sleep(50 * time.millisecond)
+	}
+
+	state.begin_shutdown()
+	time.sleep(6 * time.second)
+	server.shutdown(timeout: 20 * time.second) or { eprintln('Graceful shutdown failed: ${err}') }
+}
+
+pub fn (mut app App) init_server(server &veb.Server) {
+	app.server_ready <- server
+}
+
+pub fn (mut app App) before_accept_loop() {
+	app.health_state.mark_ready()
+
+	mut requested := shutdown_requested
+	if requested.load() {
+		app.health_state.begin_shutdown()
+	}
 }
 
 fn main() {
@@ -30,25 +70,28 @@ fn main() {
 		current_port: port.str()
 	}
 
-	mut app := &App{
-		env: env
-	}
-
 	infradb.apply_startup_migrations() or { eprintln('Startup migration skipped: ${err}') }
 	infradb_pg.apply_pg_startup_migrations() or { eprintln('PG startup migration skipped: ${err}') }
 
+	mut app := &App{
+		env:          env
+		health_state: health.new_state()
+		health_pool:  infradb.new()!
+		server_ready: chan &veb.Server{cap: 1}
+	}
+
 	mut api_controller := &APIController{
-		pool_conn: infradb.new()!,
+		pool_conn: infradb.new()!
 		env:       env
 	}
 
 	mut api_controller_v2 := &APIControllerV2{
-		pool_conn: infradb.new()!,
+		pool_conn: infradb.new()!
 		env:       env
 	}
 
 	mut auth_controller := &AuthController{
-		env:          env,
+		env:          env
 		avatar_cache: auth_user.new_avatar_cache(env.avatar_cache_ttl_minutes)
 	}
 
@@ -60,6 +103,10 @@ fn main() {
 	app.register_controller[APIControllerV2, web_ctx.WsCtx]('/api/v2', mut api_controller_v2)!
 	app.register_controller[AuthController, web_ctx.WsCtx]('/auth', mut auth_controller)!
 	app.mount_static_folder_at('./pages/assets', '/pages/assets')!
+	os.signal_opt(.term, request_shutdown) or {
+		panic('Failed to register SIGTERM handler: ${err}')
+	}
+	spawn wait_for_shutdown(app.health_state, app.server_ready)
 
 	println('Starting Tabua Mare API on port ${port}')
 	veb.run[App, web_ctx.WsCtx](mut app, port)
@@ -81,7 +128,6 @@ fn (app &App) is_logged_in(mut ctx web_ctx.WsCtx) bool {
 
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
-	dump(ctx.ip())
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('/', app.is_logged_in(mut ctx))
 	data['og'] = app.open_graph(data)
@@ -180,6 +226,21 @@ pub fn (app &App) dashboard(mut ctx web_ctx.WsCtx) veb.Result {
 
 @['/ping'; get; head]
 pub fn (app &App) ping(mut ctx web_ctx.WsCtx) veb.Result {
-    ctx.res.set_status(.ok)
-    return ctx.no_content()
+	ctx.res.set_status(.ok)
+	return ctx.no_content()
+}
+
+@['/health/live'; get; head]
+pub fn (app &App) health_live(mut ctx web_ctx.WsCtx) veb.Result {
+	return ctx.no_content()
+}
+
+@['/health/ready'; get; head]
+pub fn (mut app App) health_ready(mut ctx web_ctx.WsCtx) veb.Result {
+	if app.health_state.is_ready() && infradb.sqlite_is_healthy(mut app.health_pool) {
+		return ctx.no_content()
+	}
+
+	ctx.res.set_status(.service_unavailable)
+	return ctx.send_response_to_client('', '')
 }
