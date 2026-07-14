@@ -73,3 +73,12 @@ Repositorio: `tabua_mare_api`
 ## Proximo Teste Esperado
 
 - Criar admin Coolify; publicar branch; validar CI/GHCR; configurar apps A/B e TLS DNS-01.
+
+## Revisao Final De Seguranca
+
+Lote posterior registrado em [2026-07-14-{new-platform}-final-review.MD](2026-07-14-{new-platform}-final-review.MD).
+
+- Rate-limit e readiness passaram a falhar fechados sem PostgreSQL.
+- Startup no dominio de producao passou a recusar configuracao incompleta/insegura.
+- Deploy passou a validar as duas apps/storages antes de qualquer PATCH.
+- Smoke A/B passou a selecionar cada slot por header e router Traefik dedicado.

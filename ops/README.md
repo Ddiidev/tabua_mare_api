@@ -62,9 +62,8 @@ Criar duas aplicacoes regulares baseadas em Docker Image:
 - nomes `tabuamare-a` e `tabuamare-b`;
 - imagem `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`;
 - porta exposta `3330`, sem host mapping;
-- Consistent Container Names habilitado;
 - health check `/health/ready`, intervalo 5s, timeout 2s;
-- stop grace period `30s`;
+- stop grace period `30s`; no Coolify `4.1.2` fixado, o default quando nao configurado usa `docker stop --time=30` em `app/Actions/Application/StopApplication.php`;
 - limite `2` CPU, `512 MiB`; reserva `256 MiB`;
 - volume exclusivo por app em `/app/data`.
 
@@ -84,6 +83,13 @@ Copiar `ops/traefik/dynamic/tabuamare.yaml` para `/data/coolify/proxy/dynamic/ta
 
 - `__APP_A_CONTAINER__`: nome consistente/UUID do container A;
 - `__APP_B_CONTAINER__`: nome consistente/UUID do container B.
+- `__DEPLOY_SMOKE_SECRET__`: segredo aleatorio de no minimo 32 caracteres, igual ao secret GitHub `DEPLOY_SMOKE_SECRET`.
+
+Gerar o valor fora de logs de CI:
+
+```bash
+openssl rand -hex 32
+```
 
 O arquivo cria apex, redirect `www -> apex`, painel admin e balanceamento A/B com health check.
 
@@ -96,7 +102,7 @@ O arquivo cria apex, redirect `www -> apex`, painel admin e balanceamento A/B co
 
 ## 7. GitHub e deploy
 
-Secret: `COOLIFY_TOKEN`. Variables: `COOLIFY_URL`, `COOLIFY_APP_A_UUID`, `COOLIFY_APP_B_UUID`. Token Coolify somente com `read`, `write`, `deploy`.
+Secrets: `COOLIFY_TOKEN` e `DEPLOY_SMOKE_SECRET` (minimo 32 caracteres). Variables: `COOLIFY_URL`, `COOLIFY_APP_A_UUID`, `COOLIFY_APP_B_UUID`. Token Coolify somente com `read`, `write`, `deploy`.
 
 No primeiro push, GitHub cria o pacote GHCR privado por padrao. Ir em `Ddiidev -> Packages -> tabua-mare-api -> Package settings -> Change visibility -> Public`. Essa mudanca e obrigatoria e irreversivel. Confirmar sem login:
 
@@ -108,6 +114,17 @@ docker manifest inspect ghcr.io/ddiidev/tabua-mare-api:sha-<commit>
 Tags `sha-*` existentes nunca sao sobrescritas; o CI falha se a tag ja existir.
 
 O workflow `Deploy manual de producao A/B` recebe SHA completo. Atualiza A, smoke, B; falha restaura tags anteriores.
+
+Antes de qualquer alteracao, o cliente valida as duas apps por `GET /api/v1/applications/{uuid}` e `GET /api/v1/applications/{uuid}/storages`. Campos oficiais usados: `ports_exposes`, `ports_mappings`, `health_check_enabled`, `health_check_path`, `health_check_port`, `limits_cpus`, `limits_memory`, `limits_memory_reservation`; storage usa `name`, `mount_path`, `host_path`. Invariantes exigidas:
+
+- porta interna somente `3330`, sem `ports_mappings` para host;
+- health check habilitado em `/health/ready` na porta `3330`;
+- 2 CPU, 512 MiB de limite e 256 MiB de reserva;
+- exatamente um storage em `/app/data`; identidade (`name` de volume ou `host_path`) diferente entre A/B.
+
+O deploy exige A e B inicialmente `running:healthy`. Deploy e rollback sao stop-first: antes de cada stop, consultam novamente o peer e exigem `running:healthy`; entao marcam o slot como tocado, chamam `POST /applications/{uuid}/stop`, aguardam o GET reportar `exited`/`stopped` e somente depois alteram tag e iniciam. No rollback B -> A, A so e parada depois que B foi restaurada e voltou a `running:healthy`. Se restaurar B falhar, A permanece saudavel na tag nova e o script reporta rollback incompleto. Antes do primeiro deploy, conferir manualmente na UI que stop grace esta vazio/default ou `30s`; nunca configurar abaixo de 30s. Referencia do default fixado: [StopApplication.php do Coolify](https://github.com/coollabsio/coolify/blob/4.1.2/app/Actions/Application/StopApplication.php).
+
+O smoke publico envia o slot e `X-Tabuamare-Deploy-Secret`, sem registrar o segredo. Routers Traefik de prioridade 100 exigem ambos os headers; requisicoes normais continuam no balanceador `tabuamare-ab`.
 
 ## 8. Endurecer SSH por ultimo
 

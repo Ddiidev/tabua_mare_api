@@ -69,9 +69,19 @@ fn main() {
 		...conf_env.load_env()
 		current_port: port.str()
 	}
+	conf_env.validate_startup(env) or {
+		eprintln('Configuracao de startup invalida: ${err}')
+		exit(1)
+	}
 
 	infradb.apply_startup_migrations() or { eprintln('Startup migration skipped: ${err}') }
-	infradb_pg.apply_pg_startup_migrations() or { eprintln('PG startup migration skipped: ${err}') }
+	infradb_pg.apply_pg_startup_migrations() or {
+		if conf_env.is_production(env) {
+			eprintln('PG startup migration failed: ${err}')
+			exit(1)
+		}
+		eprintln('PG startup migration skipped: ${err}')
+	}
 
 	mut app := &App{
 		env:          env
@@ -237,7 +247,12 @@ pub fn (app &App) health_live(mut ctx web_ctx.WsCtx) veb.Result {
 
 @['/health/ready'; get; head]
 pub fn (mut app App) health_ready(mut ctx web_ctx.WsCtx) veb.Result {
-	if app.health_state.is_ready() && infradb.sqlite_is_healthy(mut app.health_pool) {
+	connstr := rlock app.env {
+		app.env.postgresql_conn_str
+	}
+	if app.health_state.is_ready_with_dependencies(infradb.sqlite_is_healthy(mut app.health_pool),
+		infradb_pg.is_healthy(connstr))
+	{
 		return ctx.no_content()
 	}
 

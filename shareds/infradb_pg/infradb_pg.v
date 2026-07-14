@@ -34,6 +34,19 @@ pub fn new() ?&PgHolder {
 	}
 }
 
+// is_healthy confirma que o PostgreSQL obrigatorio aceita conexao e consulta.
+pub fn is_healthy(connstr string) bool {
+	if connstr == '' {
+		return false
+	}
+	mut db := pg.connect_with_conninfo(connstr) or { return false }
+	defer {
+		db.close() or {}
+	}
+	db.exec('SELECT 1') or { return false }
+	return true
+}
+
 // db retorna a conexao PG do holder (thread-safe).
 pub fn (mut h PgHolder) db() &pg.DB {
 	h.lock.lock()

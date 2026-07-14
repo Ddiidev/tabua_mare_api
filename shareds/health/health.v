@@ -25,6 +25,10 @@ pub fn (state &State) is_ready() bool {
 	return ready.load()
 }
 
+pub fn (state &State) is_ready_with_dependencies(sqlite_ok bool, postgres_ok bool) bool {
+	return state.is_ready() && sqlite_ok && postgres_ok
+}
+
 pub fn (state &State) mark_ready() {
 	mut shutting_down := state.shutting_down
 	if shutting_down.load() {
