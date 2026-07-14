@@ -9,8 +9,8 @@ permissions:
   packages: write
 
 concurrency:
-  group: ci-image-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-image-${{ github.sha }}
+  cancel-in-progress: false
 
 env:
   V_COMMIT: 45ae01d23168b6372f734eeb38a77360bbcf184a
@@ -57,8 +57,16 @@ jobs:
       - name: Impedir reatribuicao da tag SHA
         if: github.event_name == 'push'
         run: |
-          if docker manifest inspect "$GHCR_IMAGE" >/dev/null 2>&1; then
+          set +e
+          manifest_error="$(docker manifest inspect "$GHCR_IMAGE" 2>&1 >/dev/null)"
+          manifest_status=$?
+          set -e
+          if [[ "$manifest_status" -eq 0 ]]; then
             echo "::error::A tag imutavel $GHCR_IMAGE ja existe; reatribuicao recusada."
+            exit 1
+          fi
+          if ! grep -Eqi 'manifest unknown|not found' <<<"$manifest_error"; then
+            echo "::error::Falha ao consultar GHCR; publicacao recusada sem confirmar ausencia da tag."
             exit 1
           fi
 

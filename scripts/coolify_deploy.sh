@@ -89,7 +89,7 @@ start_app() {
 
 wait_deployment() {
 	local deployment_uuid="$1"
-	local deadline=$(( $(date +%s) + deploy_timeout ))
+	local deadline="$2"
 	local response status
 	while (( $(date +%s) <= deadline )); do
 		response="$(api_request GET "/deployments/${deployment_uuid}" 2>/dev/null || true)"
@@ -112,7 +112,7 @@ wait_deployment() {
 wait_healthy() {
 	local uuid="$1"
 	local expected_tag="$2"
-	local deadline=$(( $(date +%s) + deploy_timeout ))
+	local deadline="$3"
 	local response status current_tag
 	while (( $(date +%s) <= deadline )); do
 		response="$(get_app "${uuid}" 2>/dev/null || true)"
@@ -156,7 +156,8 @@ old_tag_b=''
 deploy_app() {
 	local slot="$1"
 	local uuid="$2"
-	local start_response deployment_uuid
+	local start_response deployment_uuid deadline
+	deadline=$(( $(date +%s) + deploy_timeout ))
 	log "Atualizando app ${slot} para ${target_tag}"
 	if [[ "${slot}" == A ]]; then
 		touched_a=1
@@ -170,8 +171,8 @@ deploy_app() {
 		log "Coolify nao retornou deployment_uuid para app ${slot}"
 		return 1
 	}
-	wait_deployment "${deployment_uuid}" || return 1
-	wait_healthy "${uuid}" "${target_tag}" || return 1
+	wait_deployment "${deployment_uuid}" "${deadline}" || return 1
+	wait_healthy "${uuid}" "${target_tag}" "${deadline}" || return 1
 	public_smoke
 }
 
@@ -179,13 +180,15 @@ restore_app() {
 	local slot="$1"
 	local uuid="$2"
 	local old_tag="$3"
-	local start_response deployment_uuid
+	local start_response deployment_uuid deadline
+	deadline=$(( $(date +%s) + deploy_timeout ))
 	log "Rollback app ${slot} para ${old_tag}"
 	patch_tag "${uuid}" "${old_tag}" || return 1
 	start_response="$(start_app "${uuid}")" || return 1
 	deployment_uuid="$(json_field deployment_uuid <<<"${start_response}" 2>/dev/null || true)"
 	[[ -n "${deployment_uuid}" ]] || return 1
-	wait_deployment "${deployment_uuid}" && wait_healthy "${uuid}" "${old_tag}"
+	wait_deployment "${deployment_uuid}" "${deadline}" && \
+		wait_healthy "${uuid}" "${old_tag}" "${deadline}"
 }
 
 rollback() {
@@ -202,10 +205,12 @@ rollback() {
 		log 'ERRO CRITICO: rollback incompleto; verificar Coolify imediatamente'
 	fi
 	rollback_in_progress=0
+	rollback_done=1
 	return "${failed}"
 }
 
 rollback_in_progress=0
+rollback_done=0
 
 app_a="$(get_app "${COOLIFY_APP_A_UUID}")" || fail 'nao foi possivel ler app A'
 app_b="$(get_app "${COOLIFY_APP_B_UUID}")" || fail 'nao foi possivel ler app B'
@@ -215,12 +220,22 @@ old_tag_b="$(json_field docker_registry_image_tag <<<"${app_b}")"
 [[ "${old_tag_b}" =~ ^sha-[0-9a-f]{40}$ ]] || fail 'tag anterior invalida no app B'
 
 on_signal() {
-	trap - INT TERM
+	trap '' INT TERM
 	log 'Deploy interrompido; tentando rollback antes de sair'
 	rollback || true
 	exit 130
 }
+
+on_exit() {
+	local exit_code="$?"
+	if [[ "${exit_code}" != 0 && "${rollback_done}" == 0 && "${rollback_in_progress}" == 0 ]]; then
+		log 'Saida inesperada; tentando rollback'
+		rollback || true
+	fi
+	return "${exit_code}"
+}
 trap on_signal INT TERM
+trap on_exit EXIT
 
 if ! deploy_app A "${COOLIFY_APP_A_UUID}"; then
 	log 'Deploy A falhou; iniciando rollback'
@@ -233,5 +248,5 @@ if ! deploy_app B "${COOLIFY_APP_B_UUID}"; then
 	exit 1
 fi
 
-trap - INT TERM
+trap - INT TERM EXIT
 log "Deploy concluido: A/B em ${target_tag}"
