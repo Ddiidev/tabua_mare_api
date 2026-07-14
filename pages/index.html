@@ -1,398 +1,247 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="cyan">
+<html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     ${ og }
-
-    <title>Tábua de Marés - API Brasileira</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="/pages/assets/favicon-192x192.png"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css"
-    />
+    <title>Tábua de Marés — API brasileira</title>
+    <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
     <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Spectral&amp;display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      body,
-      h1,
-      h2,
-      h3,
-      p,
-      a {
-        font-family: "Spectral", serif;
-      }
-
-      .social-links {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1.5rem;
-        justify-content: center;
-        margin: 2rem 0;
-      }
-
-      .social-link {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-decoration: none;
-        color: var(--primary);
-        transition:
-          transform 0.3s ease,
-          color 0.3s ease;
-        padding: 1rem;
-        border-radius: 8px;
-        background-color: rgba(0, 0, 0, 0.03);
-      }
-
-      .social-link:hover {
-        transform: translateY(-5px);
-        color: var(--primary-hover);
-        background-color: rgba(0, 0, 0, 0.05);
-      }
-
-      .social-link span {
-        margin-top: 0.5rem;
-        font-weight: 500;
-      }
-
-      .button-yellow {
-        background-color: #f9c74f;
-        border-color: #f9c74f;
-      }
-
-      .button-yellow:hover {
-        background-color: #f8b500;
-        border-color: #f8b500;
-      }
-    </style>
   </head>
-
   <body v-scope>
-    <!-- Header -->
     ${ navbar }
 
-    <!-- Hero Section -->
-    <main class="container">
-      <section class="hero">
-        <div class="grid">
-          <div>
-            <hgroup>
-              <h1>API de Tábua de Marés do Brasil</h1>
-              <p>
-                A Tábua de Marés API fornece dados precisos sobre as marés do litoral brasileiro. Uma
-                ferramenta criada por desenvolvedor para desenvolvedores, pesquisadores e entusiastas do mar.
-              </p>
-            </hgroup>
+    <main id="main-content">
+      <section class="home-hero container" aria-labelledby="home-title">
+        <div class="home-hero__copy">
+          <p class="eyebrow"><span></span> API brasileira · aberta por padrão</p>
+          <h1 id="home-title">Dados de maré do Brasil.<br /><em>Uma requisição e pronto.</em></h1>
+          <p class="home-hero__lead">
+            Portos, horários e alturas de maré em uma API REST direta. Comece sem cadastro ou chave. Escale quando precisar.
+          </p>
+          <div class="home-hero__actions">
+            <a href="#console" role="button" class="button-sun">Testar API sem cadastro</a>
+            <a href="/docs" role="button" class="outline">Ler documentação</a>
+          </div>
+          <ul class="home-hero__facts" aria-label="Resumo do acesso">
+            <li><strong>16 req/min</strong><span>sem chave</span></li>
+            <li><strong>Mensal livre</strong><span>acesso anônimo</span></li>
+            <li><strong>17 estados</strong><span>costa brasileira</span></li>
+          </ul>
+        </div>
 
-            <p>
-              <mark>Não é necessária chave de API! Consulte livremente.</mark>
-            </p>
-
-            <p>
-              <small>De Dev para Dev</small>
-              <img
-                src="/pages/assets/flag-br.png"
-                alt="Bandeira do Brasil"
-                style="
-                  height: 1.2em;
-                  vertical-align: middle;
-                  margin-left: 0.5rem;
-                "
-              />
-            </p>
-            <a href="https://www.websitecarbon.com/website/tabuamare-devtu-qzz-io/" target="_blank" class="carbon-badge">
-              🌱 99% menos carbono
-            </a>
-
-            <div class="grid">
-              <a href="/docs" role="button" class="button-yellow"
-                >Ver Documentação</a
-              >
-              <button
-                class="secondary outline"
-                @click="showStatesDropdown = !showStatesDropdown"
-              >
-                Todos os Estados
-                <svg
-                  width="16"
-                  height="16"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  ></path>
-                </svg>
-              </button>
-            </div>
-
-            <!-- States Dropdown -->
-            <details v-show="showStatesDropdown" open>
-              <summary class="states-summary">
-                Estados Costeiros do Brasil
+        <section id="console" class="tide-console" data-ui="tide-console" :class="'is-' + requestState" aria-labelledby="console-title">
+          <header class="tide-console__header">
+            <div class="console-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span id="console-title">requisição ao vivo</span>
+            <span class="console-status">{{ statusLabel }}</span>
+          </header>
+          <div class="tide-console__request">
+            <details class="endpoint-picker">
+              <summary aria-label="Escolher endpoint de teste">
+                <span class="endpoint-picker__title">{{ selectedEndpoint.title }}</span>
+                <span class="endpoint-picker__route"><b>GET</b><code>{{ selectedEndpoint.path }}</code></span>
               </summary>
-              <div class="states-grid">
-                <div class="state-item">🏖️ AL - Alagoas</div>
-                <div class="state-item">🌊 AP - Amapá</div>
-                <div class="state-item">🏝️ BA - Bahia</div>
-                <div class="state-item">⛵ CE - Ceará</div>
-                <div class="state-item">🌅 ES - Espírito Santo</div>
-                <div class="state-item">🦀 MA - Maranhão</div>
-                <div class="state-item">🐟 PA - Pará</div>
-                <div class="state-item">🏖️ PB - Paraíba</div>
-                <div class="state-item">🌊 PE - Pernambuco</div>
-                <div class="state-item">🏝️ PI - Piauí</div>
-                <div class="state-item">⛵ PR - Paraná</div>
-                <div class="state-item">🌅 RJ - Rio de Janeiro</div>
-                <div class="state-item">🦀 RN - Rio Grande do Norte</div>
-                <div class="state-item">🐟 RS - Rio Grande do Sul</div>
-                <div class="state-item">🏖️ SC - Santa Catarina</div>
-                <div class="state-item">🌊 SE - Sergipe</div>
-                <div class="state-item">🏝️ SP - São Paulo</div>
+              <div class="endpoint-picker__menu" role="listbox" aria-label="Endpoints disponíveis">
+                <button
+                  v-for="endpoint in endpoints"
+                  type="button"
+                  class="endpoint-picker__option"
+                  :class="{ 'is-selected': endpoint.path === selectedEndpoint.path }"
+                  role="option"
+                  :aria-selected="endpoint.path === selectedEndpoint.path"
+                  @click="selectEndpoint(endpoint, $event)"
+                >
+                  <strong>{{ endpoint.title }}</strong>
+                  <span class="endpoint-picker__route"><b>GET</b><code>{{ endpoint.path }}</code></span>
+                </button>
               </div>
             </details>
+            <button type="button" class="console-run" @click="runDemo" :disabled="requestState === 'loading'">
+              {{ requestState === 'loading' ? 'Consultando…' : 'Executar' }}
+            </button>
+          </div>
+          <div class="tide-track" aria-hidden="true"><span class="tide-water"></span><span class="tide-buoy"></span></div>
+          <pre class="tide-console__response" aria-live="polite"><code>{{ responseText }}</code></pre>
+          <footer class="tide-console__footer">
+            <span>Nenhuma API key enviada</span>
+            <span>JSON</span>
+          </footer>
+        </section>
+      </section>
+
+      <section id="produto" class="product-strip">
+        <div class="container product-strip__grid">
+          <div><span>01</span><strong>Dados oficiais</strong><p>Marés do litoral brasileiro organizadas para integração.</p></div>
+          <div><span>02</span><strong>REST simples</strong><p>Rotas legíveis, respostas JSON e exemplos práticos.</p></div>
+          <div><span>03</span><strong>Geolocalização</strong><p>Encontre o porto mais próximo por coordenadas.</p></div>
+        </div>
+      </section>
+
+      <section class="how-it-works container section-space" aria-labelledby="how-title">
+        <div class="section-heading">
+          <p class="eyebrow">Do terminal para o litoral</p>
+          <h2 id="how-title">Três passos. Sem barreira de entrada.</h2>
+          <p>Use agora. Crie conta e API key somente quando quiser mais capacidade e controle.</p>
+        </div>
+        <ol class="steps-list">
+          <li><span>1</span><div><strong>Escolha o endpoint</strong><p>Consulte estados, portos, tábua mensal ou posição geográfica.</p></div></li>
+          <li><span>2</span><div><strong>Faça a chamada</strong><p>Sem chave no acesso inicial. <code>curl</code>, fetch ou sua linguagem favorita.</p></div></li>
+          <li><span>3</span><div><strong>Escale com uma chave</strong><p>Mais RPM, cota isolada e acompanhamento no dashboard.</p></div></li>
+        </ol>
+      </section>
+
+      <section id="planos" class="pricing-section section-space" aria-labelledby="plans-title">
+        <div class="container">
+          <div class="section-heading section-heading--split">
+            <div><p class="eyebrow">Planos para manter o projeto vivo</p><h2 id="plans-title">Mais capacidade para quem usa de verdade.</h2></div>
+            <p>Você pode começar sem chave. Quando o projeto crescer, uma API key ajuda a sustentar a operação e traz mais previsibilidade para o uso recorrente.</p>
+          </div>
+          <div class="pricing-grid">
+            <article class="price-card">
+              <p class="price-card__name">Sem chave</p><p class="price-card__price">R$ 0</p><p class="price-card__period">sem cadastro</p>
+              <ul><li>16 req/min</li><li>Mensal ilimitado</li><li>Limite compartilhado por IP</li></ul>
+              <a href="#console" role="button" class="outline">Testar agora</a>
+            </article>
+            <article class="price-card">
+              <p class="price-card__name">Free</p><p class="price-card__price">R$ 0</p><p class="price-card__period">com conta</p>
+              <ul><li>64 req/min</li><li>32 mil req/mês</li><li>API key gratuita</li></ul>
+              <a href="/auth/google?next=/dashboard" role="button" class="outline">Criar conta</a>
+            </article>
+            <article class="price-card price-card--featured">
+              <span class="price-card__tag">Mais espaço</span>
+              <p class="price-card__name">Plan 5</p><p class="price-card__price"><small>R$</small> 5</p><p class="price-card__period">por mês</p>
+              <ul><li>512 req/min</li><li>256 mil req/mês</li><li>API key isolada</li></ul>
+              <a href="/auth/google?next=/dashboard" role="button" class="button-sun">Começar</a>
+            </article>
+            <article class="price-card">
+              <p class="price-card__name">Plan 10</p><p class="price-card__price"><small>R$</small> 10</p><p class="price-card__period">por mês</p>
+              <ul><li>2.048 req/min</li><li>Mensal ilimitado</li><li>API key isolada</li></ul>
+              <a href="/auth/google?next=/dashboard" role="button" class="outline">Começar</a>
+            </article>
+            <article class="price-card price-card--featured">
+              <span class="price-card__tag">Economize R$ 50/ano</span>
+              <p class="price-card__name">Plano Anual</p><p class="price-card__price"><small>R$</small> 70</p><p class="price-card__period">por ano</p>
+              <ul><li>2.048 req/min</li><li>Mensal ilimitado</li><li>API key isolada</li></ul>
+              <a href="/auth/google?next=/dashboard" role="button" class="button-sun">Economizar</a>
+            </article>
           </div>
         </div>
       </section>
 
-      <!-- Features Section -->
-      <section>
-        <hgroup>
-          <h2>Recursos da API</h2>
-          <p>
-            Descubra tudo o que nossa API pode oferecer para suas aplicações
-          </p>
-        </hgroup>
-
-        <div class="grid">
-          <!-- Feature 1 -->
-          <article>
-            <header>
-              <svg
-                width="48"
-                height="48"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M3,12C3,7.58 6.58,4 11,4C13.54,4 15.78,5.39 17,7.5C17.81,7.19 18.69,7 19.62,7C21.95,7 23.82,8.87 23.82,11.2C23.82,13.53 21.95,15.4 19.62,15.4H17V17H15V15.4H9V17H7V15.4H4.38C3.61,15.4 3,14.79 3,14.02C3,13.25 3.61,12.64 4.38,12.64H7V11.36H4.38C3.61,11.36 3,10.75 3,9.98C3,9.21 3.61,8.6 4.38,8.6H7V7H9V8.6H15V7H17V8.6H19.62C21.95,8.6 23.82,10.47 23.82,12.8C23.82,15.13 21.95,17 19.62,17H17V19H15V17H9V19H7V17H4.38C1.61,17 0,15.39 0,12.62C0,9.85 1.61,8.24 4.38,8.24H7C7,5.79 9.21,3.58 11.62,3.58C14.03,3.58 16.24,5.79 16.24,8.24H19.62C22.39,8.24 24,9.85 24,12.62C24,15.39 22.39,17 19.62,17H17C17,19.45 14.79,21.66 12.38,21.66C9.97,21.66 7.76,19.45 7.76,17H4.38C1.61,17 0,15.39 0,12.62C0,9.85 1.61,8.24 4.38,8.24Z"
-                />
-              </svg>
-              <h3>Dados Precisos</h3>
-            </header>
-            <p>
-              Informações atualizadas de marés para todo o litoral brasileiro
-              com alta precisão.
-            </p>
-          </article>
-
-          <!-- Feature 2 -->
-          <article>
-            <header>
-              <svg
-                width="48"
-                height="48"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"
-                />
-              </svg>
-              <h3>API Rest Simples</h3>
-            </header>
-            <p>
-              Interface REST fácil de usar com documentação completa e exemplos
-              práticos.
-            </p>
-          </article>
-
-          <!-- Feature 3 -->
-          <article>
-            <header>
-              <svg
-                width="48"
-                height="48"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M12,2C15.31,2 18,4.66 18,7.95C18,12.41 12,19 12,19S6,12.41 6,7.95C6,4.66 8.69,2 12,2M12,6A2,2 0 0,0 10,8A2,2 0 0,0 12,10A2,2 0 0,0 14,8A2,2 0 0,0 12,6M20,19C20,21.21 16.42,23 12,23C7.58,23 4,21.21 4,19C4,17.71 5.22,16.56 7.11,15.94L7.75,16.74C6.67,17.19 6,17.81 6,18.5C6,19.88 8.69,21 12,21C15.31,21 18,19.88 18,18.5C18,17.81 17.33,17.19 16.25,16.74L16.89,15.94C18.78,16.56 20,17.71 20,19Z"
-                />
-              </svg>
-              <h3>Cobertura Nacional</h3>
-            </header>
-            <p>
-              Dados de todos os estados costeiros do Brasil, do Amapá ao Rio
-              Grande do Sul.
-            </p>
-          </article>
+      <section class="users-section section-space" aria-labelledby="users-title">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Em uso no mundo real</p>
+            <h2 id="users-title">Projetos que transformam dados de maré em produto.</h2>
+            <p>Do planejamento de voos ao radar para quem vai surfar: a mesma API, aplicada a problemas diferentes.</p>
+          </div>
+          <div class="users-grid">
+            <a class="user-card" href="https://droneskull.com.br/" target="_blank" rel="noreferrer noopener">
+              <div class="user-card__logo user-card__logo--drone"><img src="https://droneskull.com.br/img/logo.png" alt="Logo Drone Skull"></div>
+              <div class="user-card__copy"><strong>Drone Skull</strong><span>Produção aérea cinematográfica</span><small>Dados para planejar cada voo com mais contexto.</small></div>
+              <span class="user-card__arrow" aria-hidden="true">↗</span>
+            </a>
+            <a class="user-card" href="https://swellcheckapp.vercel.app/" target="_blank" rel="noreferrer noopener">
+              <div class="user-card__logo user-card__logo--swell"><img src="https://swellcheckapp.vercel.app/Favicon.svg" alt="Logo Swell Check"></div>
+              <div class="user-card__copy"><strong>Swell Check</strong><span>Condições para quem vai surfar</span><small>Previsões organizadas para decidir quando entrar no mar.</small></div>
+              <span class="user-card__arrow" aria-hidden="true">↗</span>
+            </a>
+          </div>
         </div>
       </section>
 
-      <!-- CTA Section -->
-      <section>
-        <article>
-          <header>
-            <h2>Pronto para Navegar?</h2>
-          </header>
-          <p>
-            Comece a usar nossa API hoje mesmo e tenha acesso aos dados de marés
-            mais confiáveis do Brasil.
-          </p>
-          <footer>
-            <a href="/docs" role="button" class="button-yellow"
-              >Acessar Documentação</a
-            >
-          </footer>
-        </article>
+      <section id="open-source" class="open-source-section container section-space" aria-labelledby="oss-title">
+        <div class="open-source-section__mark" aria-hidden="true">&lt;/&gt;</div>
+        <div>
+          <p class="eyebrow">Código aberto, operação transparente</p>
+          <h2 id="oss-title">Infraestrutura pública também pode ter acabamento.</h2>
+          <p>Veja o código, reporte problemas e acompanhe a evolução da API no GitHub. O acesso gratuito continua parte do produto.</p>
+          <div class="inline-actions">
+            <a href="https://github.com/Ddiidev/tabua_mare_api" target="_blank" rel="noreferrer" role="button">Abrir GitHub ↗</a>
+            <a href="/apoiar">Apoiar o projeto</a>
+            <a href="https://www.youtube.com/@mais.foco42" target="_blank" rel="noreferrer">YouTube</a>
+            <a href="https://andrelz.invdual.com/" target="_blank" rel="noreferrer">Blog</a>
+          </div>
+        </div>
       </section>
 
-      <!-- Contact Section -->
-      <section id="contact">
-        <hgroup>
-          <h2>Contato</h2>
-          <p>Conecte-se conosco através das redes sociais</p>
-        </hgroup>
-
-        <div class="grid">
-          <article>
-            <div class="social-links">
-              <a
-                href="https://www.youtube.com/@mais.foco42"
-                target="_blank"
-                class="social-link"
-              >
-                <svg
-                  width="32"
-                  height="32"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M10,15L15.19,12L10,9V15M21.56,7.17C21.69,7.64 21.78,8.27 21.84,9.07C21.91,9.87 21.94,10.56 21.94,11.16L22,12C22,14.19 21.84,15.8 21.56,16.83C21.31,17.73 20.73,18.31 19.83,18.56C19.36,18.69 18.5,18.78 17.18,18.84C15.88,18.91 14.69,18.94 13.59,18.94L12,19C7.81,19 5.2,18.84 4.17,18.56C3.27,18.31 2.69,17.73 2.44,16.83C2.31,16.36 2.22,15.73 2.16,14.93C2.09,14.13 2.06,13.44 2.06,12.84L2,12C2,9.81 2.16,8.2 2.44,7.17C2.69,6.27 3.27,5.69 4.17,5.44C4.64,5.31 5.5,5.22 6.82,5.16C8.12,5.09 9.31,5.06 10.41,5.06L12,5C16.19,5 18.8,5.16 19.83,5.44C20.73,5.69 21.31,6.27 21.56,7.17Z"
-                  />
-                </svg>
-                <span>YouTube</span>
-              </a>
-              <a
-                href="https://andrelz.invdual.com/"
-                target="_blank"
-                class="social-link"
-              >
-                <svg
-                  width="32"
-                  height="32"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M14,13H9.95A1,1 0 0,0 8.95,14A1,1 0 0,0 9.95,15H14A1,1 0 0,0 15,14A1,1 0 0,0 14,13M9.95,10H12.55A1,1 0 0,0 13.55,9A1,1 0 0,0 12.55,8H9.95A1,1 0 0,0 8.95,9A1,1 0 0,0 9.95,10M16,9V10A1,1 0 0,0 17,11A1,1 0 0,0 18,10V9A1,1 0 0,0 17,8A1,1 0 0,0 16,9M16,14V13A1,1 0 0,0 15,12A1,1 0 0,0 14,13V14A1,1 0 0,0 15,15A1,1 0 0,0 16,14M19,4H5C3.89,4 3,4.89 3,6V18A2,2 0 0,0 5,20H19A2,2 0 0,0 21,18V6C21,4.89 20.1,4 19,4M19,18H5V8H19V18Z"
-                  />
-                </svg>
-                <span>Blog Pessoal</span>
-              </a>
-              <a
-                href="https://github.com/Ddiidev/tabua_mare_api"
-                target="_blank"
-                class="social-link"
-              >
-                <svg
-                  width="32"
-                  height="32"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z"
-                  />
-                </svg>
-                <span>GitHub</span>
-              </a>
-            </div>
-          </article>
+      <section class="final-cta">
+        <div class="container">
+          <p class="eyebrow">A maré não espera</p>
+          <h2>Faça a primeira chamada agora.</h2>
+          <div class="inline-actions"><a href="#console" role="button" class="button-sun">Testar sem cadastro</a><a href="/docs" role="button" class="outline">Ver endpoints</a></div>
         </div>
       </section>
     </main>
 
-    <!-- Footer -->
     ${ footer }
-
-    <!-- Contact Modal -->
-    <dialog v-show="showContactModal" @click="showContactModal = false">
-      <article @click.stop>
-        <header>
-          <button
-            aria-label="Close"
-            rel="prev"
-            @click="showContactModal = false"
-          ></button>
-          <h3>Contato</h3>
-        </header>
-        <p>Entre em contato conosco para dúvidas sobre a API:</p>
-        <div class="grid">
-          <div>
-            <strong>Email:</strong>
-            <p>contato@tabuamare.com.br</p>
-          </div>
-          <div>
-            <strong>Suporte Técnico:</strong>
-            <p>suporte@tabuamare.com.br</p>
-          </div>
-        </div>
-      </article>
-    </dialog>
 
     <script>
       const { createApp } = PetiteVue;
-
+      const endpointOptions = [
+        {
+          title: 'Estados disponíveis',
+          path: '/api/v2/states'
+        },
+        {
+          title: 'Portos por estado',
+          path: '/api/v2/harbor_names/pb'
+        },
+        {
+          title: 'Dados do porto',
+          path: '/api/v2/harbors/[pb01]'
+        },
+        {
+          title: 'Tábua de maré',
+          path: '/api/v2/tabua-mare/pb01/1/[1,2,3]'
+        },
+        {
+          title: 'Tábua mais próxima',
+          path: '/api/v2/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]'
+        },
+        {
+          title: 'Porto mais próximo no estado',
+          path: '/api/v2/nearested-harbor/pb/[-7.11509,-34.864]'
+        },
+        {
+          title: 'Porto mais próximo',
+          path: '/api/v2/nearest-harbor-independent-state/[-7.11509,-34.864]'
+        }
+      ];
       createApp({
-        showContactModal: false,
-        showStatesDropdown: false,
-        showMobileMenu: false,
+        endpoints: endpointOptions,
+        selectedEndpoint: endpointOptions[0],
+        requestState: 'idle',
+        responseText: '{\n  "pronto": true,\n  "mensagem": "Clique em Executar para consultar a API"\n}',
+        statusLabel: 'pronto',
+        selectEndpoint(endpoint, event) {
+          this.selectedEndpoint = endpoint;
+          this.requestState = 'idle';
+          this.statusLabel = 'pronto';
+          this.responseText = '{\n  "pronto": true,\n  "mensagem": "Clique em Executar para consultar a API"\n}';
+          event.currentTarget.closest('details').open = false;
+        },
+        async runDemo() {
+          this.requestState = 'loading';
+          this.statusLabel = 'consultando';
+          this.responseText = '{\n  "carregando": true\n}';
+          try {
+            const response = await fetch(this.selectedEndpoint.path, { credentials: 'same-origin' });
+            const body = await response.json();
+            this.responseText = JSON.stringify(body, null, 2);
+            this.requestState = response.ok ? 'success' : 'error';
+            this.statusLabel = response.ok ? response.status + ' sucesso' : response.status + ' erro';
+          } catch (error) {
+            this.requestState = 'error';
+            this.statusLabel = 'falha de rede';
+            this.responseText = JSON.stringify({ error: { message: error.message } }, null, 2);
+          }
+        }
       }).mount();
     </script>
   </body>
-
-  <style>
-    .states-summary {
-        font-size: 1.25rem;
-        font-weight: 700;
-        margin-top: var(--spacing-md);
-        color: var(--pico-primary-700);
-      }
-
-      .carbon-badge {
-        display: inline-flex;
-        align-items: center;
-        background-color: #4CAF50;
-        color: rgb(241, 241, 241) !important;
-        padding: 0.2em 0.5em 0.1em;
-        border-radius: 0.8em;
-        font-size: 0.9em;
-        text-decoration: none;
-        margin-bottom: 1rem;
-        transition: background-color 0.3s ease;
-      }
-
-      .carbon-badge:hover {
-        background-color: #45a049;
-      }
-
-      .carbon-badge svg {
-        margin-right: 0.4em;
-      }
-  </style>
 </html>

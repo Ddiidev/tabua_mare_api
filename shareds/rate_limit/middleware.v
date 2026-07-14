@@ -34,7 +34,7 @@ pub fn rate_limit_middleware(opts RateLimitOpts) veb.MiddlewareOptions[web_ctx.W
 fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) bool {
 	ip := ctx.ip()
 	ctx.ip = ip
-	ctx.plan = 'free'
+	ctx.plan = 'anon'
 
 	if connstr == '' {
 		return true
@@ -50,30 +50,6 @@ fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) 
 
 	mut bucket := 'ip:${ip}'
 	mut plan := 'anon'
-	mut limit_rpm := env.rate_limit_anon_rpm
-	mut limit_monthly := env.rate_limit_anon_monthly
-
-	// se o usuario esta logado (cookie JWT valido), aplica o limite free (ou superior conforme o plano)
-	uid := logged_user_id(mut ctx, env)
-	if uid > 0 {
-		user_plan := repo_auth.find_plan_by_id(mut db_pg, uid) or { 'free' }
-		plan = user_plan
-		ctx.plan = user_plan
-		match user_plan {
-			'plan5' {
-				limit_rpm = env.rate_limit_plan5_rpm
-				limit_monthly = env.rate_limit_plan5_monthly
-			}
-			'plan10', 'planannual' {
-				limit_rpm = env.rate_limit_plan10_rpm
-				limit_monthly = env.rate_limit_plan10_monthly
-			}
-			else {
-				limit_rpm = env.rate_limit_free_rpm
-				limit_monthly = env.rate_limit_free_monthly
-			}
-		}
-	}
 
 	api_key := extract_api_key(mut ctx)
 	if api_key != '' {
@@ -92,24 +68,25 @@ fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) 
 			ctx.api_key = key.key_value
 			plan = effective_plan
 			ctx.plan = effective_plan
-			match effective_plan {
-				'plan5' {
-					limit_rpm = env.rate_limit_plan5_rpm
-					limit_monthly = env.rate_limit_plan5_monthly
-				}
-				'plan10', 'planannual' {
-					limit_rpm = env.rate_limit_plan10_rpm
-					limit_monthly = env.rate_limit_plan10_monthly
-				}
-				else {
-					limit_rpm = env.rate_limit_free_rpm
-					limit_monthly = env.rate_limit_free_monthly
-				}
-			}
 		}
 	}
 
+	limit_rpm, limit_monthly := plan_limits(env, plan)
 	return apply_limits(mut ctx, mut db_pg, bucket, plan, limit_rpm, limit_monthly)
+}
+
+// plan_limits resolve o RPM e a cota mensal para um plano.
+	// sem api_key, qualquer cliente (inclusive JWT logado) usa anon por IP;
+	// free usa rate_limit_free_* somente para api_keys Free;
+// plan5/plan10/planannual usam os campos correspondentes.
+// ATENCAO: regra espelhada em pages/dashboard.html:isPlanAllowed() — nao confundir.
+pub fn plan_limits(env conf_env.EnvConfig, plan string) (int, int) {
+	return match plan {
+		'anon' { env.rate_limit_anon_rpm, env.rate_limit_anon_monthly }
+		'plan5' { env.rate_limit_plan5_rpm, env.rate_limit_plan5_monthly }
+		'plan10', 'planannual' { env.rate_limit_plan10_rpm, env.rate_limit_plan10_monthly }
+		else { env.rate_limit_free_rpm, env.rate_limit_free_monthly }
+	}
 }
 
 // is_plan_allowed retorna true se o plano da api_key ainda e valido para o usuario.
@@ -141,11 +118,12 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 		return false
 	}
 
+	// garante que a linha de creditos existe antes de qualquer operacao (decrement ou inc)
+	rl.ensure_credit_row(mut db, bucket, plan, limit_monthly) or {
+		eprintln('rate_limit ensure_credit_row failed: ${err}')
+	}
+
 	if limit_monthly != 0 {
-		// garante que a linha de creditos existe antes de decrementar
-		rl.ensure_credit_row(mut db, bucket, plan, limit_monthly) or {
-			eprintln('rate_limit ensure_credit_row failed: ${err}')
-		}
 		exceeded_month := rl.decrement(mut db, bucket) or {
 			eprintln('rate_limit monthly check failed: ${err}')
 			false
@@ -157,10 +135,7 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 			return false
 		}
 	} else {
-		// plano ilimitado: cria a linha apenas para contar used
-		rl.ensure_credit_row(mut db, bucket, plan, limit_monthly) or {
-			eprintln('rate_limit ensure_credit_row failed: ${err}')
-		}
+		// plano ilimitado: apenas conta used
 		rl.inc(mut db, bucket, 'month', rl.window_key_month()) or {
 			eprintln('rate_limit month count failed: ${err}')
 		}
@@ -169,7 +144,7 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 	return true
 }
 
-fn extract_api_key(mut ctx web_ctx.WsCtx) string {
+pub fn extract_api_key(mut ctx web_ctx.WsCtx) string {
 	if auth := ctx.req.header.get(.authorization) {
 		if auth.starts_with('Bearer ') {
 			return auth[7..]

@@ -59,14 +59,25 @@ pub fn get_current_month_usage(mut db pg.DB, bucket string) !CreditCheck {
 	}
 }
 
-// decrement consome 1 credito mensal atomicamente. Retorna true se excedeu (sem credito).
-// lim 0 (ilimitado) nunca excede; apenas conta used.
+// decrement consome 1 credito mensal atomicamente. Retorna true se excediu (sem credito).
+// So decrementa used e remaining quando ainda ha credito (remaining > 0).
+// Requests bloqueadas (remaining == 0) nao incrementam used.
+// lim 0 (ilimitado) nunca excede; apenas conta used (chamado via inc, nao decrement).
 pub fn decrement(mut db pg.DB, bucket string) !bool {
 	month_key := window_key_month()
-	res := db.exec_param_many('UPDATE monthly_credits SET used = used + 1, remaining = CASE WHEN lim = 0 THEN remaining WHEN remaining > 0 THEN remaining - 1 ELSE 0 END WHERE bucket = ($1) AND month_key = ($2) RETURNING lim, remaining',
+	res := db.exec_param_many('UPDATE monthly_credits SET used = used + 1, remaining = remaining - 1 WHERE bucket = ($1) AND month_key = ($2) AND remaining > 0 RETURNING lim, remaining',
 		[bucket, month_key])!
 	if res.len == 0 {
-		return false
+		// nenhuma linha atualizada — verifica se e excedido (remaining <= 0)
+		// ou se a linha nao existe (ensure_credit_row falhou)
+		rows := db.exec_param_many('SELECT lim, remaining FROM monthly_credits WHERE bucket = ($1) AND month_key = ($2) LIMIT 1',
+			[bucket, month_key])!
+		if rows.len == 0 {
+			return false
+		}
+		l := val_int(rows[0], 0)
+		remaining := val_int(rows[0], 1)
+		return l != 0 && remaining <= 0
 	}
 	l := val_int(res[0], 0)
 	remaining := val_int(res[0], 1)

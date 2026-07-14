@@ -37,7 +37,7 @@ pub fn issue(mut db pg.DB, user_id int, label string, plan string) !string {
 
 // list_by_user retorna as api_keys de um usuario.
 pub fn list_by_user(mut db pg.DB, user_id int) ![]dto.ApiKey {
-	rows := db.exec_param('SELECT id, user_id, key_value, label, plan, revoked_at FROM api_keys WHERE user_id = ($1) ORDER BY id ASC',
+	rows := db.exec_param('SELECT id, user_id, key_value, label, plan, revoked_at FROM api_keys WHERE user_id = ($1) AND revoked_at IS NULL ORDER BY id ASC',
 		user_id.str())!
 
 	mut keys := []dto.ApiKey{}

@@ -47,10 +47,10 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 STRIPE_PRICE_PLAN5=price_...
 STRIPE_PRICE_PLAN10=price_...
 STRIPE_PRICE_PLANANNUAL=price_...
-RATE_LIMIT_FREE_RPM=24
-RATE_LIMIT_PLAN5_RPM=128
-RATE_LIMIT_PLAN10_RPM=256
-RATE_LIMIT_ANON_RPM=5
+RATE_LIMIT_FREE_RPM=64
+RATE_LIMIT_PLAN5_RPM=512
+RATE_LIMIT_PLAN10_RPM=2048
+RATE_LIMIT_ANON_RPM=16
 RATE_LIMIT_FREE_MONTHLY=32000
 RATE_LIMIT_PLAN5_MONTHLY=256000
 RATE_LIMIT_PLAN10_MONTHLY=0               # 0 = unlimited
@@ -65,7 +65,7 @@ URL_ENV=http://localhost:3330
 - **`main.v`** — starts the `veb` server, registers controllers and static file serving. The `App` struct handles HTML page routes (`/`, `/docs`, `/playground`, `/apoiar`, `/dashboard`).
 - **`api.v`** — `APIController` for `/api/v1` (deprecated; all handlers respond 410 Gone with link to /docs).
 - **`api_v2.v`** — `APIControllerV2` for `/api/v2` (current; harbor IDs are strings like `pb01`). Rate-limit middleware applied here.
-- **`auth_controller.v`** — `AuthController` for `/auth` (Google OAuth login/callback/logout, /me, /avatar, /api-keys CRUD, /checkout, /webhook, /billing-portal, /cancel-subscription, /rate-limit-status).
+- **`auth_controller.v`** — `AuthController` for `/auth` (Google OAuth login/callback/logout, /me, /avatar, /api-keys CRUD, /checkout, /webhook, /billing-portal, /cancel-subscription, /rate-limit-status). `db_conn()` returns error if `POSTGRESQL_CONN_STR` is empty (no silent fallback).
 
 ### Key Architectural Patterns
 
@@ -120,7 +120,7 @@ tests/             — integration tests (_test.v files, require DB)
 
 ### V1 vs V2 Difference
 
-- **V1**: harbor IDs are database integers — **deprecated, all handlers respond 410 Gone**. Kept registered to avoid rate-limit bypass and guide clients to V2.
+- **V1**: harbor IDs are database integers — **deprecated, all handlers respond 410 Gone**. Kept registered to avoid rate-limit bypass and guide clients to V2. The UI (docs/playground) no longer exposes V1 as a selectable option; only V2 is shown.
 - **V2**: harbor IDs are state-prefixed strings (e.g., `"pb01"`). New endpoints only here.
 
 ### Authentication & Rate Limiting
@@ -131,15 +131,32 @@ tests/             — integration tests (_test.v files, require DB)
 
 | Tier | RPM | Monthly |
 |---|---|---|
-| Anon (no account, no api_key) | 5 | unlimited |
-| Free (logged in, by IP) | 24 | 32.000 |
-| Plan 5 (api_key) | 128 | 256.000 |
-| Plan 10 / Anual (api_key) | 256 | unlimited |
+| Anon (sem api_key, por IP) | 16 | unlimited |
+| Free (api_key) | 64 | 32.000 |
+| Plan 5 (api_key) | 512 | 256.000 |
+| Plan 10 (api_key) | 2.048 | unlimited |
+| Anual (api_key) | 2.048 | unlimited |
 
-  Counters and monthly credits persisted in PostgreSQL. The middleware reads the JWT cookie to distinguish anon from free-logged-in. nginx has no rate-limit; the app is the sole rate-limit layer.
+  Counters and monthly credits persisted in PostgreSQL. Sem `api_key`, o middleware trata a requisição como anônima por IP, independentemente de JWT; a chave válida determina o plano e o bucket isolado. nginx has no rate-limit; the app is the sole rate-limit layer.
 
-- **api_key** — sent via `Authorization: Bearer <key>` or `X-Api-Key` header. `is_plan_allowed(key_plan, user_plan)` prevents revoked/downgraded plans from using old paid keys.
-- **Stripe webhooks** — `/auth/webhook` verifies signature with `STRIPE_WEBHOOK_SECRET` (300s tolerance). Handles: `checkout.session.completed`, `customer.subscription.created/updated/deleted`, `invoice.payment_failed`. Updates `users.plan`, `stripe_customer_id`, `stripe_subscription_id`.
+  **Note on anon/free buckets sharing IPs:** due to the Cloudflare Tunnel → nginx → app proxy chain, distinct clients may collapse into the same `ip:...` bucket (tunnel egress IP). This is **accepted by design**: anon and free-no-key users share rate-limit capacity distributed by IP, even if the IP is not their real public IP. A future priority queue will enforce tier precedence on top of this.
+
+- **Priority tiers (planned, not yet implemented as a queue):**
+
+| Priority | Tier | Bucket | Notes |
+|---|---|---|---|
+| 0 (highest) | Plan 10 / Anual | `key:...` | api_key required |
+| 1 | Plan 5 | `key:...` | api_key required |
+| 2 | Free with api_key | `key:...` | free tier but authenticated by key |
+| 3 (lowest) | Anon / Free without api_key | `ip:...` | shared IP bucket — distributed among all clients without key on the same egress IP |
+
+  Rationale: Free users **with** an api_key (priority 2) must take precedence over clients **without** an api_key (priority 3), because the key proves isolated identity. When a future priority queue is added, lower numeric priority wins; on contention, priority 3 requests are throttled first.
+
+- **api_key** — sent via `Authorization: Bearer <key>` or `X-Api-Key` header. `is_plan_allowed(key_plan, user_plan)` prevents revoked/downgraded plans from using old paid keys. Valid plans for api_keys: `free`, `plan5`, `plan10`, `planannual`.
+- **plan_limits(env, plan)** — single source of truth for `(limit_rpm, limit_monthly)` per plan. Defined in `shareds/rate_limit/middleware.v`, used by middleware and `/auth/rate-limit-status`.
+- **extract_api_key(ctx)** — `pub` in `shareds/rate_limit/middleware.v`. Parses Bearer, `X-Api-Key` header, or `api_key` form field. Reused by middleware and `/auth/rate-limit-status`.
+- **Stripe webhooks** — `/auth/webhook` verifies signature with `STRIPE_WEBHOOK_SECRET` (300s tolerance). Handles: `checkout.session.completed`, `customer.subscription.created/updated/deleted`, `invoice.payment_failed`. Updates `users.plan`, `stripe_customer_id`, `stripe_subscription_id`. All events decoded with a single `StripeWebhookEvent` struct (`json.decode` ignores absent fields).
+- **find_id_by_stripe_customer** — `repository/auth/users.v`. Resolves `stripe_customer_id` → `user_id` used by webhook handlers.
 - **Customer Portal** — `/auth/billing-portal` creates a Stripe hosted portal session for subscription management.
 - **Cancel** — `/auth/cancel-subscription` calls Stripe API to cancel; falls back to billing portal if no `subscription_id` saved.
 
@@ -163,14 +180,31 @@ ctx.html(engine.render('index.html', data) or { '' })
 
 **Important:** veemarker uses `${ ... }` for server-side interpolation. Do NOT use JS template literals with `${...}` inside `.html` templates — the engine will eat them. Use string concatenation instead.
 
+### Interface e planos
+
+- Docs e playground devem usar labels técnicos curtos, sem excesso de emojis decorativos.
+- `code` inline próximo a texto deve permanecer alinhado à linha (`vertical-align: baseline`); não usar deslocamento vertical que faça o bloco “flutuar”.
+- Blocos de código e respostas do playground devem ser compactos, mantendo apenas o espaço necessário para leitura e o botão de cópia.
+- Validar mudanças visuais no navegador nas rotas `/docs` e `/playground`, além de conferir `git diff --check`.
+- O plano anual (`planannual`) tem o mesmo limite do Plan 10: `2.048 req/min` e mensal ilimitado. A comunicação pública deve mostrar o valor anual e a economia em reais: `R$ 70/ano`, economia de `R$ 50/ano` contra doze mensalidades de R$ 10.
+- Assets referenciados nas páginas devem existir e responder pela rota estática antes de serem usados; preferir assets locais ou URLs oficiais verificadas.
+
+### Preços Stripe
+
+- `stripe_price_ids` em `shareds/conf_env/conf_env.v` é a fonte única dos IDs.
+- Com `-d env_dev`, os preços vêm de `STRIPE_PRICE_PLAN5`, `STRIPE_PRICE_PLAN10` e `STRIPE_PRICE_PLANANNUAL`.
+- Sem `-d env_dev`, usar os IDs live fixos definidos no código. Não criar produtos ou prices durante mudanças de interface.
+
 ### Dashboard (`pages/dashboard.html`)
 
 Uses **PetiteVue** (lightweight Vue) for client-side reactivity. Shows:
 - User profile + plan badge + monthly usage (from `/auth/rate-limit-status`)
 - Plan cards (Free/Plan5/Plan10/Anual) with Stripe checkout buttons
-- Subscription management (billing portal, cancel)
-- API keys CRUD (masked display, copy allowed, no reveal)
+- Subscription management (billing portal opens in a new tab, cancel)
+- API keys CRUD (masked display, copy allowed, no reveal; revoked keys are hidden from the list)
 - Rate-limit test tool (configurable count, 5 parallel, stop button, optional api_key)
+
+**Plan badge convention:** the internal plan value `planannual` is displayed visually as `plan∞` in badges via the `planLabel()` helper. The internal value `planannual` is preserved everywhere (Stripe, DB, JWT, API), only the display label changes.
 
 ## Security Notes
 
@@ -179,5 +213,5 @@ Uses **PetiteVue** (lightweight Vue) for client-side reactivity. Shows:
 - `normalize_state_code` validates state is exactly 2 chars a-z before interpolation.
 - JWT verification uses constant-time HMAC comparison.
 - Stripe webhook signature verified before processing.
-- API key values are masked in the dashboard list (only first 4 + last 4 chars visible). Copy works but reveal does not.
+- API key values are masked in the dashboard list (only first 4 + last 4 chars visible). Copy works but reveal does not. Revoked keys are filtered out server-side (`revoked_at IS NULL`) and never returned to the frontend.
 - `current_user_id` extracts uid from JWT cookie; returns 0 if unauthenticated (no panic).

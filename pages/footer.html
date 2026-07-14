@@ -1,27 +1,26 @@
-<!-- Footer -->
-<footer class="bg-deep-blue text-white py-8">
-  <div class="container mx-auto px-6">
-    <div class="flex flex-col md:flex-row justify-between items-center">
-      <div class="flex items-center space-x-3 mb-4 md:mb-0">
-        <img
-          src="/pages/assets/favicon-192x192.png"
-          alt="Favicon"
-          class="w-4 h-4 mr-2"
-          style="border-radius: 50%; width: 64px; height: 64px"
-        />
-        <span class="font-maritime">Tábua de Marés Brasil</span>
-      </div>
-      <div class="text-center md:text-right">
-        <p>&copy; ${ year } API Tábua de Marés. Navegando com dados precisos.</p>
-        <p class="text-sm text-gray-300 mt-1">
-          <img
-            src="/pages/assets/flag-br.png"
-            alt="Bandeira do Brasil"
-            class="inline-block h-6 mr-1"
-          />
-          Orgulhosamente brasileiro
-        </p>
-      </div>
+<footer class="site-footer">
+  <div class="site-footer__grid container">
+    <div class="site-footer__brand">
+      <a href="/" aria-label="Tábua de Marés — início">
+        <img src="/pages/assets/favicon-192x192.png" alt="" width="48" height="48" />
+        <span><strong>Tábua de Marés</strong><small>API brasileira, aberta por padrão.</small></span>
+      </a>
     </div>
+    <nav aria-label="Produto">
+      <strong>Produto</strong>
+      <a href="/docs">Documentação</a>
+      <a href="/playground">Playground</a>
+      <a href="/#planos">Planos</a>
+    </nav>
+    <nav aria-label="Projeto">
+      <strong>Projeto</strong>
+      <a href="https://github.com/Ddiidev/tabua_mare_api" target="_blank" rel="noreferrer">GitHub ↗</a>
+      <a href="/apoiar">Apoiar</a>
+      <a href="mailto:contato@devtu.qzz.io">Contato</a>
+    </nav>
+  </div>
+  <div class="site-footer__base container">
+    <span>&copy; ${ year } Tábua de Marés API</span>
+    <span>Feita no Brasil <img src="/pages/assets/flag-br.png" alt="" width="20" height="14" /></span>
   </div>
 </footer>

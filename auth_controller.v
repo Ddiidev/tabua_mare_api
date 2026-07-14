@@ -2,7 +2,6 @@ module main
 
 import veb
 import db.pg
-import shareds.infradb_pg
 import net.http
 import json
 import shareds.web_ctx
@@ -28,11 +27,10 @@ pub struct AuthController {
 // Cada handler cria sua propria conexao e fecha no defer, evitando o bug
 // de captura de &pg.DB em closures do V 0.5.1.
 fn (ac &AuthController) db_conn() !&pg.DB {
-	if ac.env.postgresql_conn_str != '' {
-		return pg.connect_with_conninfo(ac.env.postgresql_conn_str)
+	if ac.env.postgresql_conn_str == '' {
+		return error('POSTGRESQL_CONN_STR nao configurado')
 	}
-	cfg := infradb_pg.pg_config_from_connstr(ac.env.postgresql_conn_str)!
-	return pg.connect(cfg)
+	return pg.connect_with_conninfo(ac.env.postgresql_conn_str)
 }
 
 // google_login inicia o fluxo OAuth do Google: gera state, seta cookie efemero e
@@ -286,7 +284,7 @@ pub fn (mut ac AuthController) api_keys_create(mut ctx web_ctx.WsCtx) veb.Result
 
 	// valida plano
 	match parsed.plan {
-		'free', 'plan5', 'plan10' {}
+		'free', 'plan5', 'plan10', 'planannual' {}
 		else {
 			ctx.res.set_status(.bad_request)
 			return ctx.json(types.failure[string](400, 'plano invalido: ${parsed.plan}'))
@@ -652,7 +650,7 @@ fn handle_stripe_subscription_updated(mut ac AuthController, event stripe.Event)
 	}
 
 	// extrai customer_id, status e plan_code do raw_body
-	parsed := json.decode(StripeWebhookSubscriptionWrapper, event.raw_body) or {
+	parsed := json.decode(StripeWebhookEvent, event.raw_body) or {
 		return error('falha ao parse raw_body: ${err}')
 	}
 	customer_id := parsed.data.object.customer
@@ -662,15 +660,7 @@ fn handle_stripe_subscription_updated(mut ac AuthController, event stripe.Event)
 	status := parsed.data.object.status
 	plan_code := parsed.data.object.metadata['plan_code'] or { '' }
 
-	user_rows := db.exec_param('SELECT id FROM users WHERE stripe_customer_id = ($1) LIMIT 1',
-		customer_id)!
-	if user_rows.len == 0 {
-		return error('usuario nao encontrado para customer ${customer_id}')
-	}
-	uid := user_rows[0].vals[0] or { '' }.int()
-	if uid <= 0 {
-		return error('user_id invalido para customer ${customer_id}')
-	}
+	uid := repo_auth.find_id_by_stripe_customer(mut db, customer_id)!
 
 	// status ativo/trialing -> mantem plano; senao -> free
 	mut plan := 'free'
@@ -687,16 +677,18 @@ fn handle_stripe_subscription_updated(mut ac AuthController, event stripe.Event)
 	}
 }
 
-// StripeWebhookSubscriptionWrapper extrai customer_id, status e metadata do raw_body.
-struct StripeWebhookSubscriptionWrapper {
-	data StripeWebhookSubscriptionObjectWrapper
+// StripeWebhookEvent decodifica o raw_body de eventos do Stripe.
+// json.decode ignora campos ausentes, entao uma unica struct serve para
+// todos os eventos (subscription.*, invoice.*).
+struct StripeWebhookEvent {
+	data StripeWebhookEventData
 }
 
-struct StripeWebhookSubscriptionObjectWrapper {
-	object StripeWebhookSubscriptionObject
+struct StripeWebhookEventData {
+	object StripeWebhookEventObject
 }
 
-struct StripeWebhookSubscriptionObject {
+struct StripeWebhookEventObject {
 	id       string
 	customer string
 	status   string
@@ -711,7 +703,7 @@ fn handle_stripe_subscription_deleted(mut ac AuthController, event stripe.Event)
 	}
 
 	// extrai customer_id do raw_body para evitar chamar a API Stripe
-	wrapper := json.decode(StripeWebhookDataWrapper, event.raw_body) or {
+	wrapper := json.decode(StripeWebhookEvent, event.raw_body) or {
 		return error('falha ao parse raw_body: ${err}')
 	}
 	customer_id := wrapper.data.object.customer
@@ -719,30 +711,9 @@ fn handle_stripe_subscription_deleted(mut ac AuthController, event stripe.Event)
 		return error('customer_id ausente no evento')
 	}
 
-	user_rows := db.exec_param('SELECT id FROM users WHERE stripe_customer_id = ($1) LIMIT 1',
-		customer_id)!
-	if user_rows.len == 0 {
-		return error('usuario nao encontrado para customer ${customer_id}')
-	}
-	uid := user_rows[0].vals[0] or { '' }.int()
-	if uid <= 0 {
-		return error('user_id invalido para customer ${customer_id}')
-	}
+	uid := repo_auth.find_id_by_stripe_customer(mut db, customer_id)!
 
 	repo_auth.update_plan(mut db, uid, 'free')!
-}
-
-// StripeWebhookDataWrapper ajuda a extrair o customer_id do raw_body do webhook.
-struct StripeWebhookDataWrapper {
-	data StripeWebhookObjectWrapper
-}
-
-struct StripeWebhookObjectWrapper {
-	object StripeWebhookCustomerObject
-}
-
-struct StripeWebhookCustomerObject {
-	customer string
 }
 
 // handle_stripe_invoice_payment_failed processa invoice.payment_failed.
@@ -755,7 +726,7 @@ fn handle_stripe_invoice_payment_failed(mut ac AuthController, event stripe.Even
 		secret_key: ac.env.stripe_secret_key
 	})!
 
-	invoice := json.decode(StripeWebhookInvoiceWrapper, event.raw_body) or {
+	invoice := json.decode(StripeWebhookEvent, event.raw_body) or {
 		return error('falha ao parse raw_body: ${err}')
 	}
 	customer_id := invoice.data.object.customer
@@ -768,15 +739,7 @@ fn handle_stripe_invoice_payment_failed(mut ac AuthController, event stripe.Even
 		db.close() or {}
 	}
 
-	user_rows := db.exec_param('SELECT id FROM users WHERE stripe_customer_id = ($1) LIMIT 1',
-		customer_id)!
-	if user_rows.len == 0 {
-		return error('usuario nao encontrado para customer ${customer_id}')
-	}
-	uid := user_rows[0].vals[0] or { '' }.int()
-	if uid <= 0 {
-		return error('user_id invalido para customer ${customer_id}')
-	}
+	uid := repo_auth.find_id_by_stripe_customer(mut db, customer_id)!
 
 	// verifica se ainda ha alguma subscription ativa para o customer
 	active_subs := stripe_client.list_subscriptions(stripe.SubscriptionListParams{
@@ -788,18 +751,6 @@ fn handle_stripe_invoice_payment_failed(mut ac AuthController, event stripe.Even
 	if active_subs.data.len == 0 {
 		repo_auth.update_plan(mut db, uid, 'free')!
 	}
-}
-
-struct StripeWebhookInvoiceWrapper {
-	data StripeWebhookInvoiceObjectWrapper
-}
-
-struct StripeWebhookInvoiceObjectWrapper {
-	object StripeWebhookInvoiceCustomerObject
-}
-
-struct StripeWebhookInvoiceCustomerObject {
-	customer string
 }
 
 // rate_limit_status retorna o uso atual de rate-limit do usuario/ip/chave.
@@ -815,41 +766,14 @@ pub fn (mut ac AuthController) rate_limit_status(mut ctx web_ctx.WsCtx) veb.Resu
 		db.close() or {}
 	}
 
+	// Defaults: anon por IP
 	ip := ctx.ip()
 	mut bucket := 'ip:${ip}'
 	mut plan := 'anon'
-	mut limit_rpm := ac.env.rate_limit_anon_rpm
-	mut limit_monthly := ac.env.rate_limit_anon_monthly
 
-	// se logado, usa o plano do usuario (free ou superior)
-	uid := ac.current_user_id(mut ctx)
-	if uid > 0 {
-		user_plan := repo_auth.find_plan_by_id(mut db, uid) or { 'free' }
-		plan = user_plan
-		match user_plan {
-			'plan5' {
-				limit_rpm = ac.env.rate_limit_plan5_rpm
-				limit_monthly = ac.env.rate_limit_plan5_monthly
-			}
-			'plan10', 'planannual' {
-				limit_rpm = ac.env.rate_limit_plan10_rpm
-				limit_monthly = ac.env.rate_limit_plan10_monthly
-			}
-			else {
-				limit_rpm = ac.env.rate_limit_free_rpm
-				limit_monthly = ac.env.rate_limit_free_monthly
-			}
-		}
-	}
-
-	// extrai api_key do header Authorization ou X-Api-Key
-	mut api_key := ctx.req.header.get(.authorization) or { '' }
-	if api_key.starts_with('Bearer ') {
-		api_key = api_key[7..]
-	}
-	if api_key == '' {
-		api_key = ctx.req.header.get_custom('X-Api-Key') or { '' }
-	}
+	// JWT de login nao identifica chamadas da API. Sem api_key, permanece anonimo por IP.
+	// Se tem api_key valida, ela define plano e bucket isolado.
+	api_key := rate_limit.extract_api_key(mut ctx)
 	if api_key != '' {
 		mut key_found := true
 		key := repo_auth.find_by_key(mut db, api_key) or { key_found = false; dto.ApiKey{} }
@@ -861,25 +785,12 @@ pub fn (mut ac AuthController) rate_limit_status(mut ctx web_ctx.WsCtx) veb.Resu
 			}
 			bucket = 'key:${key.key_value}'
 			plan = effective_plan
-			match effective_plan {
-				'plan5' {
-					limit_rpm = ac.env.rate_limit_plan5_rpm
-					limit_monthly = ac.env.rate_limit_plan5_monthly
-				}
-				'plan10', 'planannual' {
-					limit_rpm = ac.env.rate_limit_plan10_rpm
-					limit_monthly = ac.env.rate_limit_plan10_monthly
-				}
-				else {
-					limit_rpm = ac.env.rate_limit_free_rpm
-					limit_monthly = ac.env.rate_limit_free_monthly
-				}
-			}
 		}
 	}
 
-	minute_key := rl.window_key_minute()
+	limit_rpm, limit_monthly := rate_limit.plan_limits(ac.env, plan)
 
+	minute_key := rl.window_key_minute()
 	used_rpm := rl.get_count(mut db, bucket, 'minute', minute_key) or { 0 }
 	monthly := rl.get_current_month_usage(mut db, bucket) or {
 		rl.CreditCheck{used: 0, remaining: limit_monthly, lim: limit_monthly}
@@ -927,13 +838,11 @@ pub fn (mut ac AuthController) api_keys_revoke(mut ctx web_ctx.WsCtx, id string)
 
 // current_user_id extrai o user_id do cookie JWT, ou 0 se nao autenticado.
 fn (mut ac AuthController) current_user_id(mut ctx web_ctx.WsCtx) int {
-	cookie_name := unsafe { ac.env.session_cookie_name }
-	secret := unsafe { ac.env.session_secret }
-	if secret == '' {
+	if ac.env.session_secret == '' {
 		return 0
 	}
-	token := ctx.get_cookie(cookie_name) or { return 0 }
-	if !auth_user.verify(secret, token) {
+	token := ctx.get_cookie(ac.env.session_cookie_name) or { return 0 }
+	if !auth_user.verify(ac.env.session_secret, token) {
 		return 0
 	}
 	claims := auth_user.decode(token) or { return 0 }

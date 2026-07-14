@@ -2,12 +2,16 @@ module main
 
 import veb
 import pool
+import db.pg
 import shareds.types
 import shareds.web_ctx
 import shareds.conf_env
 import shareds.rate_limit
 import repository.habor_mare as repo_habor_mare
 import repository.tabua_mare as repo_tabua_mare
+import repository.auth as repo_auth
+import repository.auth.dto
+import repository.rate_limit as rl
 
 // APIController Controller da API endpoint base: /api/v2
 pub struct APIControllerV2 {
@@ -145,4 +149,60 @@ pub fn (mut api APIControllerV2) get_nearest_harbor(mut ctx web_ctx.WsCtx, lat_l
 	}
 
 	return ctx.json(types.success([nearest_harbor]))
+}
+
+// usage retorna a cota mensal restante para a api_key informada.
+// Autenticacao via header Authorization: Bearer <key> ou X-Api-Key.
+@['/usage'; get]
+pub fn (mut api APIControllerV2) usage(mut ctx web_ctx.WsCtx) veb.Result {
+	connstr := api.env.postgresql_conn_str
+	if connstr == '' {
+		ctx.res.set_status(.internal_server_error)
+		return ctx.json(types.failure[string](500, 'banco indisponivel'))
+	}
+
+	api_key := rate_limit.extract_api_key(mut ctx)
+	if api_key == '' {
+		ctx.res.set_status(.unauthorized)
+		return ctx.json(types.failure[string](401, 'api_key ausente'))
+	}
+
+	mut db := pg.connect_with_conninfo(connstr) or {
+		ctx.res.set_status(.internal_server_error)
+		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
+	}
+	defer {
+		db.close() or {}
+	}
+
+	mut key_found := true
+	key := repo_auth.find_by_key(mut db, api_key) or { key_found = false; dto.ApiKey{} }
+	if !key_found || key.revoked {
+		ctx.res.set_status(.unauthorized)
+		return ctx.json(types.failure[string](401, 'api_key invalida ou revogada'))
+	}
+
+	user_plan := repo_auth.find_plan_by_id(mut db, key.user_id) or { 'free' }
+	mut effective_plan := key.plan
+	if !rate_limit.is_plan_allowed(key.plan, user_plan) {
+		effective_plan = user_plan
+	}
+
+	bucket := 'key:${key.key_value}'
+	limit_rpm, limit_monthly := rate_limit.plan_limits(api.env, effective_plan)
+
+	used_rpm := rl.get_count(mut db, bucket, 'minute', rl.window_key_minute()) or { 0 }
+	monthly := rl.get_current_month_usage(mut db, bucket) or {
+		rl.CreditCheck{used: 0, remaining: limit_monthly, lim: limit_monthly}
+	}
+
+	return ctx.json(types.success([{
+		'plan':              effective_plan
+		'limit_rpm':         limit_rpm.str()
+		'used_rpm':          used_rpm.str()
+		'remaining_rpm':     if limit_rpm == 0 { '-1' } else { (limit_rpm - used_rpm).str() }
+		'limit_monthly':     limit_monthly.str()
+		'used_monthly':      monthly.used.str()
+		'remaining_monthly': if limit_monthly == 0 { '-1' } else { monthly.remaining.str() }
+	}]))
 }
