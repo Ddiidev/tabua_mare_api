@@ -46,6 +46,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Login GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Impedir reatribuicao da tag SHA
+        if: github.event_name == 'push'
+        run: |
+          if docker manifest inspect "$GHCR_IMAGE" >/dev/null 2>&1; then
+            echo "::error::A tag imutavel $GHCR_IMAGE ja existe; reatribuicao recusada."
+            exit 1
+          fi
+
       - name: Dependencias nativas do V
         run: |
           sudo apt-get update
@@ -132,14 +148,6 @@ jobs:
           COMPOSE_BUILD: "0"
         run: ./scripts/smoke_compose.sh
 
-      - name: Login GHCR
-        if: github.event_name == 'push'
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Publicar tag imutavel
         if: github.event_name == 'push'
         run: docker push "$GHCR_IMAGE"
@@ -148,4 +156,8 @@ jobs:
         if: github.event_name == 'push'
         run: |
           docker logout ghcr.io
-          docker manifest inspect "$GHCR_IMAGE" >/dev/null
+          if ! docker manifest inspect "$GHCR_IMAGE" >/dev/null 2>&1; then
+            echo "::warning::Pacote GHCR ainda privado. Torne tabua-mare-api publico antes do deploy."
+            echo '## Acao obrigatoria' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Tornar o pacote GHCR `tabua-mare-api` publico. O deploy permanece bloqueado enquanto o manifesto anonimo falhar.' >> "$GITHUB_STEP_SUMMARY"
+          fi
