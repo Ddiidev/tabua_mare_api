@@ -53,6 +53,8 @@ RUN /opt/v/v \
 
 FROM alpine:3.22 AS runtime
 
+LABEL org.opencontainers.image.source="https://github.com/Ddiidev/tabua_mare_api"
+
 RUN apk add --no-cache \
     ca-certificates \
     curl \

@@ -1,0 +1,54 @@
+name: Deploy manual de producao A/B
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Commit completo da imagem publicada no GHCR
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: tabuamare-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      COOLIFY_URL: ${{ vars.COOLIFY_URL }}
+      COOLIFY_APP_A_UUID: ${{ vars.COOLIFY_APP_A_UUID }}
+      COOLIFY_APP_B_UUID: ${{ vars.COOLIFY_APP_B_UUID }}
+      PUBLIC_SMOKE_URL: https://tabuamare.api.br
+      COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validar entrada e configuracao
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          [[ "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo 'commit_sha deve conter 40 caracteres hexadecimais minusculos' >&2
+            exit 1
+          }
+          for name in COOLIFY_URL COOLIFY_APP_A_UUID COOLIFY_APP_B_UUID COOLIFY_TOKEN; do
+            [[ -n "${!name:-}" ]] || {
+              echo "Configuracao ausente: $name" >&2
+              exit 1
+            }
+          done
+
+      - name: Atualizar A, validar e atualizar B
+        env:
+          TARGET_TAG: sha-${{ inputs.commit_sha }}
+        run: ./scripts/coolify_deploy.sh "$TARGET_TAG"
