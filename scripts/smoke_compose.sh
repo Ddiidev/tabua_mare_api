@@ -43,6 +43,8 @@ b_static_volume="$(service_data_volume tabuamare-b)"
 [[ "${a_static_volume}" != "${b_static_volume}" ]] || fail 'A e B compartilham volume no Compose fonte'
 grep -Eq '^  sqlite-a:$' "${compose_file}" || fail 'declaracao sqlite-a ausente'
 grep -Eq '^  sqlite-b:$' "${compose_file}" || fail 'declaracao sqlite-b ausente'
+# Contrato literal do Compose, nao expansao shell.
+# shellcheck disable=SC2016
 grep -Fq 'path: ${TABUAMARE_ENV_FILE:-.env}' "${compose_file}" || fail 'env_file nao aceita arquivo isolado'
 grep -Fq 'required: false' "${compose_file}" || fail '.env continua obrigatorio em checkout limpo'
 grep -Fq '/health/ready' "${compose_file}" || fail 'healthcheck readiness ausente'
@@ -111,7 +113,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-TABUAMARE_ENV_FILE="${test_env_file}" docker compose -p "${project}" up -d --build
+up_args=(up -d)
+if [[ "${COMPOSE_BUILD:-1}" == 1 ]]; then
+	up_args+=(--build)
+else
+	up_args+=(--no-build)
+fi
+TABUAMARE_ENV_FILE="${test_env_file}" docker compose -p "${project}" "${up_args[@]}"
 
 wait_http() {
 	local url="$1"
@@ -139,4 +147,18 @@ b_volume="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/app
 [[ -n "${b_volume}" ]] || fail 'mount SQLite B nao encontrado'
 [[ "${a_volume}" != "${b_volume}" ]] || fail 'A e B compartilham o mesmo volume SQLite'
 
-printf 'PASS: A/B saudaveis, API v2 200, volumes distintos %s != %s\n' "${a_volume}" "${b_volume}"
+app_uid() {
+	local container_id="$1"
+	docker exec "${container_id}" sh -eu -c '
+		pid="$(pidof TabuaMareAPI)"
+		[ -n "${pid}" ]
+		awk "/^Uid:/ { print \$2 }" "/proc/${pid}/status"
+	'
+}
+
+a_uid="$(app_uid "${a_id}")"
+b_uid="$(app_uid "${b_id}")"
+[[ "${a_uid}" == 10001 ]] || fail "processo A usa UID ${a_uid}, esperado 10001"
+[[ "${b_uid}" == 10001 ]] || fail "processo B usa UID ${b_uid}, esperado 10001"
+
+printf 'PASS: A/B saudaveis, API v2 200, UID 10001, volumes distintos %s != %s\n' "${a_volume}" "${b_volume}"

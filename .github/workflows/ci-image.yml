@@ -1,0 +1,151 @@
+name: CI e imagem Alpine
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ci-image-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  V_COMMIT: 45ae01d23168b6372f734eeb38a77360bbcf184a
+  VEEMARKER_COMMIT: 1510ef5a7cbf980f2e075f02baada7190748e3f7
+  DOTENV_COMMIT: 1d9477c8b1a3f5ca14b2eb042c4e6d52449b75d4
+  V_STRIPE_COMMIT: ccc7e4151038589d97b47e3cc7d0de44abf3247c
+  LOCAL_IMAGE: tabua-mare-api:ci-${{ github.sha }}
+  GHCR_IMAGE: ghcr.io/ddiidev/tabua-mare-api:sha-${{ github.sha }}
+  DB_SQLITE_PATH: ${{ github.workspace }}/taubinha.sqlite
+  POSTGRESQL_CONN_STR: postgresql://postgres:postgres@127.0.0.1:5432/tabuamare_ci
+  RUN_POSTGRES_TEST: "1"
+
+jobs:
+  test-build-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: tabuamare_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tabuamare_ci"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dependencias nativas do V
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libgc-dev libpq-dev libssl-dev libsqlite3-dev
+
+      - name: V 0.5.2 e modulos fixados
+        run: |
+          set -euo pipefail
+          git clone https://github.com/vlang/v.git /tmp/v
+          git -C /tmp/v checkout --detach "$V_COMMIT"
+          make -C /tmp/v
+          test "$(git -C /tmp/v rev-parse HEAD)" = "$V_COMMIT"
+          /tmp/v/v version | grep -F 'V 0.5.2'
+
+          mkdir -p "$HOME/.vmodules/leafscale" "$HOME/.vmodules/ken0x0a"
+          git clone https://github.com/leafscale/veemarker.git "$HOME/.vmodules/leafscale/veemarker"
+          git -C "$HOME/.vmodules/leafscale/veemarker" checkout --detach "$VEEMARKER_COMMIT"
+          git clone https://github.com/ken0x0a/v-dotenv.git "$HOME/.vmodules/ken0x0a/dotenv"
+          git -C "$HOME/.vmodules/ken0x0a/dotenv" checkout --detach "$DOTENV_COMMIT"
+          git clone https://github.com/Ddiidev/v-stripe.git "$HOME/.vmodules/v_stripe"
+          git -C "$HOME/.vmodules/v_stripe" checkout --detach "$V_STRIPE_COMMIT"
+          echo '/tmp/v' >> "$GITHUB_PATH"
+
+      - name: Testes V com PostgreSQL efemero
+        run: /tmp/v/v test tests/
+
+      - name: Contratos shell e ciclo de vida
+        run: |
+          set -euo pipefail
+          ./scripts/test_seed_sqlite.sh
+          ./scripts/test_alpine_image_static.sh
+          ./scripts/smoke_compose.sh
+          ./scripts/check_production_domain.sh
+          ./scripts/test_coolify_deploy.sh
+          ./scripts/test_health_lifecycle.sh
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build unico linux/amd64
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --load \
+            --tag "$LOCAL_IMAGE" \
+            --tag "$GHCR_IMAGE" \
+            .
+
+      - name: Verificar Alpine, arquitetura e bibliotecas
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect "$LOCAL_IMAGE" --format '{{.Architecture}}')" = amd64
+          docker run --rm --entrypoint sh "$LOCAL_IMAGE" -eu -c \
+            "grep -Eq '^3[.]22[.]' /etc/alpine-release"
+          docker run --rm --entrypoint sh "$LOCAL_IMAGE" -eu -c '
+            apk add --no-cache pax-utils >/dev/null
+            scanelf --needed --nobanner /app/TabuaMareAPI
+            ldd /app/TabuaMareAPI | tee /tmp/ldd.txt
+            ! grep -Fq "not found" /tmp/ldd.txt
+          '
+
+      - name: Ambiente isolado do smoke A/B
+        run: |
+          cat > "$RUNNER_TEMP/tabuamare-ci.env" <<'ENV'
+          POSTGRESQL_CONN_STR=postgresql://postgres:postgres@postgres:5432/tabuamare_ci
+          GOOGLE_CLIENT_ID=ci-client
+          GOOGLE_CLIENT_SECRET=ci-secret
+          GOOGLE_REDIRECT_URI=https://tabuamare.api.br/auth/google/callback
+          SESSION_SECRET=ci-only-session-secret-with-more-than-32-bytes
+          STRIPE_SECRET_KEY=sk_test_ci
+          STRIPE_WEBHOOK_SECRET=whsec_ci
+          URL_ENV=https://tabuamare.api.br
+          ENV
+
+      - name: Smoke da imagem exata em A/B
+        env:
+          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
+          TABUAMARE_IMAGE: ${{ env.LOCAL_IMAGE }}
+          TABUAMARE_ENV_FILE: ${{ runner.temp }}/tabuamare-ci.env
+          COMPOSE_TEST_ENV_FILE: ${{ runner.temp }}/tabuamare-ci.env
+          COMPOSE_TEST_ALLOW_DB_MUTATIONS: "yes"
+          COMPOSE_RUNTIME: "1"
+          COMPOSE_BUILD: "0"
+        run: ./scripts/smoke_compose.sh
+
+      - name: Login GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publicar tag imutavel
+        if: github.event_name == 'push'
+        run: docker push "$GHCR_IMAGE"
+
+      - name: Confirmar acesso publico anonimo
+        if: github.event_name == 'push'
+        run: |
+          docker logout ghcr.io
+          docker manifest inspect "$GHCR_IMAGE" >/dev/null

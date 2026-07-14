@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tabuamare_ci
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tabuamare_ci"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  tabuamare-a:
+    image: ${TABUAMARE_IMAGE:?TABUAMARE_IMAGE obrigatoria}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  tabuamare-b:
+    image: ${TABUAMARE_IMAGE:?TABUAMARE_IMAGE obrigatoria}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      tabuamare-a:
+        condition: service_healthy
