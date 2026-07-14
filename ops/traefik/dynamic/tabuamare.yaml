@@ -1,0 +1,73 @@
+http:
+  middlewares:
+    tabuamare-redirect-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    tabuamare-redirect-www:
+      redirectRegex:
+        regex: ^https?://www\.tabuamare\.api\.br/(.*)
+        replacement: https://tabuamare.api.br/${1}
+        permanent: true
+    tabuamare-compress:
+      compress: {}
+
+  routers:
+    tabuamare-http:
+      entryPoints:
+        - http
+      rule: Host(`tabuamare.api.br`) || Host(`www.tabuamare.api.br`) || Host(`coolify-admin.tabuamare.api.br`)
+      middlewares:
+        - tabuamare-redirect-https
+      service: tabuamare-noop
+
+    tabuamare-apex:
+      entryPoints:
+        - https
+      rule: Host(`tabuamare.api.br`)
+      middlewares:
+        - tabuamare-compress
+      service: tabuamare-ab
+      tls:
+        certResolver: letsencrypt
+
+    tabuamare-www:
+      entryPoints:
+        - https
+      rule: Host(`www.tabuamare.api.br`)
+      middlewares:
+        - tabuamare-redirect-www
+      service: tabuamare-ab
+      tls:
+        certResolver: letsencrypt
+
+    tabuamare-coolify-admin:
+      entryPoints:
+        - https
+      rule: Host(`coolify-admin.tabuamare.api.br`)
+      service: tabuamare-coolify-admin
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    tabuamare-ab:
+      loadBalancer:
+        passHostHeader: true
+        healthCheck:
+          path: /health/ready
+          interval: 5s
+          timeout: 2s
+        servers:
+          - url: http://__APP_A_CONTAINER__:3330
+          - url: http://__APP_B_CONTAINER__:3330
+
+    tabuamare-coolify-admin:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: http://coolify:8080
+
+    tabuamare-noop:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1
