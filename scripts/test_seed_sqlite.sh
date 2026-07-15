@@ -26,6 +26,7 @@ import sys
 path, value = sys.argv[1:]
 connection = sqlite3.connect(path)
 connection.execute("CREATE TABLE seed_info (value TEXT NOT NULL)")
+connection.execute("CREATE TABLE data_mare (id INTEGER PRIMARY KEY)")
 connection.execute("INSERT INTO seed_info(value) VALUES (?)", (value,))
 connection.commit()
 connection.close()
