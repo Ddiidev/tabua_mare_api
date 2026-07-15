@@ -3,12 +3,7 @@ module tabua_mare
 import orm
 import time
 import pool
-
-$if using_sqlite ? {
-	import db.sqlite as db_provider
-} $else {
-	import db.pg as db_provider
-}
+import db.sqlite as db_provider
 import entities
 import shareds.types
 import repository.habor_mare
@@ -94,7 +89,7 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 
 // get_tabua_mare_by_month_days Retorna os dados da tábua de maré de um determinado porto, mês e dias
 @[deprecated: 'Use get_tabua_mare_by_month_days ao invés de get_tabua_mare_by_month_days_v1, isso porque get_tabua_mare_by_month_days_v1 busca por id do banco, o get_tabua_mare_by_month_days busca por id do estado']
-@[deprecated_after: '2026-04-22']
+@[deprecated_after: '2026-10-22']
 pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor_id int, month int, days []int) !types.ResultValues[dto.DTOTabuaMareV1] {
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
@@ -118,7 +113,7 @@ pub fn get_tabua_mare_by_month_days_v1(mut pool_conn pool.ConnectionPool, harbor
 	mut qb_hours := orm.new_query[entities.HourData](db)
 
 	if month_data.len == 0 {
-		return error('Nenhum dado mensal encontrado para o porto e mês especificados')
+		return error('Nenhum dado mensal encontrado para o porto e mês especificado')
 	}
 
 	mut days_data := qb_month_days

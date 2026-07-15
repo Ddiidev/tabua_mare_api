@@ -4,7 +4,7 @@
 
 Uma API pública para consultar dados precisos de marés em todo o litoral brasileiro. Interface REST simples, sem necessidade de chave de API, com cobertura nacional e exemplos práticos.
 
-- Site oficial: https://tabuamare.devtu.qzz.io/
+- Site oficial: https://tabuamare.api.br/
 - Documentação: `/docs`
 - Playground: `/playground`
 - Apoiar o projeto: `/apoiar`
@@ -32,7 +32,7 @@ A versão 2 da API traz uma mudança importante na identificação dos portos:
 
 ## Como usar a API
 
-Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estrutura de resposta, acesse: **https://tabuamare.devtu.qzz.io/docs**
+Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estrutura de resposta, acesse: **https://tabuamare.api.br/docs**
 
 ### Principais Endpoints (V2)
 
@@ -88,8 +88,11 @@ Observações:
 
 ## Limites e uso
 
-- Uso livre: não é necessária chave de API.
-- Limite: 500 requisições por minuto por IP.
+- Sem api_key (anônimo por IP): 16 req/min, ilimitado/mês.
+- Free com api_key: 64 req/min, 32k req/mês.
+- Plan 5 (R$ 5/mês, api_key): 512 req/min, 256k req/mês.
+- Plan 10 (R$ 10/mês, api_key): 2.048 req/min, ilimitado/mês.
+- Plan Anual (R$ 70/ano, api_key): 4.096 req/min, ilimitado/mês.
 
 ## Executando localmente
 
@@ -112,12 +115,9 @@ cp .env.template .env
 2. Configure as seguintes variáveis no arquivo `.env`:
 
 ```
-DB_DATABASE=nome_do_banco
-DB_USER=usuario_do_banco
-DB_HOST=localhost
-DB_PASS=senha_do_banco
-DB_PORT=5432
-NEW_RELIC_KEY=CHAVE
+DB_SQLITE_PATH=./taubinha.sqlite
+POSTGRESQL_CONN_STR=postgresql://usuario:senha@localhost:5432/tabuamare
+GOOGLE_REDIRECT_URI=http://localhost:3330/auth/google/callback
 URL_ENV=http://localhost:3330
 ```
 
@@ -131,10 +131,32 @@ v run . 3330
 
 A aplicação iniciará e servirá:
 
-- API em `http://localhost:3330/api/v1`
+- API em `http://localhost:3330/api/v2`
 - Páginas: `http://localhost:3330/`, `/docs`, `/playground`, `/apoiar`
 
-### Produção (Docker Compose)
+### Imagem de produção Alpine
+
+1. Construa a imagem usando o `Dockerfile` na raiz:
+
+```bash
+docker build --platform linux/amd64 -t tabua-mare-api:local .
+```
+
+2. Suba uma instância com volume SQLite próprio:
+
+```bash
+docker run --rm -p 3330:3330 \
+  --env-file .env \
+  -v tabuamare-sqlite:/app/data \
+  tabua-mare-api:local
+```
+
+- Alpine 3.22, `linux/amd64`, processo V como UID `10001`.
+- Uma instância por container, porta interna `3330`.
+- O seed SQLite é validado e atualizado atomicamente em `/app/data/taubinha.sqlite`.
+- Health checks: `/health/live` e `/health/ready`.
+
+### Validação local A/B
 
 1. Copie o arquivo `.env.template` para `.env` e ajuste variáveis conforme necessário.
 2. Construa e suba os serviços:
@@ -143,15 +165,21 @@ A aplicação iniciará e servirá:
 docker compose up -d --build
 ```
 
-- Nginx é configurado automaticamente a partir de `nginx/`.
-- Variável `PORT` controla a porta externa (padrão `8080`).
-- Opcional: `CLOUDFLARE_TUNNEL_TOKEN` para habilitar Cloudflare Tunnel.
+- O Compose local sobe somente `tabuamare-a` e `tabuamare-b`.
+- Cada instância usa volume SQLite exclusivo.
+- Portas locais: `3330` e `3340`.
+
+### Produção Coolify
+
+Produção usa duas aplicações regulares Coolify baseadas na mesma imagem GHCR imutável, atrás de Cloudflare e Traefik. Não usa nginx, Cloudflare Tunnel, Swarm ou Compose de produção.
+
+Setup, firewall, DNS-01, volumes, A/B e deploy: [ops/README.md](ops/README.md).
 
 ## Apoie o projeto
 
 Você pode apoiar este projeto de várias formas:
 
-- **Financeiramente**: Acesse https://tabuamare.devtu.qzz.io/apoiar para contribuir e ajudar a pagar uma VPS melhor
+- **Financeiramente**: Acesse https://tabuamare.api.br/apoiar para contribuir e ajudar a pagar uma VPS melhor
 - **Desenvolvimento**: Crie issues, pull requests ou contribua com código
 - **Divulgação**: Compartilhe o projeto com outros desenvolvedores
 

@@ -4,7 +4,6 @@ import arrays
 
 pub type IntRangeArr = string
 
-// ints convert string on format "[1,5-15]" to array of ints
 pub fn (ids IntRangeArr) ints() []int {
 	mut inters := []int{}
 	for id in ids.replace_each(['[', '', ']', '', ' ', '']).split(',') {

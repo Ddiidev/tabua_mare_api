@@ -1,8 +1,12 @@
 module auth_user
 
-// UserData representa os dados do usuário para o JWT
+// UserData representa os dados publicos do usuario retornados por /auth/me.
 pub struct UserData {
 pub:
-	email string
-	name  string
+	id         int
+	email      string
+	name       string
+	avatar_url string
+	plan       string
+	provider   string
 }

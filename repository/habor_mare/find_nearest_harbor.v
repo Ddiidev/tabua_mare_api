@@ -3,12 +3,9 @@ module habor_mare
 import math
 import pool
 import repository.habor_mare.dto
-
-$if using_sqlite ? {
-	import db.sqlite as db_provider
-	import shareds.geohash
-	import time
-}
+import db.sqlite as db_provider
+import shareds.geohash
+import time
 
 const earth_radius_km = 6371.0
 const geohash_precisions = [5, 4, 3, 2, 1]
@@ -33,12 +30,12 @@ fn distance(lat1 f64, lon1 f64, lat2 f64, lon2 f64) f64 {
 fn normalize_state_code(state string) !string {
 	normalized := state.to_lower().trim_space()
 	if normalized.len != 2 {
-		return error('É necessário informar o estado corretamente.')
+		return error('state must be informed correctly.')
 	}
 
 	for char_code in normalized.bytes() {
 		if char_code < `a` || char_code > `z` {
-			return error('É necessário informar o estado corretamente.')
+			return error('state must be informed correctly.')
 		}
 	}
 
@@ -107,28 +104,19 @@ fn find_nearest_harbor_match_within_same_state_in_memory(mut pool_conn pool.Conn
 	}
 
 	if shortest_distance == -1.0 {
-		return error('Nenhum porto encontrado no estado correspondente às coordenadas.')
+		return error('Nenhum porto encontrado no estado correspondente as coordenadas.')
 	}
 
 	return nearest_match
 }
 
 fn find_nearest_harbor_match(mut pool_conn pool.ConnectionPool, lat f64, lng f64) !NearestHarborMatch {
-	$if using_sqlite ? {
-		return find_nearest_harbor_match_sqlite(mut pool_conn, lat, lng, '')
-	} $else {
-		return find_nearest_harbor_match_in_memory(mut pool_conn, lat, lng)
-	}
+	return find_nearest_harbor_match_sqlite(mut pool_conn, lat, lng, '')
 }
 
 fn find_nearest_harbor_match_within_same_state(mut pool_conn pool.ConnectionPool, lat f64, lng f64, state string) !NearestHarborMatch {
 	normalized_state := normalize_state_code(state)!
-	$if using_sqlite ? {
-		return find_nearest_harbor_match_sqlite(mut pool_conn, lat, lng, normalized_state)
-	} $else {
-		return find_nearest_harbor_match_within_same_state_in_memory(mut pool_conn, lat, lng,
-			normalized_state)
-	}
+	return find_nearest_harbor_match_sqlite(mut pool_conn, lat, lng, normalized_state)
 }
 
 // find_nearest_harbor_id retorna o ID do porto mais próximo sem filtro de estado.
@@ -159,7 +147,7 @@ pub fn find_nearest_harbor_within_same_state(mut pool_conn pool.ConnectionPool, 
 	nearest_match := find_nearest_harbor_match_within_same_state(mut pool_conn, lat, lng, state)!
 	result := get_harbor_by_ids_v1(mut pool_conn, [nearest_match.id])!
 	if result.total == 0 {
-		return error('Nenhum porto encontrado no estado correspondente às coordenadas.')
+		return error('Nenhum porto encontrado no estado correspondente as coordenadas.')
 	}
 	return result.data[0]
 }
@@ -180,7 +168,6 @@ pub fn find_nearest_harbor_v2(mut pool_conn pool.ConnectionPool, lat f64, lng f6
 	}
 }
 
-$if using_sqlite ? {
 fn haversine_order_expr(lat f64, lng f64) string {
 	return '((SIN(((CAST(g.lat AS REAL) - ${lat}) * 0.017453292519943295) / 2.0) * SIN(((CAST(g.lat AS REAL) - ${lat}) * 0.017453292519943295) / 2.0)) + (COS(${lat} * 0.017453292519943295) * COS(CAST(g.lat AS REAL) * 0.017453292519943295) * SIN(((CAST(g.lng AS REAL) - ${lng}) * 0.017453292519943295) / 2.0) * SIN(((CAST(g.lng AS REAL) - ${lng}) * 0.017453292519943295) / 2.0)))'
 }
@@ -276,7 +263,6 @@ fn find_nearest_harbor_match_sqlite(mut pool_conn pool.ConnectionPool, lat f64, 
 			state_filter)
 	}
 	return full_scan_match
-}
 }
 
 // find_nearest_harbor_within_same_state_v2 wrapper para retornar DTO v2
