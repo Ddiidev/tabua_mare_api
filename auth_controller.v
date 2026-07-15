@@ -62,6 +62,7 @@ pub fn (mut ac AuthController) google_login(mut ctx web_ctx.WsCtx) veb.Result {
 // de sessao HttpOnly. Redireciona para / (ou ?next=).
 @['/google/callback'; get]
 pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result {
+	eprintln('[oauth] callback started')
 	code := ctx.query['code'] or {
 		ctx.res.set_status(.bad_request)
 		return ctx.text('code ausente')
@@ -83,19 +84,25 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 
 	cfg := ac.google_config()
 
+	eprintln('[oauth] exchanging authorization code')
 	access_token := auth_user.exchange_code(cfg, code) or {
+		eprintln('[oauth] token exchange failed: ${err}')
 		ctx.res.set_status(.unauthorized)
 		return ctx.text('falha ao trocar code: ${err}')
 	}
 
+	eprintln('[oauth] fetching userinfo')
 	user_info := auth_user.fetch_userinfo(cfg, access_token) or {
+		eprintln('[oauth] userinfo failed: ${err}')
 		ctx.res.set_status(.unauthorized)
 		return ctx.text('falha ao obter userinfo: ${err}')
 	}
 
 	raw_json := json.encode(user_info)
 
+	eprintln('[oauth] connecting postgres')
 	mut db := ac.db_conn() or {
+		eprintln('[oauth] postgres connection failed: ${err}')
 		ctx.res.set_status(.internal_server_error)
 		return ctx.text('banco de dados indisponivel: ${err}')
 	}
@@ -103,9 +110,11 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 		db.close() or {}
 	}
 
+	eprintln('[oauth] upserting user')
 	upsert := repo_auth.upsert_by_provider(mut db, 'google', user_info.sub,
 		user_info.email, user_info.name, user_info.picture, raw_json) or {
 		ctx.res.set_status(.internal_server_error)
+		eprintln('[oauth] user upsert failed: ${err}')
 		return ctx.text('falha ao criar/atualizar usuario: ${err}')
 	}
 
@@ -134,6 +143,7 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 		max_age: -1
 	})
 
+	eprintln('[oauth] callback completed')
 	next := ctx.query['next'] or { '/' }
 	return ctx.redirect(next, veb.RedirectParams{ typ: .found })
 }
