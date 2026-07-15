@@ -5,6 +5,7 @@ import net.urllib
 import json
 import crypto.rand
 import encoding.base64
+import time
 
 pub struct GoogleUserInfo {
 pub:
@@ -48,6 +49,7 @@ pub fn build_auth_url(cfg GoogleConfig, state string) string {
 
 // exchange_code troca o code por tokens e retorna o access_token.
 pub fn exchange_code(cfg GoogleConfig, code string) !string {
+	eprintln('[oauth] token exchange started')
 	data := http.url_encode_form_data({
 		'code':          code
 		'client_id':     cfg.client_id
@@ -61,9 +63,20 @@ pub fn exchange_code(cfg GoogleConfig, code string) !string {
 		header: http.new_header(http.HeaderConfig{ .content_type, 'application/x-www-form-urlencoded' })
 		url:    cfg.token_url
 		data:   data
-	})!
+		read_timeout: 10 * time.second
+		write_timeout: 10 * time.second
+		max_retries:  0
+		disable_connection_reuse: true
+	}) or { return error('token exchange request failed: ${err}') }
+	if resp.status_code < 200 || resp.status_code >= 300 {
+		return error('token exchange returned HTTP ${resp.status_code}')
+	}
 
 	tokens := json.decode(TokenResponse, resp.body)!
+	if tokens.access_token == '' {
+		return error('token exchange returned an empty access token')
+	}
+	eprintln('[oauth] token exchange completed')
 	return tokens.access_token
 }
 
@@ -72,10 +85,19 @@ pub fn fetch_userinfo(cfg GoogleConfig, access_token string) !GoogleUserInfo {
 	if access_token == '' {
 		return error('access_token is required')
 	}
+	eprintln('[oauth] userinfo request started')
 	resp := http.fetch(http.FetchConfig{
 		header: http.new_header(http.HeaderConfig{ .authorization, 'Bearer ${access_token}' })
 		url:    cfg.userinfo_url
-	})!
+		read_timeout: 10 * time.second
+		write_timeout: 10 * time.second
+		max_retries:  0
+		disable_connection_reuse: true
+	}) or { return error('userinfo request failed: ${err}') }
+	if resp.status_code < 200 || resp.status_code >= 300 {
+		return error('userinfo returned HTTP ${resp.status_code}')
+	}
+	eprintln('[oauth] userinfo request completed')
 	return json.decode(GoogleUserInfo, resp.body)!
 }
 
