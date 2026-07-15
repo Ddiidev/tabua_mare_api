@@ -34,7 +34,7 @@ pub fn new() ?&PgHolder {
 	db.set_max_idle_conns(1)
 
 	return &PgHolder{
-		db:        unsafe { &db }
+		db:        db
 		available: true
 	}
 }
