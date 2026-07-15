@@ -12,6 +12,7 @@ pub type PgConn = &pg.DB
 // PgHolder envolve a &pg.DB para que closures de middleware capturem o holder
 // (struct wrapper) em vez da &pg.DB direta, evitando o bug de captura de
 // referencia &pg.DB em closures no V 0.5.1 (handler trava no primeiro acesso).
+@[nocopy]
 pub struct PgHolder {
 mut:
 	lock sync.Mutex
