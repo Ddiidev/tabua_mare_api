@@ -14,7 +14,8 @@ pub type PgConn = &pg.DB
 @[heap]
 pub struct PgHolder {
 mut:
-	db   &pg.DB = unsafe { nil }
+	db        &pg.DB = unsafe { nil }
+	available bool
 }
 
 // new cria e retorna um holder com a conexao PG (e guarda a conexao internamente).
@@ -29,7 +30,8 @@ pub fn new() ?&PgHolder {
 	}
 
 	return &PgHolder{
-		db: unsafe { &db }
+		db:        unsafe { &db }
+		available: true
 	}
 }
 
@@ -51,6 +53,12 @@ pub fn (h &PgHolder) db() &pg.DB {
 	return h.db
 }
 
+// available informa se o pool foi inicializado. O processo pode subir sem PG
+// para que /health/live responda; nesse caso readiness permanece falsa.
+pub fn (h &PgHolder) available() bool {
+	return h.available
+}
+
 // raw retorna a conexao PG bruta (para repositories que usam mut db pg.DB).
 pub fn (h &PgHolder) raw() &pg.DB {
 	return h.db
@@ -58,6 +66,9 @@ pub fn (h &PgHolder) raw() &pg.DB {
 
 // is_healthy valida uma conexao do pool compartilhado sem abrir outra conexao.
 pub fn (h &PgHolder) is_healthy() bool {
+	if !h.available {
+		return false
+	}
 	mut db := h.db
 	db.validate() or { return false }
 	return true

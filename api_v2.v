@@ -162,6 +162,10 @@ pub fn (mut api APIControllerV2) usage(mut ctx web_ctx.WsCtx) veb.Result {
 		ctx.res.set_status(.unauthorized)
 		return ctx.json(types.failure[string](401, 'api_key ausente'))
 	}
+	if !api.pg_holder.available() {
+		ctx.res.set_status(.service_unavailable)
+		return ctx.json(types.failure[string](503, 'banco indisponivel'))
+	}
 
 	mut db := api.pg_holder.db()
 

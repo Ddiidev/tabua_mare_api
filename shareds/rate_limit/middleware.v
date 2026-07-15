@@ -36,6 +36,9 @@ fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, pg_holder &infra
 	ip := ctx.ip()
 	ctx.ip = ip
 	ctx.plan = 'anon'
+	if !pg_holder.available() {
+		return reject_dependency(mut ctx, 'PostgreSQL indisponivel')
+	}
 
 	mut db_pg := pg_holder.db()
 

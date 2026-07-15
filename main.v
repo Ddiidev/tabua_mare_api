@@ -84,8 +84,8 @@ fn main() {
 		eprintln('PG startup migration skipped: ${err}')
 	}
 	pg_holder := infradb_pg.new() or {
-		eprintln('PostgreSQL pool initialization failed: ${err}')
-		exit(1)
+		eprintln('PostgreSQL pool initialization failed; readiness disabled: ${err}')
+		&infradb_pg.PgHolder{}
 	}
 
 	mut app := &App{
