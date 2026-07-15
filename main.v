@@ -24,6 +24,7 @@ struct App {
 mut:
 	health_state &health.State
 	health_pool  &pool.ConnectionPool
+	pg_holder    &infradb_pg.PgHolder
 	server_ready chan &veb.Server
 }
 
@@ -82,11 +83,16 @@ fn main() {
 		}
 		eprintln('PG startup migration skipped: ${err}')
 	}
+	pg_holder := infradb_pg.new() or {
+		eprintln('PostgreSQL pool initialization failed: ${err}')
+		exit(1)
+	}
 
 	mut app := &App{
 		env:          env
 		health_state: health.new_state()
 		health_pool:  infradb.new()!
+		pg_holder:    pg_holder
 		server_ready: chan &veb.Server{cap: 1}
 	}
 
@@ -98,16 +104,18 @@ fn main() {
 	mut api_controller_v2 := &APIControllerV2{
 		pool_conn: infradb.new()!
 		env:       env
+		pg_holder: pg_holder
 	}
 
 	mut auth_controller := &AuthController{
 		env:          env
+		pg_holder:    pg_holder
 		avatar_cache: auth_user.new_avatar_cache(env.avatar_cache_ttl_minutes)
 	}
 
 	api_controller.init_cors()
 	api_controller_v2.init_cors()
-	api_controller_v2.init_rate_limit(env)
+	api_controller_v2.init_rate_limit(env, pg_holder)
 
 	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
 	app.register_controller[APIControllerV2, web_ctx.WsCtx]('/api/v2', mut api_controller_v2)!
@@ -275,11 +283,8 @@ pub fn (app &App) health_live(mut ctx web_ctx.WsCtx) veb.Result {
 
 @['/health/ready'; get; head]
 pub fn (mut app App) health_ready(mut ctx web_ctx.WsCtx) veb.Result {
-	connstr := rlock app.env {
-		app.env.postgresql_conn_str
-	}
 	if app.health_state.is_ready_with_dependencies(infradb.sqlite_is_healthy(mut app.health_pool),
-		infradb_pg.is_healthy(connstr))
+		app.pg_holder.is_healthy())
 	{
 		return ctx.no_content()
 	}

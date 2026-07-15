@@ -2,7 +2,6 @@ module infradb_pg
 
 import db.pg
 import net.urllib
-import sync
 import shareds.conf_env
 
 // PgConn e' a conexao PostgreSQL (pg.DB tem pool interno thread-safe).
@@ -12,15 +11,14 @@ pub type PgConn = &pg.DB
 // PgHolder envolve a &pg.DB para que closures de middleware capturem o holder
 // (struct wrapper) em vez da &pg.DB direta, evitando o bug de captura de
 // referencia &pg.DB em closures no V 0.5.1 (handler trava no primeiro acesso).
-@[nocopy]
+@[heap]
 pub struct PgHolder {
 mut:
-	lock sync.Mutex
 	db   &pg.DB = unsafe { nil }
 }
 
 // new cria e retorna um holder com a conexao PG (e guarda a conexao internamente).
-// Retorna none se a conexao falhar (o app continua; auth/rate-limit fica desligado).
+// Retorna none se a conexao falhar.
 pub fn new() ?&PgHolder {
 	env := conf_env.load_env()
 
@@ -48,18 +46,21 @@ pub fn is_healthy(connstr string) bool {
 	return true
 }
 
-// db retorna a conexao PG do holder (thread-safe).
-pub fn (mut h PgHolder) db() &pg.DB {
-	h.lock.lock()
-	defer {
-		h.lock.unlock()
-	}
+// db retorna a conexao PG do holder. pg.DB gerencia o pool interno thread-safe.
+pub fn (h &PgHolder) db() &pg.DB {
 	return h.db
 }
 
 // raw retorna a conexao PG bruta (para repositories que usam mut db pg.DB).
-pub fn (mut h PgHolder) raw() &pg.DB {
+pub fn (h &PgHolder) raw() &pg.DB {
 	return h.db
+}
+
+// is_healthy valida uma conexao do pool compartilhado sem abrir outra conexao.
+pub fn (h &PgHolder) is_healthy() bool {
+	mut db := h.db
+	db.validate() or { return false }
+	return true
 }
 
 // pg_config_from_env constroi um pg.Config a partir das vars individuais (DB_*).

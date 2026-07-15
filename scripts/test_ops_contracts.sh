@@ -7,6 +7,8 @@ firewall="${root_dir}/ops/cloudflare-origin-firewall.sh"
 traefik="${root_dir}/ops/traefik/dynamic/tabuamare.yaml"
 readme="${root_dir}/ops/README.md"
 
+bash "${root_dir}/scripts/test_pg_pool_contract.sh"
+
 fail() {
 	printf 'FAIL: %s\n' "$*" >&2
 	exit 1

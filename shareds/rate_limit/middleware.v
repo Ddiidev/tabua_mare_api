@@ -9,44 +9,35 @@ import domain.auth_user
 import repository.auth as repo_auth
 import repository.auth.dto
 import repository.rate_limit as rl
+import shareds.infradb_pg
 
 pub struct RateLimitOpts {
 pub mut:
-	env conf_env.EnvConfig
+	env      conf_env.EnvConfig
+	pg_holder &infradb_pg.PgHolder
 }
 
 // rate_limit_middleware retorna um MiddlewareOptions para o veb que aplica rate-limit por IP/api_key.
-// Nota: cria uma conexao PG nova por request porque capturar &pg.DB em closure do veb
-// triga um bug no V 0.5.1 (handler trava no primeiro acesso). Para rate-limit
-// (1-2 queries por request) o custo de open/close e' aceitavel.
+// As consultas continuam ocorrendo em toda requisicao para preservar revogacao de
+// chaves e limites atuais, mas usam o pool PostgreSQL compartilhado da aplicacao.
 pub fn rate_limit_middleware(opts RateLimitOpts) veb.MiddlewareOptions[web_ctx.WsCtx] {
 	env := opts.env
-	connstr := env.postgresql_conn_str
+	pg_holder := opts.pg_holder
 	return veb.MiddlewareOptions[web_ctx.WsCtx]{
-		handler: fn [env, connstr] (mut ctx web_ctx.WsCtx) bool {
-			return do_rate_limit(mut ctx, env, connstr)
+		handler: fn [env, pg_holder] (mut ctx web_ctx.WsCtx) bool {
+			return do_rate_limit(mut ctx, env, pg_holder)
 		}
 	}
 }
 
 // do_rate_limit executa a logica de rate-limit fora da closure para evitar
 // o limite de niveis de expressao do checker do V.
-fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) bool {
+fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, pg_holder &infradb_pg.PgHolder) bool {
 	ip := ctx.ip()
 	ctx.ip = ip
 	ctx.plan = 'anon'
 
-	if connstr == '' {
-		return reject_dependency(mut ctx, 'PostgreSQL nao configurado')
-	}
-
-	mut db_pg := pg.connect_with_conninfo(connstr) or {
-		eprintln('rate_limit: pg connect failed: ${err}')
-		return reject_dependency(mut ctx, 'PostgreSQL indisponivel')
-	}
-	defer {
-		db_pg.close() or {}
-	}
+	mut db_pg := pg_holder.db()
 
 	mut bucket := 'ip:${ip}'
 	mut plan := 'anon'
