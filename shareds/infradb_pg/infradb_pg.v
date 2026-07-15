@@ -2,10 +2,11 @@ module infradb_pg
 
 import db.pg
 import net.urllib
+import time
 import shareds.conf_env
 
 // PgConn e' a conexao PostgreSQL compartilhada. O pg.DB mantem o pool interno
-// thread-safe, configurado abaixo para uma unica conexao fisica.
+// thread-safe, configurado com limites de 5 conexoes, 2 ociosas e lifetime de 30 min.
 pub type PgConn = &pg.DB
 
 // PgHolder envolve a &pg.DB para que closures de middleware capturem o holder
@@ -24,32 +25,23 @@ pub fn new() ?&PgHolder {
 	env := conf_env.load_env()
 
 	mut db := if env.postgresql_conn_str != '' {
-		pg.connect_with_conninfo(env.postgresql_conn_str) or { return none }
+		pg.connect_with_conninfo(env.postgresql_conn_str, pg.PoolConfig{
+			max_open_conns:    5
+			max_idle_conns:    2
+			conn_max_lifetime: 30 * time.minute
+		}) or { return none }
 	} else {
-		pg.connect(pg_config_from_env(env)) or { return none }
+		pg.connect(pg_config_from_env(env), pg.PoolConfig{
+			max_open_conns:    5
+			max_idle_conns:    2
+			conn_max_lifetime: 30 * time.minute
+		}) or { return none }
 	}
-	// Evita criar uma conexao fisica por request sem adicionar um pool externo
-	// de pools. As operacoes continuam thread-safe pelo DB compartilhado.
-	db.set_max_open_conns(1)
-	db.set_max_idle_conns(1)
 
 	return &PgHolder{
 		db:        db
 		available: true
 	}
-}
-
-// is_healthy confirma que o PostgreSQL obrigatorio aceita conexao e consulta.
-pub fn is_healthy(connstr string) bool {
-	if connstr == '' {
-		return false
-	}
-	mut db := pg.connect_with_conninfo(connstr) or { return false }
-	defer {
-		db.close() or {}
-	}
-	db.exec('SELECT 1') or { return false }
-	return true
 }
 
 // db retorna a conexao PG do holder. pg.DB gerencia o pool interno thread-safe.
@@ -76,6 +68,15 @@ pub fn (h &PgHolder) is_healthy() bool {
 	mut db := h.db
 	db.exec('SELECT 1') or { return false }
 	return true
+}
+
+// close encerra o pool somente no shutdown do processo.
+pub fn (h &PgHolder) close() {
+	if !h.available {
+		return
+	}
+	mut db := h.db
+	db.close() or { eprintln('PostgreSQL pool close failed') }
 }
 
 // pg_config_from_env constroi um pg.Config a partir das vars individuais (DB_*).

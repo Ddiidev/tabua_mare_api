@@ -77,15 +77,14 @@ fn main() {
 
 	infradb.apply_startup_migrations() or { eprintln('Startup migration skipped: ${err}') }
 	infradb_pg.apply_pg_startup_migrations() or {
-		if conf_env.is_production(env) {
-			eprintln('PG startup migration failed: ${err}')
-			exit(1)
-		}
-		eprintln('PG startup migration skipped: ${err}')
+		eprintln('PG startup migration skipped; readiness disabled')
 	}
 	pg_holder := infradb_pg.new() or {
-		eprintln('PostgreSQL pool initialization failed; readiness disabled: ${err}')
+		eprintln('PostgreSQL pool initialization failed; readiness disabled')
 		&infradb_pg.PgHolder{}
+	}
+	if pg_holder.available() {
+		println('PostgreSQL pool inicializado: max_open_conns=5 max_idle_conns=2 conn_max_lifetime=30m')
 	}
 
 	mut app := &App{
@@ -127,6 +126,7 @@ fn main() {
 	spawn wait_for_shutdown(app.health_state, app.server_ready)
 
 	println('Starting Tabua Mare API on port ${port}')
+	defer { app.pg_holder.close() }
 	veb.run[App, web_ctx.WsCtx](mut app, port)
 }
 
