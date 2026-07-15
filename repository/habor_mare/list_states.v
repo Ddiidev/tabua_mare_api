@@ -13,9 +13,7 @@ pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string
 	conn := pool_conn.get()!
 	mut db := conn as db_provider.DB
 	defer {
-		pool_conn.put(conn) or {
-			println(err.msg())
-		}
+		pool_conn.put(conn) or { println(err.msg()) }
 	}
 
 	mut qb := orm.new_query[entities.DataMare](db)
@@ -26,8 +24,6 @@ pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string
 		.where('year = ?', year)!
 		.query()!
 		.map(it.state))
-
-
 
 	return types.ResultValues[string]{
 		data:  distinct_states

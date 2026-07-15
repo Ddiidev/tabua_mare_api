@@ -27,8 +27,8 @@ v test tests/find_nearested_harbor_test.v
 # Docker production build (Alpine, uma app por container)
 docker build --platform linux/amd64 -t tabua-mare-api:local .
 
-# Docker Compose local A/B
-docker compose up -d --build
+# Validar imagem Alpine
+docker build --platform linux/amd64 -t tabua-mare-api:local .
 ```
 
 ## Environment Setup
@@ -163,8 +163,7 @@ tests/             — integration tests (_test.v files, require DB)
 ### Production Deployment
 
 - **Root `Dockerfile`** — Alpine 3.22 multi-stage, uma instância V por container na porta `3330`, UID 10001 e volume `/app/data`.
-- **`docker-compose.yml`** — somente validação local A/B; volumes `sqlite-a` e `sqlite-b` separados.
-- **Produção** — duas aplicações regulares Coolify usando `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`, balanceadas pelo Traefik.
+- **Produção** — duas aplicações regulares Coolify usando `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`, balanceadas pelo Traefik. O repositório não usa Compose para produção nem CI.
 - **Fluxo público** — Cloudflare proxy → Traefik/Coolify → A ou B. Sem nginx, Cloudflare Tunnel, Swarm ou Compose de produção.
 - **Operação** — scripts e runbook em `ops/`; deploy manual sequencial em `.github/workflows/deploy-production.yml`.
 

@@ -6,9 +6,9 @@ import repository.auth.dto
 // PlanStatus representa o status de plano/cobranca de um usuario.
 pub struct PlanStatus {
 pub:
-	user_id    int
-	plan       string
-	api_keys   []dto.ApiKey
+	user_id  int
+	plan     string
+	api_keys []dto.ApiKey
 }
 
 // get_plan_status retorna o plano do usuario e suas api_keys ativas.

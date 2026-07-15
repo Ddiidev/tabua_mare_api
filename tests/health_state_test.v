@@ -38,3 +38,11 @@ fn test_postgres_health_fails_closed_without_connection() {
 	assert !unavailable.available()
 	assert !unavailable.is_healthy()
 }
+
+fn test_postgres_pool_caps_open_connections() ! {
+	holder := infradb_pg.new() or { return }
+	mut db := holder.db()
+	stats := db.stats()
+	assert stats.max_open_connections == 5
+	holder.close()
+}

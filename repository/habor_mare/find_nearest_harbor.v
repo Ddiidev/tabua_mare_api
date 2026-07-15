@@ -222,7 +222,7 @@ fn try_find_nearest_harbor_match_by_geohash(db db_provider.DB, lat f64, lng f64,
 	}
 	prefix_clause := prefixes.map("'${it}'").join(',')
 
-	query := "SELECT d.id, d.id_harbor_state FROM data_mare d JOIN geo_location g ON g.data_mare_id = d.id WHERE d.year = ${year}${state_clause} AND substr(g.geo_hash, 1, ${precision}) IN (${prefix_clause}) ORDER BY ${haversine_order_expr(lat, lng)} ASC LIMIT 1;"
+	query := 'SELECT d.id, d.id_harbor_state FROM data_mare d JOIN geo_location g ON g.data_mare_id = d.id WHERE d.year = ${year}${state_clause} AND substr(g.geo_hash, 1, ${precision}) IN (${prefix_clause}) ORDER BY ${haversine_order_expr(lat, lng)} ASC LIMIT 1;'
 	return query_nearest_harbor_match(db, query)!
 }
 
@@ -239,9 +239,7 @@ fn find_nearest_harbor_match_sqlite(mut pool_conn pool.ConnectionPool, lat f64, 
 	year := time.now().year
 	for precision in geohash_precisions {
 		nearest_by_precision := try_find_nearest_harbor_match_by_geohash(db, lat, lng, year,
-			state_filter, precision) or {
-			continue
-		}
+			state_filter, precision) or { continue }
 		if nearest_by_precision.id > 0 && nearest_by_precision.harbor_state_id != '' {
 			return nearest_by_precision
 		}
@@ -252,7 +250,7 @@ fn find_nearest_harbor_match_sqlite(mut pool_conn pool.ConnectionPool, lat f64, 
 	} else {
 		" AND d.state = '${state_filter}'"
 	}
-	full_scan_query := "SELECT d.id, d.id_harbor_state FROM data_mare d JOIN geo_location g ON g.data_mare_id = d.id WHERE d.year = ${year}${state_clause} ORDER BY ${haversine_order_expr(lat, lng)} ASC LIMIT 1;"
+	full_scan_query := 'SELECT d.id, d.id_harbor_state FROM data_mare d JOIN geo_location g ON g.data_mare_id = d.id WHERE d.year = ${year}${state_clause} ORDER BY ${haversine_order_expr(lat, lng)} ASC LIMIT 1;'
 	full_scan_match := query_nearest_harbor_match(db, full_scan_query) or {
 		should_release_conn = false
 		pool_conn.put(conn) or { println(err.msg()) }

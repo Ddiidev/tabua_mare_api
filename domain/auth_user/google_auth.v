@@ -59,13 +59,13 @@ pub fn exchange_code(cfg GoogleConfig, code string) !string {
 	})
 
 	resp := http.fetch(http.FetchConfig{
-		method: .post
-		header: http.new_header(http.HeaderConfig{ .content_type, 'application/x-www-form-urlencoded' })
-		url:    cfg.token_url
-		data:   data
-		read_timeout: 10 * time.second
-		write_timeout: 10 * time.second
-		max_retries:  1
+		method:                   .post
+		header:                   http.new_header(http.HeaderConfig{.content_type, 'application/x-www-form-urlencoded'})
+		url:                      cfg.token_url
+		data:                     data
+		read_timeout:             10 * time.second
+		write_timeout:            10 * time.second
+		max_retries:              1
 		disable_connection_reuse: true
 	}) or { return error('token exchange request failed: ${err}') }
 	if resp.status_code < 200 || resp.status_code >= 300 {
@@ -87,11 +87,11 @@ pub fn fetch_userinfo(cfg GoogleConfig, access_token string) !GoogleUserInfo {
 	}
 	eprintln('[oauth] userinfo request started')
 	resp := http.fetch(http.FetchConfig{
-		header: http.new_header(http.HeaderConfig{ .authorization, 'Bearer ${access_token}' })
-		url:    cfg.userinfo_url
-		read_timeout: 10 * time.second
-		write_timeout: 10 * time.second
-		max_retries:  1
+		header:                   http.new_header(http.HeaderConfig{.authorization, 'Bearer ${access_token}'})
+		url:                      cfg.userinfo_url
+		read_timeout:             10 * time.second
+		write_timeout:            10 * time.second
+		max_retries:              1
 		disable_connection_reuse: true
 	}) or { return error('userinfo request failed: ${err}') }
 	if resp.status_code < 200 || resp.status_code >= 300 {
