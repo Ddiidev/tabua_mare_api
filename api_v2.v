@@ -2,7 +2,6 @@ module main
 
 import veb
 import pool
-import db.pg
 import shareds.types
 import shareds.web_ctx
 import shareds.conf_env
@@ -12,6 +11,7 @@ import repository.tabua_mare as repo_tabua_mare
 import repository.auth as repo_auth
 import repository.auth.dto
 import repository.rate_limit as rl
+import shareds.infradb_pg
 
 // APIController Controller da API endpoint base: /api/v2
 pub struct APIControllerV2 {
@@ -19,6 +19,7 @@ pub struct APIControllerV2 {
 	env conf_env.EnvConfig
 mut:
 	pool_conn &pool.ConnectionPool
+	pg_holder &infradb_pg.PgHolder
 }
 
 // init_cors inicializa o middleware CORS para o APIController
@@ -39,9 +40,10 @@ fn (mut api APIControllerV2) init_cors() {
 
 // init_rate_limit aplica o middleware de rate-limit (por IP/api_key, minuto + mes)
 // usando a conexao PostgreSQL (contadores e creditos persistidos).
-fn (mut api APIControllerV2) init_rate_limit(env conf_env.EnvConfig) {
+fn (mut api APIControllerV2) init_rate_limit(env conf_env.EnvConfig, pg_holder &infradb_pg.PgHolder) {
 	api.use(rate_limit.rate_limit_middleware(rate_limit.RateLimitOpts{
 		env: env
+		pg_holder: pg_holder
 	}))
 }
 
@@ -155,25 +157,13 @@ pub fn (mut api APIControllerV2) get_nearest_harbor(mut ctx web_ctx.WsCtx, lat_l
 // Autenticacao via header Authorization: Bearer <key> ou X-Api-Key.
 @['/usage'; get]
 pub fn (mut api APIControllerV2) usage(mut ctx web_ctx.WsCtx) veb.Result {
-	connstr := api.env.postgresql_conn_str
-	if connstr == '' {
-		ctx.res.set_status(.internal_server_error)
-		return ctx.json(types.failure[string](500, 'banco indisponivel'))
-	}
-
 	api_key := rate_limit.extract_api_key(mut ctx)
 	if api_key == '' {
 		ctx.res.set_status(.unauthorized)
 		return ctx.json(types.failure[string](401, 'api_key ausente'))
 	}
 
-	mut db := pg.connect_with_conninfo(connstr) or {
-		ctx.res.set_status(.internal_server_error)
-		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
-	}
-	defer {
-		db.close() or {}
-	}
+	mut db := api.pg_holder.db()
 
 	mut key_found := true
 	key := repo_auth.find_by_key(mut db, api_key) or { key_found = false; dto.ApiKey{} }

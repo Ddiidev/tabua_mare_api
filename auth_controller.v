@@ -6,6 +6,7 @@ import net.http
 import json
 import shareds.web_ctx
 import shareds.conf_env
+import shareds.infradb_pg
 import shareds.types
 import shareds.rate_limit
 import repository.rate_limit as rl
@@ -20,17 +21,28 @@ pub struct AuthController {
 	veb.Middleware[web_ctx.WsCtx]
 	pub mut:
 	env          conf_env.EnvConfig
+	pg_holder    ?&infradb_pg.PgHolder
 	avatar_cache &auth_user.AvatarCache = unsafe { nil }
 }
 
-// db_conn abre uma conexao PG nova a partir da connection string.
-// Cada handler cria sua propria conexao e fecha no defer, evitando o bug
-// de captura de &pg.DB em closures do V 0.5.1.
+// db_conn retorna o pool PostgreSQL compartilhado da aplicacao.
+// O fallback mantem testes isolados que instanciam o controller sem holder.
 fn (ac &AuthController) db_conn() !&pg.DB {
 	if ac.env.postgresql_conn_str == '' {
 		return error('POSTGRESQL_CONN_STR nao configurado')
 	}
+	if holder := ac.pg_holder {
+		return holder.db()
+	}
 	return pg.connect_with_conninfo(ac.env.postgresql_conn_str)
+}
+
+// close_db fecha apenas conexoes criadas pelo fallback de testes.
+// O holder de producao permanece vivo durante todo o processo.
+fn (ac &AuthController) close_db(mut db &pg.DB) {
+	if ac.pg_holder == none {
+		db.close() or {}
+	}
 }
 
 // google_login inicia o fluxo OAuth do Google: gera state, seta cookie efemero e
@@ -107,7 +119,7 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 		return ctx.text('banco de dados indisponivel: ${err}')
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	eprintln('[oauth] upserting user')
@@ -185,7 +197,7 @@ pub fn (mut ac AuthController) me(mut ctx web_ctx.WsCtx) veb.Result {
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 	plan := repo_auth.find_plan_by_id(mut db, claims.sub) or { claims.plan }
 
@@ -215,7 +227,7 @@ pub fn (mut ac AuthController) avatar(mut ctx web_ctx.WsCtx, user_id string) veb
 		return ctx.text('banco indisponivel: ${err}')
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	user := repo_auth.find_by_id(mut db, uid) or {
@@ -267,7 +279,7 @@ pub fn (mut ac AuthController) api_keys_list(mut ctx web_ctx.WsCtx) veb.Result {
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	keys := repo_auth.list_by_user(mut db, uid) or {
@@ -306,7 +318,7 @@ pub fn (mut ac AuthController) api_keys_create(mut ctx web_ctx.WsCtx) veb.Result
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	user_plan := repo_auth.find_plan_by_id(mut db, uid) or { 'free' }
@@ -377,7 +389,7 @@ pub fn (mut ac AuthController) checkout(mut ctx web_ctx.WsCtx) veb.Result {
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 	user := repo_auth.find_by_id(mut db, uid) or {
 		ctx.res.set_status(.not_found)
@@ -453,7 +465,7 @@ pub fn (mut ac AuthController) billing_portal(mut ctx web_ctx.WsCtx) veb.Result 
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	user := repo_auth.find_by_id(mut db, uid) or {
@@ -504,7 +516,7 @@ pub fn (mut ac AuthController) cancel_subscription(mut ctx web_ctx.WsCtx) veb.Re
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	user := repo_auth.find_by_id(mut db, uid) or {
@@ -636,7 +648,7 @@ fn handle_stripe_checkout_completed(mut ac AuthController, event stripe.Event) !
 
 	mut db := ac.db_conn() or { return err }
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	repo_auth.update_plan(mut db, uid, plan_code)!
@@ -656,7 +668,7 @@ fn handle_stripe_checkout_completed(mut ac AuthController, event stripe.Event) !
 fn handle_stripe_subscription_updated(mut ac AuthController, event stripe.Event) ! {
 	mut db := ac.db_conn() or { return err }
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	// extrai customer_id, status e plan_code do raw_body
@@ -709,7 +721,7 @@ struct StripeWebhookEventObject {
 fn handle_stripe_subscription_deleted(mut ac AuthController, event stripe.Event) ! {
 	mut db := ac.db_conn() or { return err }
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	// extrai customer_id do raw_body para evitar chamar a API Stripe
@@ -746,7 +758,7 @@ fn handle_stripe_invoice_payment_failed(mut ac AuthController, event stripe.Even
 
 	mut db := ac.db_conn() or { return err }
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	uid := repo_auth.find_id_by_stripe_customer(mut db, customer_id)!
@@ -773,7 +785,7 @@ pub fn (mut ac AuthController) rate_limit_status(mut ctx web_ctx.WsCtx) veb.Resu
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	// Defaults: anon por IP
@@ -836,7 +848,7 @@ pub fn (mut ac AuthController) api_keys_revoke(mut ctx web_ctx.WsCtx, id string)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 	defer {
-		db.close() or {}
+		ac.close_db(mut db)
 	}
 
 	repo_auth.revoke(mut db, uid, key_id) or {
