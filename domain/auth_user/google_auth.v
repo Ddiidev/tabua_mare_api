@@ -65,7 +65,7 @@ pub fn exchange_code(cfg GoogleConfig, code string) !string {
 		data:   data
 		read_timeout: 10 * time.second
 		write_timeout: 10 * time.second
-		max_retries:  0
+		max_retries:  1
 		disable_connection_reuse: true
 	}) or { return error('token exchange request failed: ${err}') }
 	if resp.status_code < 200 || resp.status_code >= 300 {
@@ -91,7 +91,7 @@ pub fn fetch_userinfo(cfg GoogleConfig, access_token string) !GoogleUserInfo {
 		url:    cfg.userinfo_url
 		read_timeout: 10 * time.second
 		write_timeout: 10 * time.second
-		max_retries:  0
+		max_retries:  1
 		disable_connection_reuse: true
 	}) or { return error('userinfo request failed: ${err}') }
 	if resp.status_code < 200 || resp.status_code >= 300 {
