@@ -4,8 +4,8 @@ import db.pg
 import net.urllib
 import shareds.conf_env
 
-// PgConn e' a conexao PostgreSQL (pg.DB tem pool interno thread-safe).
-// Usamos uma unica &pg.DB em vez de pool.ConnectionPool do V (bug em V 0.5.1).
+// PgConn e' a conexao PostgreSQL compartilhada. O pg.DB mantem o pool interno
+// thread-safe, configurado abaixo para uma unica conexao fisica.
 pub type PgConn = &pg.DB
 
 // PgHolder envolve a &pg.DB para que closures de middleware capturem o holder
@@ -28,6 +28,10 @@ pub fn new() ?&PgHolder {
 	} else {
 		pg.connect(pg_config_from_env(env)) or { return none }
 	}
+	// Evita criar uma conexao fisica por request sem adicionar um pool externo
+	// de pools. As operacoes continuam thread-safe pelo DB compartilhado.
+	db.set_max_open_conns(1)
+	db.set_max_idle_conns(1)
 
 	return &PgHolder{
 		db:        unsafe { &db }
