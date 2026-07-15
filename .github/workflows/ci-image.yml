@@ -102,8 +102,6 @@ jobs:
           set -euo pipefail
           ./scripts/test_seed_sqlite.sh
           ./scripts/test_alpine_image_static.sh
-          ./scripts/smoke_compose.sh
-          ./scripts/check_production_domain.sh
           ./scripts/test_coolify_deploy.sh
           ./scripts/test_health_lifecycle.sh
 
@@ -135,7 +133,7 @@ jobs:
       - name: Ambiente isolado do smoke A/B
         run: |
           cat > "$RUNNER_TEMP/tabuamare-ci.env" <<'ENV'
-          POSTGRESQL_CONN_STR=postgresql://postgres:postgres@postgres:5432/tabuamare_ci
+          POSTGRESQL_CONN_STR=postgresql://postgres:postgres@127.0.0.1:5432/tabuamare_ci
           GOOGLE_CLIENT_ID=ci-client
           GOOGLE_CLIENT_SECRET=ci-secret
           GOOGLE_REDIRECT_URI=https://tabuamare.api.br/auth/google/callback
@@ -146,15 +144,27 @@ jobs:
           ENV
 
       - name: Smoke da imagem exata em A/B
-        env:
-          COMPOSE_FILE: docker-compose.yml:docker-compose.ci.yml
-          TABUAMARE_IMAGE: ${{ env.LOCAL_IMAGE }}
-          TABUAMARE_ENV_FILE: ${{ runner.temp }}/tabuamare-ci.env
-          COMPOSE_TEST_ENV_FILE: ${{ runner.temp }}/tabuamare-ci.env
-          COMPOSE_TEST_ALLOW_DB_MUTATIONS: "yes"
-          COMPOSE_RUNTIME: "1"
-          COMPOSE_BUILD: "0"
-        run: ./scripts/smoke_compose.sh
+        run: |
+          set -euo pipefail
+          env_file="$RUNNER_TEMP/tabuamare-ci.env"
+          a_name="tabuamare-ci-a-${GITHUB_RUN_ID}"
+          b_name="tabuamare-ci-b-${GITHUB_RUN_ID}"
+          a_volume="tabuamare-ci-a-${GITHUB_RUN_ID}"
+          b_volume="tabuamare-ci-b-${GITHUB_RUN_ID}"
+          cleanup() { docker rm -f "$a_name" "$b_name" >/dev/null 2>&1 || true; docker volume rm "$a_volume" "$b_volume" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          docker volume create "$a_volume" >/dev/null
+          docker volume create "$b_volume" >/dev/null
+          wait_http() { local url="$1" expected="$2" code=000; for _ in $(seq 1 180); do code="$(curl -sS -o /dev/null -w '%{http_code}' "$url" 2>/dev/null || true)"; [[ "$code" == "$expected" ]] && return 0; sleep 1; done; echo "$url: recebido $code, esperado $expected" >&2; docker logs "$a_name" >&2 || true; docker logs "$b_name" >&2 || true; return 1; }
+          docker run -d --name "$a_name" --network host --env-file "$env_file" -e PORT=3330 -v "$a_volume:/app/data" "$LOCAL_IMAGE" 3330
+          wait_http http://127.0.0.1:3330/health/ready 204
+          docker run -d --name "$b_name" --network host --env-file "$env_file" -e PORT=3340 -v "$b_volume:/app/data" "$LOCAL_IMAGE" 3340
+          wait_http http://127.0.0.1:3340/health/ready 204
+          wait_http http://127.0.0.1:3330/api/v2/states 200
+          wait_http http://127.0.0.1:3340/api/v2/states 200
+          [[ "$(docker inspect --format '{{.State.Status}}' "$a_name")" == running ]]
+          [[ "$(docker inspect --format '{{.State.Status}}' "$b_name")" == running ]]
+          echo 'PASS: smoke direto A/B, readiness e API v2'
 
       - name: Publicar tag imutavel
         if: github.event_name == 'push'

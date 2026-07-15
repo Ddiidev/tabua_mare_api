@@ -3,7 +3,7 @@ module entities
 @[table: 'user_identities']
 pub struct UserIdentity {
 pub mut:
-	id           int    @[primary; sql: serial]
+	id           int @[primary; sql: serial]
 	user_id      int
 	provider     string @[sql_type: 'TEXT']
 	provider_uid string @[sql_type: 'TEXT']

@@ -8,8 +8,6 @@ import shareds.conf_env
 import shareds.rate_limit
 import repository.habor_mare as repo_habor_mare
 import repository.tabua_mare as repo_tabua_mare
-import repository.auth as repo_auth
-import repository.auth.dto
 import repository.rate_limit as rl
 import shareds.infradb_pg
 
@@ -42,7 +40,7 @@ fn (mut api APIControllerV2) init_cors() {
 // usando a conexao PostgreSQL (contadores e creditos persistidos).
 fn (mut api APIControllerV2) init_rate_limit(env conf_env.EnvConfig, pg_holder &infradb_pg.PgHolder) {
 	api.use(rate_limit.rate_limit_middleware(rate_limit.RateLimitOpts{
-		env: env
+		env:       env
 		pg_holder: pg_holder
 	}))
 }
@@ -89,8 +87,8 @@ pub fn (mut api APIControllerV2) get_harbors_by_ids(mut ctx web_ctx.WsCtx, harbo
 // get_tabua_mare Retorna o tábua (tabela) da mare de um porto específico para um mês e dias específicos.
 @['/tabua-mare/:harbor/:month/:days']
 pub fn (mut api APIControllerV2) get_tabua_mare(mut ctx web_ctx.WsCtx, harbor_id string, month int, days string) veb.Result {
-	result := repo_tabua_mare.get_tabua_mare_by_month_days(mut api.pool_conn, harbor_id,
-		month, types.IntRangeArr(days).ints()) or {
+	result := repo_tabua_mare.get_tabua_mare_by_month_days(mut api.pool_conn, harbor_id, month,
+		types.IntRangeArr(days).ints()) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'error: ${err}'))
 	}
@@ -109,7 +107,8 @@ pub fn (mut api APIControllerV2) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx,
 	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state_v2(mut api.pool_conn,
 		lat, lng, state) or {
 		ctx.res.set_status(.not_found)
-		return ctx.json(types.failure[string](404, 'Nenhum porto encontrado perto das coordenadas fornecidas.'))
+		return ctx.json(types.failure[string](404,
+			'Nenhum porto encontrado perto das coordenadas fornecidas.'))
 	}
 
 	// TODO: CORRIGIR
@@ -132,7 +131,8 @@ pub fn (mut api APIControllerV2) get_nearest_harbor_by_state(mut ctx web_ctx.WsC
 	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state_v2(mut api.pool_conn,
 		lat, lng, state) or {
 		ctx.res.set_status(.not_found)
-		return ctx.json(types.failure[string](404, 'Nenhum porto encontrado perto das coordenadas fornecidas.'))
+		return ctx.json(types.failure[string](404,
+			'Nenhum porto encontrado perto das coordenadas fornecidas.'))
 	}
 
 	return ctx.json(types.success([nearest_harbor]))
@@ -147,7 +147,8 @@ pub fn (mut api APIControllerV2) get_nearest_harbor(mut ctx web_ctx.WsCtx, lat_l
 
 	nearest_harbor := repo_habor_mare.find_nearest_harbor_v2(mut api.pool_conn, lat, lng) or {
 		ctx.res.set_status(.not_found)
-		return ctx.json(types.failure[string](404, 'Nenhum porto encontrado perto das coordenadas fornecidas.'))
+		return ctx.json(types.failure[string](404,
+			'Nenhum porto encontrado perto das coordenadas fornecidas.'))
 	}
 
 	return ctx.json(types.success([nearest_harbor]))
@@ -169,34 +170,37 @@ pub fn (mut api APIControllerV2) usage(mut ctx web_ctx.WsCtx) veb.Result {
 
 	mut db := api.pg_holder.db()
 
-	mut key_found := true
-	key := repo_auth.find_by_key(mut db, api_key) or { key_found = false; dto.ApiKey{} }
-	if !key_found || key.revoked {
+	identity := rate_limit.resolve_api_key_identity(mut db, api_key) or {
+		ctx.res.set_status(.service_unavailable)
+		return ctx.json(types.failure[string](503, 'banco indisponivel'))
+	}
+	if !identity.found {
 		ctx.res.set_status(.unauthorized)
 		return ctx.json(types.failure[string](401, 'api_key invalida ou revogada'))
 	}
 
-	user_plan := repo_auth.find_plan_by_id(mut db, key.user_id) or { 'free' }
-	mut effective_plan := key.plan
-	if !rate_limit.is_plan_allowed(key.plan, user_plan) {
-		effective_plan = user_plan
-	}
-
-	bucket := 'key:${key.key_value}'
+	effective_plan := identity.plan
+	bucket := identity.bucket
 	limit_rpm, limit_monthly := rate_limit.plan_limits(api.env, effective_plan)
 
 	used_rpm := rl.get_count(mut db, bucket, 'minute', rl.window_key_minute()) or { 0 }
-	monthly := rl.get_current_month_usage(mut db, bucket) or {
-		rl.CreditCheck{used: 0, remaining: limit_monthly, lim: limit_monthly}
+	monthly := rl.get_current_month_usage(mut db, bucket, limit_monthly) or {
+		rl.CreditCheck{
+			used:      0
+			remaining: limit_monthly
+			lim:       limit_monthly
+		}
 	}
 
-	return ctx.json(types.success([{
-		'plan':              effective_plan
-		'limit_rpm':         limit_rpm.str()
-		'used_rpm':          used_rpm.str()
-		'remaining_rpm':     if limit_rpm == 0 { '-1' } else { (limit_rpm - used_rpm).str() }
-		'limit_monthly':     limit_monthly.str()
-		'used_monthly':      monthly.used.str()
-		'remaining_monthly': if limit_monthly == 0 { '-1' } else { monthly.remaining.str() }
-	}]))
+	return ctx.json(types.success([
+		{
+			'plan':              effective_plan
+			'limit_rpm':         limit_rpm.str()
+			'used_rpm':          used_rpm.str()
+			'remaining_rpm':     if limit_rpm == 0 { '-1' } else { (limit_rpm - used_rpm).str() }
+			'limit_monthly':     limit_monthly.str()
+			'used_monthly':      monthly.used.str()
+			'remaining_monthly': if limit_monthly == 0 { '-1' } else { monthly.remaining.str() }
+		},
+	]))
 }

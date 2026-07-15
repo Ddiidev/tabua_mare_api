@@ -4,11 +4,14 @@
 
 O script aceita somente Ubuntu 24.04 e instala atualizacoes, timezone `America/Sao_Paulo`, fail2ban, swap 2 GiB, `swappiness=10`, Docker/Coolify `4.1.2` e firewall da origem.
 
+Use `ops/recover_vps.py` para uma VPS nova ou reconstruída. O wizard pede a chave SSH, caminhos dos backups, domínio e segredos sem gravá-los no Git, valida os arquivos locais e executa bootstrap/firewall. A importação do backup Coolify, env e SQLite continua com confirmação manual no painel/volumes, porque o formato e o destino dependem da instalação. `run_ssh.sh` é um atalho local ignorado pelo repositório.
+
+Execução manual, se necessária:
+
 ```bash
-./run_ssh.sh --dry-run
 tar -C ops -cf - bootstrap_vps.sh cloudflare-origin-firewall.sh \
-  | ./run_ssh.sh -- 'mkdir -p /root/tabuamare-ops && tar -C /root/tabuamare-ops -xf -'
-./run_ssh.sh -- 'bash /root/tabuamare-ops/bootstrap_vps.sh'
+  | ssh root@SEU_IP 'mkdir -p /root/tabuamare-ops && tar -C /root/tabuamare-ops -xf -'
+ssh root@SEU_IP 'bash /root/tabuamare-ops/bootstrap_vps.sh'
 ```
 
 O bootstrap fixa `AUTOUPDATE=false`. Atualizacoes futuras do Coolify ficam manuais.
@@ -17,7 +20,7 @@ O firewall entra antes de Docker/Coolify. No boot, restaura os ultimos ranges Cl
 ## 2. Primeiro admin, sem expor porta 8000
 
 ```bash
-./run_ssh.sh -N -L 8000:127.0.0.1:8000
+ssh -N -L 8000:127.0.0.1:8000 root@SEU_IP
 ```
 
 Abrir `http://localhost:8000` e criar imediatamente o primeiro admin. Nao criar conta no Let's Encrypt: o Traefik registra e renova o certificado automaticamente.
@@ -131,7 +134,7 @@ O smoke publico envia o slot e `X-Tabuamare-Deploy-Secret`, sem registrar o segr
 Abrir e manter uma segunda sessao funcionando por chave. So depois:
 
 ```bash
-CONFIRM_KEY_CONNECTION=yes ./run_ssh.sh -- \
+ssh root@SEU_IP \
   'CONFIRM_KEY_CONNECTION=yes bash /root/tabuamare-ops/bootstrap_vps.sh --harden-ssh'
 ```
 

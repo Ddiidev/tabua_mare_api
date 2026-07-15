@@ -160,7 +160,7 @@ grep -Fq 'coolify-admin.tabuamare.api.br' "${traefik}" || fail 'router admin aus
 grep -Fq 'www.tabuamare.api.br' "${traefik}" || fail 'router www ausente'
 
 if grep -RIEq '(sk_(live|test)_[A-Za-z0-9]{12,}|whsec_[A-Za-z0-9]{12,}|CF_DNS_API_TOKEN=[A-Za-z0-9_-]{12,}|SSH_PASS_VPS=.{8,})' \
-	"${root_dir}/ops" "${root_dir}/run_ssh.sh"; then
+	"${root_dir}/ops"; then
 	fail 'possivel segredo em artefato versionado'
 fi
 
