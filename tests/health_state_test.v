@@ -34,6 +34,7 @@ fn test_sqlite_health_requires_a_working_pool() ! {
 }
 
 fn test_postgres_health_fails_closed_without_connection() {
-	assert !infradb_pg.is_healthy('')
-	assert !infradb_pg.is_healthy('postgresql://health:health@127.0.0.1:1/health?connect_timeout=1')
+	mut unavailable := &infradb_pg.PgHolder{}
+	assert !unavailable.available()
+	assert !unavailable.is_healthy()
 }

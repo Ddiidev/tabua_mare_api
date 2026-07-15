@@ -21,31 +21,17 @@ pub struct AuthController {
 	veb.Middleware[web_ctx.WsCtx]
 	pub mut:
 	env          conf_env.EnvConfig
-	pg_holder    ?&infradb_pg.PgHolder
+	pg_holder    &infradb_pg.PgHolder
 	avatar_cache &auth_user.AvatarCache = unsafe { nil }
 }
 
 // db_conn retorna o pool PostgreSQL compartilhado da aplicacao.
-// O fallback mantem testes isolados que instanciam o controller sem holder.
+// O holder e inicializado uma vez no startup e permanece vivo ate o shutdown.
 fn (ac &AuthController) db_conn() !&pg.DB {
-	if ac.env.postgresql_conn_str == '' {
-		return error('POSTGRESQL_CONN_STR nao configurado')
+	if !ac.pg_holder.available() {
+		return error('PostgreSQL indisponivel')
 	}
-	if holder := ac.pg_holder {
-		if !holder.available() {
-			return error('PostgreSQL indisponivel')
-		}
-		return holder.db()
-	}
-	return pg.connect_with_conninfo(ac.env.postgresql_conn_str)
-}
-
-// close_db fecha apenas conexoes criadas pelo fallback de testes.
-// O holder de producao permanece vivo durante todo o processo.
-fn (ac &AuthController) close_db(mut db &pg.DB) {
-	if ac.pg_holder == none {
-		db.close() or {}
-	}
+	return ac.pg_holder.db()
 }
 
 // google_login inicia o fluxo OAuth do Google: gera state, seta cookie efemero e
@@ -120,9 +106,6 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 		eprintln('[oauth] postgres connection failed: ${err}')
 		ctx.res.set_status(.internal_server_error)
 		return ctx.text('banco de dados indisponivel: ${err}')
-	}
-	defer {
-		ac.close_db(mut db)
 	}
 
 	eprintln('[oauth] upserting user')
@@ -199,9 +182,6 @@ pub fn (mut ac AuthController) me(mut ctx web_ctx.WsCtx) veb.Result {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
-	defer {
-		ac.close_db(mut db)
-	}
 	plan := repo_auth.find_plan_by_id(mut db, claims.sub) or { claims.plan }
 
 	user := auth_user.UserData{
@@ -228,9 +208,6 @@ pub fn (mut ac AuthController) avatar(mut ctx web_ctx.WsCtx, user_id string) veb
 	mut db := ac.db_conn() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.text('banco indisponivel: ${err}')
-	}
-	defer {
-		ac.close_db(mut db)
 	}
 
 	user := repo_auth.find_by_id(mut db, uid) or {
@@ -281,9 +258,6 @@ pub fn (mut ac AuthController) api_keys_list(mut ctx web_ctx.WsCtx) veb.Result {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
-	defer {
-		ac.close_db(mut db)
-	}
 
 	keys := repo_auth.list_by_user(mut db, uid) or {
 		ctx.res.set_status(.internal_server_error)
@@ -319,9 +293,6 @@ pub fn (mut ac AuthController) api_keys_create(mut ctx web_ctx.WsCtx) veb.Result
 	mut db := ac.db_conn() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
-	}
-	defer {
-		ac.close_db(mut db)
 	}
 
 	user_plan := repo_auth.find_plan_by_id(mut db, uid) or { 'free' }
@@ -390,9 +361,6 @@ pub fn (mut ac AuthController) checkout(mut ctx web_ctx.WsCtx) veb.Result {
 	mut db := ac.db_conn() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
-	}
-	defer {
-		ac.close_db(mut db)
 	}
 	user := repo_auth.find_by_id(mut db, uid) or {
 		ctx.res.set_status(.not_found)
@@ -467,9 +435,6 @@ pub fn (mut ac AuthController) billing_portal(mut ctx web_ctx.WsCtx) veb.Result 
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
-	defer {
-		ac.close_db(mut db)
-	}
 
 	user := repo_auth.find_by_id(mut db, uid) or {
 		ctx.res.set_status(.not_found)
@@ -517,9 +482,6 @@ pub fn (mut ac AuthController) cancel_subscription(mut ctx web_ctx.WsCtx) veb.Re
 	mut db := ac.db_conn() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
-	}
-	defer {
-		ac.close_db(mut db)
 	}
 
 	user := repo_auth.find_by_id(mut db, uid) or {
@@ -650,9 +612,6 @@ fn handle_stripe_checkout_completed(mut ac AuthController, event stripe.Event) !
 	}
 
 	mut db := ac.db_conn() or { return err }
-	defer {
-		ac.close_db(mut db)
-	}
 
 	repo_auth.update_plan(mut db, uid, plan_code)!
 
@@ -670,9 +629,6 @@ fn handle_stripe_checkout_completed(mut ac AuthController, event stripe.Event) !
 // extrai customer_id e metadata (plan_code) do raw_body do evento.
 fn handle_stripe_subscription_updated(mut ac AuthController, event stripe.Event) ! {
 	mut db := ac.db_conn() or { return err }
-	defer {
-		ac.close_db(mut db)
-	}
 
 	// extrai customer_id, status e plan_code do raw_body
 	parsed := json.decode(StripeWebhookEvent, event.raw_body) or {
@@ -723,9 +679,6 @@ struct StripeWebhookEventObject {
 // handle_stripe_subscription_deleted processa customer.subscription.deleted (cancelamento).
 fn handle_stripe_subscription_deleted(mut ac AuthController, event stripe.Event) ! {
 	mut db := ac.db_conn() or { return err }
-	defer {
-		ac.close_db(mut db)
-	}
 
 	// extrai customer_id do raw_body para evitar chamar a API Stripe
 	wrapper := json.decode(StripeWebhookEvent, event.raw_body) or {
@@ -760,9 +713,6 @@ fn handle_stripe_invoice_payment_failed(mut ac AuthController, event stripe.Even
 	}
 
 	mut db := ac.db_conn() or { return err }
-	defer {
-		ac.close_db(mut db)
-	}
 
 	uid := repo_auth.find_id_by_stripe_customer(mut db, customer_id)!
 
@@ -786,9 +736,6 @@ pub fn (mut ac AuthController) rate_limit_status(mut ctx web_ctx.WsCtx) veb.Resu
 	mut db := ac.db_conn() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
-	}
-	defer {
-		ac.close_db(mut db)
 	}
 
 	// Defaults: anon por IP
@@ -849,9 +796,6 @@ pub fn (mut ac AuthController) api_keys_revoke(mut ctx web_ctx.WsCtx, id string)
 	mut db := ac.db_conn() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
-	}
-	defer {
-		ac.close_db(mut db)
 	}
 
 	repo_auth.revoke(mut db, uid, key_id) or {
