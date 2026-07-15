@@ -198,6 +198,34 @@ pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 	return ctx.html(engine.render('apoiar.html', data) or { '' })
 }
 
+@['/privacidade']
+pub fn (app &App) privacidade(mut ctx web_ctx.WsCtx) veb.Result {
+	mut data := map[string]veemarker.Any{}
+	data['navbar'] = app.navbar('/privacidade', app.is_logged_in(mut ctx))
+	data['og'] = app.open_graph(data)
+	data['footer'] = app.footer()
+
+	mut engine := veemarker.new_engine(veemarker.EngineConfig{
+		template_dir:  './pages'
+		cache_enabled: true
+	})
+	return ctx.html(engine.render('privacidade.html', data) or { '' })
+}
+
+@['/termos']
+pub fn (app &App) termos(mut ctx web_ctx.WsCtx) veb.Result {
+	mut data := map[string]veemarker.Any{}
+	data['navbar'] = app.navbar('/termos', app.is_logged_in(mut ctx))
+	data['og'] = app.open_graph(data)
+	data['footer'] = app.footer()
+
+	mut engine := veemarker.new_engine(veemarker.EngineConfig{
+		template_dir:  './pages'
+		cache_enabled: true
+	})
+	return ctx.html(engine.render('termos.html', data) or { '' })
+}
+
 @['/rate-limit-test']
 pub fn (app &App) rate_limit_test(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
