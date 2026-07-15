@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     ${ og }
-    <title>Tábua de Marés — API brasileira</title>
+    <title>Tábua de Maré API — dados brasileiros</title>
     <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
     <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
@@ -17,10 +17,10 @@
     <main id="main-content">
       <section class="home-hero container" aria-labelledby="home-title">
         <div class="home-hero__copy">
-          <p class="eyebrow"><span></span> API brasileira · aberta por padrão</p>
+          <p class="eyebrow"><span></span> Tábua de Maré API · serviço brasileiro</p>
           <h1 id="home-title">Dados de maré do Brasil.<br /><em>Uma requisição e pronto.</em></h1>
           <p class="home-hero__lead">
-            Portos, horários e alturas de maré em uma API REST direta. Comece sem cadastro ou chave. Escale quando precisar.
+            A Tábua de Maré API fornece portos, horários e alturas de maré em uma API REST direta para aplicações brasileiras. Consulte os dados sem cadastro ou chave e escale quando precisar.
           </p>
           <div class="home-hero__actions">
             <a href="#console" role="button" class="button-sun">Testar API sem cadastro</a>
@@ -31,6 +31,7 @@
             <li><strong>Mensal livre</strong><span>acesso anônimo</span></li>
             <li><strong>17 estados</strong><span>costa brasileira</span></li>
           </ul>
+          <p class="home-hero__legal"><a href="/privacidade">Política de privacidade</a><span aria-hidden="true">·</span><a href="/termos">Termos de serviço</a></p>
         </div>
 
         <section id="console" class="tide-console" data-ui="tide-console" :class="'is-' + requestState" aria-labelledby="console-title">
