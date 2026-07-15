@@ -74,8 +74,8 @@ pub fn (h &PgHolder) is_healthy() bool {
 		return false
 	}
 	mut db := h.db
-	rows := db.exec('SELECT 1') or { return false }
-	return rows.len == 1 && rows[0].vals.len == 1 && rows[0].vals[0] == '1'
+	db.exec('SELECT 1') or { return false }
+	return true
 }
 
 // pg_config_from_env constroi um pg.Config a partir das vars individuais (DB_*).
