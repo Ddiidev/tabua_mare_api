@@ -32,6 +32,9 @@ fn (ac &AuthController) db_conn() !&pg.DB {
 		return error('POSTGRESQL_CONN_STR nao configurado')
 	}
 	if holder := ac.pg_holder {
+		if !holder.available() {
+			return error('PostgreSQL indisponivel')
+		}
 		return holder.db()
 	}
 	return pg.connect_with_conninfo(ac.env.postgresql_conn_str)
