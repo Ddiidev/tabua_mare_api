@@ -13,6 +13,7 @@ readonly admin_ports='8000,6001,6002'
 readonly cache_dir='/var/lib/tabuamare-cloudflare-firewall'
 readonly cache_v4="${cache_dir}/ips-v4"
 readonly cache_v6="${cache_dir}/ips-v6"
+readonly public_iface='eth0'
 
 log() {
 	printf '[firewall] %s\n' "$*"
@@ -120,12 +121,12 @@ configure_rules() {
 				--ctdir ORIGINAL --ctorigdstport "${port}" -j DROP
 		done
 		"${tool}" -w -A "${forward_chain}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-		"${tool}" -w -A "${forward_chain}" -p tcp -m multiport --dports 80,443 \
+		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p tcp -m multiport --dports 80,443 \
 			-m set --match-set "${cf_set}" src -j ACCEPT
-		"${tool}" -w -A "${forward_chain}" -p tcp -m multiport --dports 80,443 -j DROP
-		"${tool}" -w -A "${forward_chain}" -p udp --dport 443 \
+		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p tcp -m multiport --dports 80,443 -j DROP
+		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p udp --dport 443 \
 			-m set --match-set "${cf_set}" src -j ACCEPT
-		"${tool}" -w -A "${forward_chain}" -p udp --dport 443 -j DROP
+		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p udp --dport 443 -j DROP
 		"${tool}" -w -A "${forward_chain}" -j RETURN
 	fi
 	activate_chain "${tool}" DOCKER-USER "${forward_chain}" "${filter_chain}"
