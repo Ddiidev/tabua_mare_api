@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teste de rate-limit - Tábua de Marés API</title>
+  ${ og }
+  <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
+  <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+  <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
+</head>
+
+<body v-scope>
+  ${ navbar }
+
+  <main id="main-content" class="rate-limit-test-page container">
+    <section class="rate-limit-test-hero" aria-labelledby="rate-limit-title">
+      <p class="eyebrow">Diagnóstico temporário</p>
+      <h1 id="rate-limit-title">Teste de limite por IP</h1>
+      <p>Esta página dispara cinco chamadas simultâneas pelo seu navegador. Via túnel, o servidor verá o IP real da sua conexão.</p>
+    </section>
+
+    <section class="rate-limit-test-card" aria-labelledby="rate-limit-action-title">
+      <div class="rate-limit-test-card__head">
+        <div>
+          <p class="rate-limit-test-card__kicker">GET /api/v2/states</p>
+          <h2 id="rate-limit-action-title">Burst de 5 requisições</h2>
+        </div>
+        <span class="rate-limit-test-card__ip">IP observado pelo servidor</span>
+      </div>
+      <p class="rate-limit-test-card__note">Use somente para diagnóstico. O teste consome a janela de rate-limit do IP atual.</p>
+      <button type="button" class="button-sun" @click="runBurst" :disabled="running">
+        {{ running ? 'Executando…' : 'Executar teste' }}
+      </button>
+      <div class="rate-limit-test-summary" v-if="results.length" aria-live="polite">
+        <strong>{{ summary }}</strong>
+        <span v-if="retryAfter">Bloqueio informou Retry-After: {{ retryAfter }}s.</span>
+        <span v-if="countdown">Nova tentativa liberada em aproximadamente {{ countdown }}s.</span>
+      </div>
+      <div class="rate-limit-test-results" v-if="results.length">
+        <article v-for="result in results" class="rate-limit-result" :class="'is-' + result.kind">
+          <header><strong>req {{ result.index }}</strong><span>{{ result.status }}</span></header>
+          <small>{{ result.elapsed }}s · {{ result.message }}</small>
+        </article>
+      </div>
+      <div class="rate-limit-test-release" v-if="releaseResult">
+        <strong>Após a janela:</strong> {{ releaseResult.status }} · {{ releaseResult.message }}
+      </div>
+    </section>
+  </main>
+
+  ${ footer }
+
+  <script>
+    const { createApp } = PetiteVue;
+    createApp({
+      running: false,
+      results: [],
+      releaseResult: null,
+      retryAfter: 0,
+      countdown: 0,
+      summary: '',
+      async fetchOne(index) {
+        const started = performance.now();
+        try {
+          const response = await fetch('/api/v2/states', { credentials: 'same-origin' });
+          const body = await response.json();
+          const elapsed = ((performance.now() - started) / 1000).toFixed(2);
+          return {
+            index,
+            status: response.status,
+            kind: response.ok ? 'ok' : response.status === 429 ? 'blocked' : 'error',
+            elapsed,
+            retryAfter: Number(response.headers.get('Retry-After') || 0),
+            message: body?.error?.message || 'resposta recebida'
+          };
+        } catch (error) {
+          return { index, status: 'ERR', kind: 'error', elapsed: '—', retryAfter: 0, message: error.message };
+        }
+      },
+      async runBurst() {
+        this.running = true;
+        this.results = [];
+        this.releaseResult = null;
+        this.retryAfter = 0;
+        this.countdown = 0;
+        this.summary = '';
+        this.results = await Promise.all([1, 2, 3, 4, 5].map(index => this.fetchOne(index)));
+        this.results.sort((a, b) => a.index - b.index);
+        const blocked = this.results.filter(result => result.status === 429);
+        this.retryAfter = Math.max(...this.results.map(result => result.retryAfter), 0);
+        this.summary = this.results.filter(result => result.status === 200).length + ' liberadas · ' + blocked.length + ' bloqueadas';
+        this.running = false;
+        if (this.retryAfter > 0) {
+          this.countdown = this.retryAfter;
+          const started = Date.now();
+          const timer = setInterval(() => {
+            this.countdown = Math.max(0, this.retryAfter - Math.floor((Date.now() - started) / 1000));
+            if (this.countdown === 0) clearInterval(timer);
+          }, 1000);
+          setTimeout(() => this.checkRelease(), this.retryAfter * 1000 + 500);
+        }
+      },
+      async checkRelease() {
+        const result = await this.fetchOne(1);
+        this.releaseResult = { status: result.status, message: result.message };
+      }
+    }).mount();
+  </script>
+</body>
+
+</html>

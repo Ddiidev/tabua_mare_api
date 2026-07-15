@@ -2,12 +2,7 @@ module habor_mare
 
 import orm
 import pool
-
-$if using_sqlite ? {
-	import db.sqlite as db_provider
-} $else {
-	import db.pg as db_provider
-}
+import db.sqlite as db_provider
 import time
 import entities
 import shareds.types
@@ -29,6 +24,7 @@ pub fn list_all_harbors(mut pool_conn pool.ConnectionPool) !types.ResultValues[d
 
 	mut data_harbors := []dto.DTOHaborMareGetHarbor{}
 	for harbor in harbors {
+		filtered_geo := geo_location.filter(it.data_mare_id == harbor.id)
 		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id
 			harbor_id:                   harbor.id_harbor_state
@@ -39,7 +35,7 @@ pub fn list_all_harbors(mut pool_conn pool.ConnectionPool) !types.ResultValues[d
 			mean_level:                  harbor.mean_level
 			harbor_name:                 harbor.harbor_name
 			data_collection_institution: harbor.data_collection_institution
-			geo_location:                geo_location.filter(it.data_mare_id == harbor.id).map(dto.GeoLocation{
+			geo_location:                filtered_geo.map(dto.GeoLocation{
 				lat:           it.lat
 				lng:           it.lng
 				decimal_lat:   it.decimal_lat
@@ -74,6 +70,7 @@ pub fn list_all_harbors_by_state(mut pool_conn pool.ConnectionPool, state string
 
 	mut data_harbors := []dto.DTOHaborMareGetHarbor{}
 	for harbor in harbors {
+		filtered_geo := geo_location.filter(it.data_mare_id == harbor.id)
 		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id
 			harbor_id:                   harbor.id_harbor_state
@@ -84,7 +81,7 @@ pub fn list_all_harbors_by_state(mut pool_conn pool.ConnectionPool, state string
 			mean_level:                  harbor.mean_level
 			harbor_name:                 harbor.harbor_name
 			data_collection_institution: harbor.data_collection_institution
-			geo_location:                geo_location.filter(it.data_mare_id == harbor.id).map(dto.GeoLocation{
+			geo_location:                filtered_geo.map(dto.GeoLocation{
 				lat:           it.lat
 				lng:           it.lng
 				decimal_lat:   it.decimal_lat

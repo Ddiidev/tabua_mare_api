@@ -2,12 +2,7 @@ module habor_mare
 
 import orm
 import pool
-
-$if using_sqlite ? {
-	import db.sqlite as db_provider
-} $else {
-	import db.pg as db_provider
-}
+import db.sqlite as db_provider
 import time
 import entities
 import shareds.types
@@ -22,7 +17,7 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 			println(err.msg())
 		}
 	}
-	
+
 	year := time.now().year
 
 	mut qb := orm.new_query[entities.DataMare](db)
