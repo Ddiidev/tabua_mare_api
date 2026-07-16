@@ -7,78 +7,60 @@ import shareds.conf_env
 import shareds.types
 import domain.auth_user
 import repository.auth as repo_auth
-import repository.auth.dto
 import repository.rate_limit as rl
+import shareds.infradb_pg
 
 pub struct RateLimitOpts {
 pub mut:
-	env conf_env.EnvConfig
+	env       conf_env.EnvConfig
+	pg_holder &infradb_pg.PgHolder
+}
+
+pub struct ApiKeyIdentity {
+pub:
+	found     bool
+	bucket    string
+	plan      string
+	key_value string
 }
 
 // rate_limit_middleware retorna um MiddlewareOptions para o veb que aplica rate-limit por IP/api_key.
-// Nota: cria uma conexao PG nova por request porque capturar &pg.DB em closure do veb
-// triga um bug no V 0.5.1 (handler trava no primeiro acesso). Para rate-limit
-// (1-2 queries por request) o custo de open/close e' aceitavel.
+// As consultas continuam ocorrendo em toda requisicao para preservar revogacao de
+// chaves e limites atuais, mas usam o pool PostgreSQL compartilhado da aplicacao.
 pub fn rate_limit_middleware(opts RateLimitOpts) veb.MiddlewareOptions[web_ctx.WsCtx] {
 	env := opts.env
-	connstr := env.postgresql_conn_str
+	pg_holder := opts.pg_holder
 	return veb.MiddlewareOptions[web_ctx.WsCtx]{
-		handler: fn [env, connstr] (mut ctx web_ctx.WsCtx) bool {
-			return do_rate_limit(mut ctx, env, connstr)
+		handler: fn [env, pg_holder] (mut ctx web_ctx.WsCtx) bool {
+			return do_rate_limit(mut ctx, env, pg_holder)
 		}
 	}
 }
 
 // do_rate_limit executa a logica de rate-limit fora da closure para evitar
 // o limite de niveis de expressao do checker do V.
-fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, connstr string) bool {
+fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, pg_holder &infradb_pg.PgHolder) bool {
 	ip := ctx.ip()
 	ctx.ip = ip
 	ctx.plan = 'anon'
-
-	if connstr == '' {
-		return reject_dependency(mut ctx, 'PostgreSQL nao configurado')
-	}
-
-	mut db_pg := pg.connect_with_conninfo(connstr) or {
-		eprintln('rate_limit: pg connect failed: ${err}')
+	if !pg_holder.available() {
 		return reject_dependency(mut ctx, 'PostgreSQL indisponivel')
 	}
-	defer {
-		db_pg.close() or {}
-	}
+
+	mut db_pg := pg_holder.db()
 
 	mut bucket := 'ip:${ip}'
 	mut plan := 'anon'
 
-	api_key := extract_api_key(mut ctx)
-	if api_key != '' {
-		mut key_found := true
-		key := repo_auth.find_by_key(mut db_pg, api_key) or {
-			if err.msg() != 'api key nao encontrada' {
-				eprintln('rate_limit api key lookup failed: ${err}')
-				return reject_dependency(mut ctx, 'Falha ao consultar rate-limit')
-			}
-			key_found = false
-			dto.ApiKey{}
-		}
-		if key_found && !key.revoked {
-			// valida se o plano do usuario ainda permite o plano da key
-			// evita furo: usuario cancelou, mas a key antiga continua paga
-			mut effective_plan := key.plan
-			user_plan := repo_auth.find_plan_by_id(mut db_pg, key.user_id) or {
-				eprintln('rate_limit user plan lookup failed: ${err}')
-				return reject_dependency(mut ctx, 'Falha ao consultar rate-limit')
-			}
-			if !is_plan_allowed(key.plan, user_plan) {
-				effective_plan = user_plan
-			}
-
-			bucket = 'key:${key.key_value}'
-			ctx.api_key = key.key_value
-			plan = effective_plan
-			ctx.plan = effective_plan
-		}
+	identity := resolve_api_key_identity(mut db_pg, extract_api_key(mut ctx)) or {
+		eprintln('rate_limit api key lookup failed: ${err}')
+		return reject_dependency(mut ctx, 'Falha ao consultar rate-limit')
+	}
+	if identity.found {
+		bucket = identity.bucket
+		ctx.api_key = identity.key_value
+		plan = identity.plan
+		ctx.plan = identity.plan
 	}
 
 	limit_rpm, limit_monthly := plan_limits(env, plan)
@@ -113,6 +95,39 @@ pub fn is_plan_allowed(key_plan string, user_plan string) bool {
 		return user_plan in ['plan10', 'planannual']
 	}
 	return false
+}
+
+// effective_plan aplica a regra da chave ao plano atual do usuario.
+// Uma chave antiga nunca pode manter privilegios depois de um downgrade.
+pub fn effective_plan(key_plan string, user_plan string) string {
+	if is_plan_allowed(key_plan, user_plan) {
+		return key_plan
+	}
+	return user_plan
+}
+
+// resolve_api_key_identity concentra a consulta e a regra de downgrade de uma chave.
+// Chave ausente/revogada vira anonimo; falha real no banco sobe para 503 no chamador.
+pub fn resolve_api_key_identity(mut db pg.DB, api_key string) !ApiKeyIdentity {
+	if api_key == '' {
+		return ApiKeyIdentity{}
+	}
+	key := repo_auth.find_by_key(mut db, api_key) or {
+		if err.msg() == 'api key nao encontrada' {
+			return ApiKeyIdentity{}
+		}
+		return err
+	}
+	if key.revoked {
+		return ApiKeyIdentity{}
+	}
+	user_plan := repo_auth.find_plan_by_id(mut db, key.user_id)!
+	return ApiKeyIdentity{
+		found:     true
+		bucket:    'key:${key.key_value}'
+		plan:      effective_plan(key.plan, user_plan)
+		key_value: key.key_value
+	}
 }
 
 fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string, limit_rpm int, limit_monthly int) bool {

@@ -36,8 +36,8 @@ pub fn verify(secret string, token string) bool {
 	if parts.len != 3 {
 		return false
 	}
-	signature_mirror := hmac.new(secret.bytes(), '${parts[0]}.${parts[1]}'.bytes(),
-		sha256.sum, sha256.block_size)
+	signature_mirror := hmac.new(secret.bytes(), '${parts[0]}.${parts[1]}'.bytes(), sha256.sum,
+		sha256.block_size)
 	signature_from_token := base64.url_decode(parts[2])
 	if !hmac.equal(signature_from_token, signature_mirror) {
 		return false

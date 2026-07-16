@@ -50,7 +50,8 @@ fn ensure_geo_hash_indexes(mut db sqlite.DB) ! {
 }
 
 fn backfill_geo_hash(mut db sqlite.DB) ! {
-	rows := db.exec("SELECT id, CAST(lat AS REAL), CAST(lng AS REAL) FROM geo_location WHERE geo_hash = '' OR geo_hash IS NULL;")!
+	rows :=
+		db.exec("SELECT id, CAST(lat AS REAL), CAST(lng AS REAL) FROM geo_location WHERE geo_hash = '' OR geo_hash IS NULL;")!
 	for row in rows {
 		if row.vals.len < 3 {
 			continue

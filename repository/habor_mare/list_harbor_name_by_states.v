@@ -13,9 +13,7 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 	conn := pool_conn.get()!
 	mut db := conn as db_provider.DB
 	defer {
-		pool_conn.put(conn) or {
-			println(err.msg())
-		}
+		pool_conn.put(conn) or { println(err.msg()) }
 	}
 
 	year := time.now().year
@@ -44,9 +42,7 @@ pub fn list_harbor_name_by_states_v1(mut pool_conn pool.ConnectionPool, state st
 	conn := pool_conn.get()!
 	mut db := conn as db_provider.DB
 	defer {
-		pool_conn.put(conn) or {
-			println(err.msg())
-		}
+		pool_conn.put(conn) or { println(err.msg()) }
 	}
 	year := time.now().year
 

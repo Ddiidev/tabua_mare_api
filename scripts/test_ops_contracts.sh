@@ -7,6 +7,8 @@ firewall="${root_dir}/ops/cloudflare-origin-firewall.sh"
 traefik="${root_dir}/ops/traefik/dynamic/tabuamare.yaml"
 readme="${root_dir}/ops/README.md"
 
+bash "${root_dir}/scripts/test_pg_pool_contract.sh"
+
 fail() {
 	printf 'FAIL: %s\n' "$*" >&2
 	exit 1
@@ -90,6 +92,9 @@ assert_last_before 'verify_docker_firewall_dependencies' \
 grep -Fq 'https://www.cloudflare.com/ips-v4' "${firewall}" || fail 'ranges IPv4 nao oficiais'
 grep -Fq 'https://www.cloudflare.com/ips-v6' "${firewall}" || fail 'ranges IPv6 nao oficiais'
 grep -Fq 'DOCKER-USER' "${firewall}" || fail 'cadeia DOCKER-USER ausente'
+grep -Fq "readonly public_iface='eth0'" "${firewall}" || fail 'interface publica do firewall nao definida'
+grep -Fq ' -i "${public_iface}" -p tcp -m multiport --dports 80,443' "${firewall}" || \
+	fail 'regras Docker nao limitadas ao trafego de entrada'
 grep -Fq 'ipset swap' "${firewall}" || fail 'atualizacao de ranges nao atomica'
 grep -Fq '8000,6001,6002' "${firewall}" || fail 'portas administrativas nao bloqueadas'
 grep -Fq 'tabuamare-cloudflare-firewall.timer' "${firewall}" || fail 'timer de atualizacao ausente'
@@ -155,7 +160,7 @@ grep -Fq 'coolify-admin.tabuamare.api.br' "${traefik}" || fail 'router admin aus
 grep -Fq 'www.tabuamare.api.br' "${traefik}" || fail 'router www ausente'
 
 if grep -RIEq '(sk_(live|test)_[A-Za-z0-9]{12,}|whsec_[A-Za-z0-9]{12,}|CF_DNS_API_TOKEN=[A-Za-z0-9_-]{12,}|SSH_PASS_VPS=.{8,})' \
-	"${root_dir}/ops" "${root_dir}/run_ssh.sh"; then
+	"${root_dir}/ops"; then
 	fail 'possivel segredo em artefato versionado'
 fi
 

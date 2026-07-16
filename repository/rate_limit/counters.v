@@ -23,11 +23,17 @@ pub fn inc_and_check(mut db pg.DB, bucket string, window_kind string, window_key
 		return false
 	}
 
-	db.exec_param_many('INSERT INTO rate_limit_counters (bucket, window_kind, window_key, count) VALUES (($1), ($2), ($3), 1) ON CONFLICT (bucket, window_kind, window_key) DO UPDATE SET count = rate_limit_counters.count + 1',
-		[bucket, window_kind, window_key])!
+	db.exec_param_many('INSERT INTO rate_limit_counters (bucket, window_kind, window_key, count) VALUES (($1), ($2), ($3), 1) ON CONFLICT (bucket, window_kind, window_key) DO UPDATE SET count = rate_limit_counters.count + 1', [
+		bucket,
+		window_kind,
+		window_key,
+	])!
 
-	rows := db.exec_param_many('SELECT count FROM rate_limit_counters WHERE bucket = ($1) AND window_kind = ($2) AND window_key = ($3) LIMIT 1',
-		[bucket, window_kind, window_key])!
+	rows := db.exec_param_many('SELECT count FROM rate_limit_counters WHERE bucket = ($1) AND window_kind = ($2) AND window_key = ($3) LIMIT 1', [
+		bucket,
+		window_kind,
+		window_key,
+	])!
 	if rows.len == 0 {
 		return false
 	}
@@ -39,8 +45,11 @@ pub fn inc_and_check(mut db pg.DB, bucket string, window_kind string, window_key
 
 // get_count retorna o contador atual da janela sem incrementar.
 pub fn get_count(mut db pg.DB, bucket string, window_kind string, window_key string) !int {
-	rows := db.exec_param_many('SELECT count FROM rate_limit_counters WHERE bucket = ($1) AND window_kind = ($2) AND window_key = ($3) LIMIT 1',
-		[bucket, window_kind, window_key])!
+	rows := db.exec_param_many('SELECT count FROM rate_limit_counters WHERE bucket = ($1) AND window_kind = ($2) AND window_key = ($3) LIMIT 1', [
+		bucket,
+		window_kind,
+		window_key,
+	])!
 	if rows.len == 0 {
 		return 0
 	}
@@ -52,6 +61,9 @@ pub fn get_count(mut db pg.DB, bucket string, window_kind string, window_key str
 
 // inc apenas incrementa o contador sem checar limite.
 pub fn inc(mut db pg.DB, bucket string, window_kind string, window_key string) ! {
-	db.exec_param_many('INSERT INTO rate_limit_counters (bucket, window_kind, window_key, count) VALUES (($1), ($2), ($3), 1) ON CONFLICT (bucket, window_kind, window_key) DO UPDATE SET count = rate_limit_counters.count + 1',
-		[bucket, window_kind, window_key])!
+	db.exec_param_many('INSERT INTO rate_limit_counters (bucket, window_kind, window_key, count) VALUES (($1), ($2), ($3), 1) ON CONFLICT (bucket, window_kind, window_key) DO UPDATE SET count = rate_limit_counters.count + 1', [
+		bucket,
+		window_kind,
+		window_key,
+	])!
 }

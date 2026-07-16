@@ -1,6 +1,7 @@
 module tabuamare_dash
 
 import db.pg
+import db
 
 // UsageSummary resume o uso de um bucket (ip ou api_key) no mes corrente.
 pub struct UsageSummary {
@@ -15,8 +16,10 @@ pub:
 // get_usage_month retorna o resumo de uso do bucket no mes corrente.
 pub fn get_usage_month(mut db pg.DB, bucket string) !UsageSummary {
 	month_key := current_month_key()
-	rows := db.exec_param_many('SELECT bucket, used, lim, remaining, plan FROM monthly_credits WHERE bucket = ($1) AND month_key = ($2) LIMIT 1',
-		[bucket, month_key])!
+	rows := db.exec_param_many('SELECT bucket, used, lim, remaining, plan FROM monthly_credits WHERE bucket = ($1) AND month_key = ($2) LIMIT 1', [
+		bucket,
+		month_key,
+	])!
 	if rows.len == 0 {
 		return UsageSummary{
 			bucket:    bucket
@@ -38,7 +41,7 @@ pub fn get_usage_month(mut db pg.DB, bucket string) !UsageSummary {
 
 fn current_month_key() string {
 	// reusa a logica de janela de mes do repository.rate_limit via SQL
-	rows := db.exec('SELECT to_char(now(), \'YYYYMM\')') or { return '' }
+	rows := db.exec("SELECT to_char(now(), 'YYYYMM')") or { return '' }
 	if rows.len == 0 || rows[0].vals.len == 0 {
 		return ''
 	}
