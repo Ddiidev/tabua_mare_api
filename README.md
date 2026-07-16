@@ -156,19 +156,6 @@ docker run --rm -p 3330:3330 \
 - O seed SQLite é validado e atualizado atomicamente em `/app/data/taubinha.sqlite`.
 - Health checks: `/health/live` e `/health/ready`.
 
-### Validação local A/B
-
-1. Copie o arquivo `.env.template` para `.env` e ajuste variáveis conforme necessário.
-2. Construa e suba os serviços:
-
-```
-docker compose up -d --build
-```
-
-- O Compose local sobe somente `tabuamare-a` e `tabuamare-b`.
-- Cada instância usa volume SQLite exclusivo.
-- Portas locais: `3330` e `3340`.
-
 ### Produção Coolify
 
 Produção usa duas aplicações regulares Coolify baseadas na mesma imagem GHCR imutável, atrás de Cloudflare e Traefik. Não usa nginx, Cloudflare Tunnel, Swarm ou Compose de produção.

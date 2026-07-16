@@ -2,64 +2,81 @@ module infradb_pg
 
 import db.pg
 import net.urllib
-import sync
+import time
 import shareds.conf_env
 
-// PgConn e' a conexao PostgreSQL (pg.DB tem pool interno thread-safe).
-// Usamos uma unica &pg.DB em vez de pool.ConnectionPool do V (bug em V 0.5.1).
+// PgConn e' a conexao PostgreSQL compartilhada. O pg.DB mantem o pool interno
+// thread-safe, configurado com limites de 5 conexoes, 2 ociosas e lifetime de 30 min.
 pub type PgConn = &pg.DB
 
 // PgHolder envolve a &pg.DB para que closures de middleware capturem o holder
 // (struct wrapper) em vez da &pg.DB direta, evitando o bug de captura de
 // referencia &pg.DB em closures no V 0.5.1 (handler trava no primeiro acesso).
-@[nocopy]
+@[heap]
 pub struct PgHolder {
 mut:
-	lock sync.Mutex
-	db   &pg.DB = unsafe { nil }
+	db        &pg.DB = unsafe { nil }
+	available bool
 }
 
 // new cria e retorna um holder com a conexao PG (e guarda a conexao internamente).
-// Retorna none se a conexao falhar (o app continua; auth/rate-limit fica desligado).
+// Retorna none se a conexao falhar.
 pub fn new() ?&PgHolder {
 	env := conf_env.load_env()
 
 	mut db := if env.postgresql_conn_str != '' {
-		pg.connect_with_conninfo(env.postgresql_conn_str) or { return none }
+		pg.connect_with_conninfo(env.postgresql_conn_str, pg.PoolConfig{
+			max_open_conns:    5
+			max_idle_conns:    2
+			conn_max_lifetime: 30 * time.minute
+		}) or { return none }
 	} else {
-		pg.connect(pg_config_from_env(env)) or { return none }
+		pg.connect(pg_config_from_env(env), pg.PoolConfig{
+			max_open_conns:    5
+			max_idle_conns:    2
+			conn_max_lifetime: 30 * time.minute
+		}) or { return none }
 	}
 
 	return &PgHolder{
-		db: unsafe { &db }
+		db:        db
+		available: true
 	}
 }
 
-// is_healthy confirma que o PostgreSQL obrigatorio aceita conexao e consulta.
-pub fn is_healthy(connstr string) bool {
-	if connstr == '' {
+// db retorna a conexao PG do holder. pg.DB gerencia o pool interno thread-safe.
+pub fn (h &PgHolder) db() &pg.DB {
+	return h.db
+}
+
+// available informa se o pool foi inicializado. O processo pode subir sem PG
+// para que /health/live responda; nesse caso readiness permanece falsa.
+pub fn (h &PgHolder) available() bool {
+	return h.available
+}
+
+// raw retorna a conexao PG bruta (para repositories que usam mut db pg.DB).
+pub fn (h &PgHolder) raw() &pg.DB {
+	return h.db
+}
+
+// is_healthy valida uma conexao do pool compartilhado sem abrir outra conexao.
+pub fn (h &PgHolder) is_healthy() bool {
+	if !h.available {
 		return false
 	}
-	mut db := pg.connect_with_conninfo(connstr) or { return false }
-	defer {
-		db.close() or {}
-	}
+	mut db := h.db
 	db.exec('SELECT 1') or { return false }
 	return true
 }
 
-// db retorna a conexao PG do holder (thread-safe).
-pub fn (mut h PgHolder) db() &pg.DB {
-	h.lock.lock()
-	defer {
-		h.lock.unlock()
+// close encerra o pool somente no shutdown do processo.
+pub fn (h &PgHolder) close() {
+	if !h.available {
+		return
 	}
-	return h.db
-}
-
-// raw retorna a conexao PG bruta (para repositories que usam mut db pg.DB).
-pub fn (mut h PgHolder) raw() &pg.DB {
-	return h.db
+	mut db := h.db
+	db.close() or { eprintln('PostgreSQL pool close failed') }
 }
 
 // pg_config_from_env constroi um pg.Config a partir das vars individuais (DB_*).

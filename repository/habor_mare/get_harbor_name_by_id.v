@@ -16,16 +16,15 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
 	defer {
-		pool_conn.put(conn) or {
-			println(err.msg())
-		}
+		pool_conn.put(conn) or { println(err.msg()) }
 	}
 
 	mut qb := orm.new_query[entities.DataMare](db)
 
 	// harbors := []entities.DataMare{}
 	year := time.now().year
-	harbors := qb.where('year = ? && id_harbor_state IN ?', orm.Primitive(year), ids_ordered.map(orm.Primitive(it)))!.query()!
+	harbors := qb.where('year = ? && id_harbor_state IN ?', orm.Primitive(year),
+		ids_ordered.map(orm.Primitive(it)))!.query()!
 	ids := harbors.map(it.id)
 
 	geo_location := sql db {
@@ -71,9 +70,7 @@ pub fn get_harbor_by_ids_v1(mut pool_conn pool.ConnectionPool, ids []int) !types
 	conn := pool_conn.get()!
 	db := conn as db_provider.DB
 	defer {
-		pool_conn.put(conn) or {
-			println(err.msg())
-		}
+		pool_conn.put(conn) or { println(err.msg()) }
 	}
 
 	mut qb := orm.new_query[entities.DataMare](db)

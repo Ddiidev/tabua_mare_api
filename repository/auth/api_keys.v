@@ -29,8 +29,12 @@ pub fn issue(mut db pg.DB, user_id int, label string, plan string) !string {
 	raw := rand.bytes(32) or { return error('falha ao gerar api key') }
 	key_value := 'tm_' + base64.url_encode(raw)
 
-	db.exec_param_many('INSERT INTO api_keys (user_id, key_value, label, plan) VALUES (($1), ($2), ($3), ($4))',
-		[user_id.str(), key_value, label, plan])!
+	db.exec_param_many('INSERT INTO api_keys (user_id, key_value, label, plan) VALUES (($1), ($2), ($3), ($4))', [
+		user_id.str(),
+		key_value,
+		label,
+		plan,
+	])!
 
 	return key_value
 }
@@ -56,6 +60,8 @@ pub fn list_by_user(mut db pg.DB, user_id int) ![]dto.ApiKey {
 
 // revoke marca uma api_key como revogada.
 pub fn revoke(mut db pg.DB, user_id int, key_id int) ! {
-	db.exec_param_many('UPDATE api_keys SET revoked_at = now() WHERE id = ($1) AND user_id = ($2)',
-		[key_id.str(), user_id.str()])!
+	db.exec_param_many('UPDATE api_keys SET revoked_at = now() WHERE id = ($1) AND user_id = ($2)', [
+		key_id.str(),
+		user_id.str(),
+	])!
 }

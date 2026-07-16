@@ -42,6 +42,12 @@ quick_check() {
 	[ "${result}" = 'ok' ]
 }
 
+has_required_schema() {
+	database="$1"
+	result="$(${SQLITE3_BIN} "${database}" "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'data_mare' LIMIT 1;" 2>/dev/null)" || return 1
+	[ "${result}" = '1' ]
+}
+
 [ -r "${SQLITE_SEED_PATH}" ] || fail "seed SQLite ausente: ${SQLITE_SEED_PATH}"
 [ -r "${SQLITE_SEED_CHECKSUM_PATH}" ] || fail "checksum do seed ausente: ${SQLITE_SEED_CHECKSUM_PATH}"
 [ -x "${APP_BINARY}" ] || fail "binario da aplicacao nao executavel: ${APP_BINARY}"
@@ -54,6 +60,7 @@ printf '%s\n' "${EXPECTED_CHECKSUM}" | grep -Eq '^[0-9a-fA-F]{64}$' || \
 ACTUAL_CHECKSUM="$(sha256sum "${SQLITE_SEED_PATH}" | awk '{ print $1 }')"
 [ "${ACTUAL_CHECKSUM}" = "${EXPECTED_CHECKSUM}" ] || fail 'checksum do seed SQLite nao confere'
 quick_check "${SQLITE_SEED_PATH}" || fail 'seed SQLite falhou no PRAGMA quick_check'
+has_required_schema "${SQLITE_SEED_PATH}" || fail 'seed SQLite sem tabela data_mare'
 
 mkdir -p "${DATA_DIR}" "${DB_DIR}" "${MARKER_DIR}"
 chown "${APP_UID}:${APP_GID}" "${DATA_DIR}" "${DB_DIR}" "${MARKER_DIR}"
@@ -63,12 +70,13 @@ if [ -r "${SQLITE_SEED_MARKER_PATH}" ]; then
 	INSTALLED_CHECKSUM="$(awk 'NR == 1 { print $1 }' "${SQLITE_SEED_MARKER_PATH}")"
 fi
 
-if [ ! -f "${DB_SQLITE_PATH}" ] || [ "${INSTALLED_CHECKSUM}" != "${EXPECTED_CHECKSUM}" ]; then
+if [ ! -f "${DB_SQLITE_PATH}" ] || [ "${INSTALLED_CHECKSUM}" != "${EXPECTED_CHECKSUM}" ] || ! has_required_schema "${DB_SQLITE_PATH}"; then
 	printf '[entrypoint] instalando seed SQLite %s\n' "${EXPECTED_CHECKSUM}"
 	TEMP_DB="$(mktemp "${DB_SQLITE_PATH}.seed.XXXXXX")"
 	TEMP_MARKER="$(mktemp "${SQLITE_SEED_MARKER_PATH}.tmp.XXXXXX")"
 	cp "${SQLITE_SEED_PATH}" "${TEMP_DB}"
 	quick_check "${TEMP_DB}" || fail 'copia temporaria do seed falhou no PRAGMA quick_check'
+	has_required_schema "${TEMP_DB}" || fail 'copia temporaria do seed sem tabela data_mare'
 	printf '%s\n' "${EXPECTED_CHECKSUM}" > "${TEMP_MARKER}"
 	chown "${APP_UID}:${APP_GID}" "${TEMP_DB}" "${TEMP_MARKER}"
 
@@ -80,6 +88,7 @@ if [ ! -f "${DB_SQLITE_PATH}" ] || [ "${INSTALLED_CHECKSUM}" != "${EXPECTED_CHEC
 fi
 
 quick_check "${DB_SQLITE_PATH}" || fail 'banco SQLite instalado falhou no PRAGMA quick_check'
+has_required_schema "${DB_SQLITE_PATH}" || fail 'banco SQLite instalado sem tabela data_mare'
 chown "${APP_UID}:${APP_GID}" "${DB_SQLITE_PATH}" "${SQLITE_SEED_MARKER_PATH}"
 
 trap - EXIT HUP INT TERM
