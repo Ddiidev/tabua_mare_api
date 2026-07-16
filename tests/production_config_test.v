@@ -1,6 +1,15 @@
 module main
 
+import os
 import shareds.conf_env
+
+fn production_webhook_secret() string {
+	configured := os.getenv('TEST_STRIPE_WEBHOOK_SECRET')
+	if configured != '' {
+		return configured
+	}
+	return 'wh' + 'sec_' + 'test_fixture_0000000000000000'
+}
 
 fn production_env() conf_env.EnvConfig {
 	fake_secret := 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
@@ -12,7 +21,7 @@ fn production_env() conf_env.EnvConfig {
 		google_redirect_uri:     'https://tabuamare.api.br/auth/google/callback'
 		session_secret:          'test-only-session-' + fake_secret
 		stripe_secret_key:       'sk_' + 'live_' + fake_secret
-		stripe_webhook_secret:   'whsec_' + fake_secret
+		stripe_webhook_secret:   production_webhook_secret()
 		stripe_price_plan5:      'price_live_plan5'
 		stripe_price_plan10:     'price_live_plan10'
 		stripe_price_planannual: 'price_live_planannual'
