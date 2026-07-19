@@ -41,6 +41,8 @@ pub:
 	stripe_price_plan5        string
 	stripe_price_plan10       string
 	stripe_price_planannual   string
+	stripe_timeout_ms         int
+	stripe_max_retries        int
 }
 
 pub struct StripePriceIds {
@@ -100,6 +102,8 @@ pub fn load_env() EnvConfig {
 		stripe_price_plan5:        prices.plan5
 		stripe_price_plan10:       prices.plan10
 		stripe_price_planannual:   prices.planannual
+		stripe_timeout_ms:         get_env_or('STRIPE_TIMEOUT_MS', env_map, '8000').int()
+		stripe_max_retries:        get_env_or('STRIPE_MAX_RETRIES', env_map, '1').int()
 	}
 }
 

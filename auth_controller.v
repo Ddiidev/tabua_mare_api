@@ -58,12 +58,16 @@ fn stripe_price_id(env conf_env.EnvConfig, plan string) !string {
 }
 
 // new_stripe_client evita repetir a validacao e a construcao do cliente em cada rota.
+// Usa timeout/retries do EnvConfig (defaults: 8000ms / 1 retry) para manter as
+// chamadas Stripe abaixo do limite do Cloudflare (~100s) e evitar 524 no checkout.
 fn (ac &AuthController) new_stripe_client() !stripe.Client {
 	if ac.env.stripe_secret_key == '' {
 		return error('Stripe nao configurado')
 	}
 	return stripe.new_client(stripe.ClientConfig{
-		secret_key: ac.env.stripe_secret_key
+		secret_key:  ac.env.stripe_secret_key
+		timeout_ms:  ac.env.stripe_timeout_ms
+		max_retries: ac.env.stripe_max_retries
 	})
 }
 
@@ -469,7 +473,11 @@ pub fn (mut ac AuthController) checkout(mut ctx web_ctx.WsCtx) veb.Result {
 		'user_id':   uid.str()
 		'plan_code': parsed.plan
 	}
-	session := stripe_client.create_checkout_session(stripe.CheckoutSessionCreateParams{
+	// idempotency_key evita sessoes duplicadas quando o usuario reenvia o
+	// checkout apos um 524/timeout: o Stripe reutiliza a sessao para a mesma
+	// combinacao (user_id + plano) em vez de criar uma nova.
+	idempotency_key := 'checkout_${uid}_${parsed.plan}'
+	session := stripe_client.create_checkout_session_with_options(stripe.CheckoutSessionCreateParams{
 		mode:              stripe.checkout_mode_subscription
 		line_items:        [
 			stripe.CheckoutLineItem{
@@ -484,6 +492,8 @@ pub fn (mut ac AuthController) checkout(mut ctx web_ctx.WsCtx) veb.Result {
 		subscription_data: stripe.CheckoutSubscriptionData{
 			metadata: metadata
 		}
+	}, stripe.RequestOptions{
+		idempotency_key: idempotency_key
 	}) or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'falha ao criar checkout: ${err}'))
