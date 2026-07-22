@@ -63,6 +63,7 @@ state = {
             "limits_cpus": "2",
             "limits_memory": "512M",
             "limits_memory_reservation": "256M",
+            "custom_network_aliases": ["tabuamare-app-a"],
         },
         "app-b": {
             "docker_registry_image_tag": "sha-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -75,6 +76,7 @@ state = {
             "limits_cpus": "2.0",
             "limits_memory": "536870912",
             "limits_memory_reservation": "268435456",
+            "custom_network_aliases": ["tabuamare-app-b"],
         },
     },
     "storages": {
@@ -92,6 +94,8 @@ if scenario == "shared-storage":
     state["storages"]["app-b"] = [{"name": "tabuamare-a-data", "mount_path": "/app/data", "host_path": None}]
 if scenario == "peer-down":
     state["apps"]["app-b"]["status"] = "exited"
+if scenario == "network-alias":
+    state["apps"]["app-a"]["custom_network_aliases"] = []
 
 def save():
     state_path.write_text(json.dumps(state), encoding="utf-8")
@@ -395,15 +399,21 @@ run_case fail-restore-b 1
 run_case bad-config 1
 run_case shared-storage 1
 run_case peer-down 1
+run_case network-alias 1
 
-traefik_config="${root_dir}/ops/traefik/dynamic/tabuamare.yaml"
-# shellcheck disable=SC2016
-grep -Fq 'Header(`X-Tabuamare-Deploy-Slot`, `A`)' "${traefik_config}" || fail 'router deploy A sem header de slot'
-# shellcheck disable=SC2016
-grep -Fq 'Header(`X-Tabuamare-Deploy-Slot`, `B`)' "${traefik_config}" || fail 'router deploy B sem header de slot'
-# shellcheck disable=SC2016
-[[ "$(grep -c 'Header(`X-Tabuamare-Deploy-Secret`, `__DEPLOY_SMOKE_SECRET__`)' "${traefik_config}")" -eq 2 ]] || fail 'routers de slot sem segredo de smoke'
-[[ "$(grep -c 'priority: 100' "${traefik_config}")" -eq 2 ]] || fail 'routers de slot sem prioridade alta'
+nginx_vhost="${root_dir}/ops/nginx/conf.d/tabuamare.conf"
+nginx_conf="${root_dir}/ops/nginx/nginx.conf"
+grep -Fq 'tabuamare_ab' "${nginx_vhost}" || fail 'upstream tabuamare_ab ausente'
+grep -Fq 'tabuamare_slot_a' "${nginx_vhost}" || fail 'upstream de slot A ausente'
+grep -Fq 'tabuamare_slot_b' "${nginx_vhost}" || fail 'upstream de slot B ausente'
+grep -Fq 'tabuamare-app-a:3330' "${nginx_vhost}" || fail 'alias estavel A ausente no vhost'
+grep -Fq 'tabuamare-app-b:3330' "${nginx_vhost}" || fail 'alias estavel B ausente no vhost'
+grep -Fq 'server coolify-proxy:80' "${nginx_vhost}" || fail 'proxy interno coolify-proxy ausente'
+grep -Fq 'location = /health/debug' "${nginx_vhost}" || fail 'health/debug sem location exata'
+grep -Fq 'return 404' "${nginx_vhost}" || fail 'health/debug sem bloqueio sem secret'
+grep -Fq 'proxy_next_upstream' "${nginx_vhost}" || fail 'nginx sem proxy_next_upstream'
+grep -Fq '"A:__DEPLOY_SMOKE_SECRET__"' "${nginx_conf}" || fail 'map de deploy slot A sem secret'
+grep -Fq '"B:__DEPLOY_SMOKE_SECRET__"' "${nginx_conf}" || fail 'map de deploy slot B sem secret'
 # shellcheck disable=SC2016
 grep -Fq 'DEPLOY_SMOKE_SECRET: ${{ secrets.DEPLOY_SMOKE_SECRET }}' \
 	"${root_dir}/.github/workflows/deploy-production.yml" || fail 'workflow sem secret do smoke'

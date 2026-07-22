@@ -443,32 +443,39 @@ pub fn (mut ac AuthController) checkout(mut ctx web_ctx.WsCtx) veb.Result {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
+
 	user := repo_auth.find_by_id(mut db, uid) or {
 		ctx.res.set_status(.not_found)
 		return ctx.json(types.failure[string](404, 'usuario nao encontrado'))
 	}
 
-	// cria o Stripe client
+	// Cria o Stripe client
 	mut stripe_client := ac.new_stripe_client() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'stripe client init failed: ${err}'))
 	}
 
-	// busca ou cria o Stripe Customer pelo email
-	stripe_customer_id := resolve_stripe_customer(mut stripe_client, user.stripe_customer_id, uid,
-		user.email) or {
+	// Resolve o stripe_customer_id para este app.
+	//
+	// Principio arquitetural: nunca fazer lookup de customer por email. O
+	// email do usuario pode estar cadastrado em OUTROS produtos dentro da
+	// mesma conta Stripe (multiplos SaaS compartilham o dashboard), e reusar
+	// o customer por email misturaria billing de produtos distintos. O
+	// customer deste app e' identificado unicamente pelo
+	// stripe_customer_id salvo no DB deste app.
+	//
+	// Logica:
+	//   1. Se o DB tem stripe_customer_id, valida com get_customer. Se for
+	//      valido (existe em live e pertence a esta conta), usa.
+	//   2. Se o DB esta vazio OU o ID salvo foi removido pelo Stripe, cria um
+	//      NOVO customer exclusivo deste app e atualiza o DB.
+	customer_id := resolve_app_customer(mut stripe_client, user.stripe_customer_id, uid,
+		user.email, mut db) or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'falha ao resolver customer: ${err}'))
 	}
 
-	// salva o stripe_customer_id no DB se ainda nao estiver salvo
-	if user.stripe_customer_id == '' || user.stripe_customer_id != stripe_customer_id {
-		repo_auth.set_stripe_customer_id(mut db, uid, stripe_customer_id) or {
-			eprintln('falha ao salvar stripe_customer_id: ${err}')
-		}
-	}
-
-	// cria a Checkout Session de assinatura
+	// Cria a Checkout Session de assinatura
 	mut metadata := {
 		'user_id':   uid.str()
 		'plan_code': parsed.plan
@@ -485,7 +492,7 @@ pub fn (mut ac AuthController) checkout(mut ctx web_ctx.WsCtx) veb.Result {
 				quantity: 1
 			},
 		]
-		customer:          stripe_customer_id
+		customer:          customer_id
 		success_url:       parsed.success_url
 		cancel_url:        parsed.cancel_url
 		metadata:          metadata
@@ -599,27 +606,59 @@ pub fn (mut ac AuthController) cancel_subscription(mut ctx web_ctx.WsCtx) veb.Re
 	}]))
 }
 
-// resolve_stripe_customer busca um customer existente pelo email ou cria um novo.
-fn resolve_stripe_customer(mut stripe_client stripe.Client, existing_customer_id string, user_id int, email string) !string {
+// resolve_app_customer devolve o stripe_customer_id valido para este app.
+//
+// Principio arquitetural: nunca buscar customer por email. O email pode
+// existir em OUTROS produtos da mesma conta Stripe (multi-SaaS) e reusar
+// o customer por email misturaria billing entre produtos. O customer
+// deste app e' identificado pelo stripe_customer_id salvo no DB.
+//
+// Logica:
+//   1. Se existing_customer_id != '', valida com get_customer. Se existir,
+//      retorna o mesmo ID.
+//   2. Se o ID salvo foi removido pelo Stripe (404) OU se o DB esta vazio,
+//      cria um NOVO customer deste app e atualiza o DB.
+//   3. Falhas de rede, autenticacao ou configuracao nao criam customers
+//      adicionais: o checkout falha e pode ser repetido com seguranca.
+fn is_missing_stripe_customer(err IError) bool {
+	if err is stripe.StripeError {
+		return err.status == 404
+	}
+	return false
+}
+
+fn resolve_app_customer(mut stripe_client stripe.Client, existing_customer_id string, user_id int, email string, mut db pg.DB) !string {
 	if existing_customer_id != '' {
-		return existing_customer_id
+		if _ := stripe_client.get_customer(existing_customer_id) {
+			// Customer valido: reusa.
+			return existing_customer_id
+		} else {
+			if !is_missing_stripe_customer(err) {
+				return error('falha ao validar customer Stripe: ${err}')
+			}
+		}
 	}
 	if email == '' {
 		return error('email do usuario vazio')
 	}
-	customers := stripe_client.list_customers(stripe.CustomerListParams{
-		email: email
-		limit: 1
-	}) or { return err }
-	if customers.data.len > 0 {
-		return customers.data[0].id
-	}
-	new_customer := stripe_client.create_customer(stripe.CustomerCreateParams{
-		email:    email
+	// Cria um novo customer exclusivo deste app. Nao reusamos por email.
+	// A descricao identifica no dashboard Stripe qual produto/app o
+	// originou, para nao confundir com customers de outros SaaS na
+	// mesma conta Stripe que compartilham o mesmo email.
+	new_customer := stripe_client.create_customer_with_options(stripe.CustomerCreateParams{
+		email:       email
+		description: 'Tabua Mare API'
 		metadata: {
 			'user_id': user_id.str()
 		}
+	}, stripe.RequestOptions{
+		idempotency_key: 'customer_${user_id}'
 	}) or { return err }
+	// Sem persistir o ID, o webhook nao consegue associar com seguranca o
+	// customer ao usuario; falhamos em vez de criar um customer orfao logico.
+	repo_auth.set_stripe_customer_id(mut db, user_id, new_customer.id) or {
+		return error('falha ao salvar stripe_customer_id: ${err}')
+	}
 	return new_customer.id
 }
 

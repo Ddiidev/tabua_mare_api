@@ -5,6 +5,8 @@ readonly image_name='ghcr.io/ddiidev/tabua-mare-api'
 readonly target_tag="${1:-}"
 readonly deploy_timeout="${COOLIFY_DEPLOY_TIMEOUT:-480}"
 readonly poll_seconds="${COOLIFY_POLL_SECONDS:-5}"
+readonly app_alias_a="${COOLIFY_APP_A_ALIAS:-tabuamare-app-a}"
+readonly app_alias_b="${COOLIFY_APP_B_ALIAS:-tabuamare-app-b}"
 
 log() {
 	printf '%s\n' "$*" >&2
@@ -33,6 +35,8 @@ require_env DEPLOY_SMOKE_SECRET
 [[ "${deploy_timeout}" =~ ^[1-9][0-9]*$ ]] || fail 'COOLIFY_DEPLOY_TIMEOUT deve ser inteiro positivo'
 [[ "${poll_seconds}" =~ ^[0-9]+([.][0-9]+)?$ ]] || fail 'COOLIFY_POLL_SECONDS invalido'
 [[ "${#DEPLOY_SMOKE_SECRET}" -ge 32 ]] || fail 'DEPLOY_SMOKE_SECRET deve ter no minimo 32 caracteres'
+[[ "${DEPLOY_SMOKE_SECRET}" =~ ^[A-Za-z0-9._-]+$ ]] || \
+	fail 'DEPLOY_SMOKE_SECRET deve usar somente A-Z, a-z, 0-9, ponto, underscore ou hifen'
 
 coolify_origin="${COOLIFY_URL%/}"
 smoke_origin="${PUBLIC_SMOKE_URL%/}"
@@ -86,12 +90,13 @@ validate_app_preflight() {
 	local slot="$1"
 	local app_json="$2"
 	local storages_json="$3"
-	python3 - "${slot}" "${app_json}" "${storages_json}" <<'PY'
+	local expected_alias="$4"
+	python3 - "${slot}" "${app_json}" "${storages_json}" "${expected_alias}" <<'PY'
 import json
 import re
 import sys
 
-slot, app_raw, storages_raw = sys.argv[1:]
+slot, app_raw, storages_raw, expected_alias = sys.argv[1:]
 app = json.loads(app_raw)
 storages_payload = json.loads(storages_raw)
 
@@ -153,6 +158,23 @@ if lookup("health_check_path") != "/health/ready":
 health_port = str(lookup("health_check_port") or "3330")
 if health_port != "3330":
     fail("health_check_port deve ser 3330")
+
+def aliases_value(value):
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    text = str(value or "").strip()
+    if not text:
+        return []
+    try:
+        decoded = json.loads(text)
+    except (TypeError, ValueError):
+        decoded = None
+    if isinstance(decoded, list):
+        return [str(item).strip() for item in decoded if str(item).strip()]
+    return [item.strip() for item in re.split(r"[\s,]+", text) if item.strip()]
+
+if expected_alias not in aliases_value(lookup("custom_network_aliases")):
+    fail(f"custom_network_aliases deve incluir {expected_alias}")
 
 storages = storages_payload.get("persistent_storages") if isinstance(storages_payload, dict) else storages_payload
 if not isinstance(storages, list):
@@ -371,8 +393,8 @@ app_a="$(get_app "${COOLIFY_APP_A_UUID}")" || fail 'nao foi possivel ler app A'
 app_b="$(get_app "${COOLIFY_APP_B_UUID}")" || fail 'nao foi possivel ler app B'
 storages_a="$(get_storages "${COOLIFY_APP_A_UUID}")" || fail 'nao foi possivel ler storages da app A'
 storages_b="$(get_storages "${COOLIFY_APP_B_UUID}")" || fail 'nao foi possivel ler storages da app B'
-storage_identity_a="$(validate_app_preflight A "${app_a}" "${storages_a}")" || fail 'preflight da app A falhou'
-storage_identity_b="$(validate_app_preflight B "${app_b}" "${storages_b}")" || fail 'preflight da app B falhou'
+storage_identity_a="$(validate_app_preflight A "${app_a}" "${storages_a}" "${app_alias_a}")" || fail 'preflight da app A falhou'
+storage_identity_b="$(validate_app_preflight B "${app_b}" "${storages_b}" "${app_alias_b}")" || fail 'preflight da app B falhou'
 [[ "${storage_identity_a}" != "${storage_identity_b}" ]] || \
 	fail 'apps A/B compartilham o mesmo volume ou host_path em /app/data'
 old_tag_a="$(json_field docker_registry_image_tag <<<"${app_a}")"

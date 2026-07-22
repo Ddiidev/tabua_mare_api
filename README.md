@@ -2,6 +2,8 @@
 
 ![Logo Tábua de Marés](pages/assets/logo-tabua-mare.svg)
 
+[![Deploy manual de producao A/B](https://github.com/Ddiidev/tabua_mare_api/actions/workflows/deploy-production.yml/badge.svg)](https://github.com/Ddiidev/tabua_mare_api/actions/workflows/deploy-production.yml)
+
 Uma API pública para consultar dados precisos de marés em todo o litoral brasileiro. Interface REST simples, sem necessidade de chave de API, com cobertura nacional e exemplos práticos.
 
 - Site oficial: https://tabuamare.api.br/
@@ -158,7 +160,7 @@ docker run --rm -p 3330:3330 \
 
 ### Produção Coolify
 
-Produção usa duas aplicações regulares Coolify baseadas na mesma imagem GHCR imutável, atrás de Cloudflare e Traefik. Não usa nginx, Cloudflare Tunnel, Swarm ou Compose de produção.
+Produção usa duas aplicações regulares Coolify baseadas na mesma imagem GHCR imutável, atrás de Cloudflare e um Nginx próprio na borda. O Nginx termina TLS e balanceia A/B; o `coolify-proxy` permanece interno para o painel. O repositório não usa Compose para as aplicações de produção.
 
 Setup, firewall, DNS-01, volumes, A/B e deploy: [ops/README.md](ops/README.md).
 

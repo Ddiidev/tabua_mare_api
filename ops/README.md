@@ -23,7 +23,7 @@ O firewall entra antes de Docker/Coolify. No boot, restaura os ultimos ranges Cl
 ssh -N -L 8000:127.0.0.1:8000 root@SEU_IP
 ```
 
-Abrir `http://localhost:8000` e criar imediatamente o primeiro admin. Nao criar conta no Let's Encrypt: o Traefik registra e renova o certificado automaticamente.
+Abrir `http://localhost:8000` e criar imediatamente o primeiro admin. Nao criar conta no Let's Encrypt: o Nginx proprio (secao 5) registra e renova o certificado via DNS-01 Cloudflare.
 
 ## 3. Token Cloudflare e DNS-01
 
@@ -37,26 +37,11 @@ Na VPS, sem colocar o valor no repositorio:
 ```bash
 install -d -m 700 /root/.config/tabua-mare
 read -rsp 'CF_DNS_API_TOKEN: ' CF_DNS_API_TOKEN; echo
-printf 'CF_DNS_API_TOKEN=%q\n' "$CF_DNS_API_TOKEN" \
-  > /root/.config/tabua-mare/cloudflare.env
-chmod 600 /root/.config/tabua-mare/cloudflare.env
+printf 'dns_cloudflare_api_token = %s\n' "$CF_DNS_API_TOKEN" \
+  > /root/.config/tabua-mare/cloudflare-token.ini
+chmod 600 /root/.config/tabua-mare/cloudflare-token.ini
 unset CF_DNS_API_TOKEN
 ```
-
-Em `Servers -> localhost -> Proxy`, manter a configuracao Traefik da versao instalada e alterar:
-
-```yaml
-services:
-  traefik:
-    env_file:
-      - /root/.config/tabua-mare/cloudflare.env
-    command:
-      - --certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare
-      - --certificatesresolvers.letsencrypt.acme.dnschallenge.delaybeforecheck=30
-      - --certificatesresolvers.letsencrypt.acme.storage=/traefik/acme.json
-```
-
-Remover as duas flags `httpchallenge`. Reiniciar o proxy. Cloudflare deve ficar `Full (strict)`; `526` so e aceitavel antes da primeira emissao.
 
 ## 4. Aplicacoes A/B
 
@@ -69,6 +54,9 @@ Criar duas aplicacoes regulares baseadas em Docker Image:
 - stop grace period `30s`; no Coolify `4.1.2` fixado, o default quando nao configurado usa `docker stop --time=30` em `app/Actions/Application/StopApplication.php`;
 - limite `2` CPU, `512 MiB`; reserva `256 MiB`;
 - volume exclusivo por app em `/app/data`.
+- Network Alias na rede `coolify`: `tabuamare-app-a` para A e
+  `tabuamare-app-b` para B. Configure em Advanced -> Network Alias e
+  redeploy cada app antes de subir o Nginx.
 
 Variaveis iguais nas duas apps: PostgreSQL, Google, `SESSION_SECRET`, Stripe e limites. Variaveis obrigatorias:
 
@@ -80,21 +68,91 @@ DB_SQLITE_PATH=/app/data/taubinha.sqlite
 
 Produção bloqueada com `sk_test_*`. Usar `sk_live_*`, prices live e webhook live em `https://tabuamare.api.br/auth/webhook`.
 
-## 5. Traefik dinamico
+## 5. Nginx proprio (substitui Traefik na borda)
 
-Copiar `ops/traefik/dynamic/tabuamare.yaml` para `/data/coolify/proxy/dynamic/tabuamare.yaml`. Antes, substituir:
+O Nginx proprio fica na borda da VPS, escutando 80/443 do host, e termina
+TLS para todos os dominios: `tabuamare.api.br`, `www.tabuamare.api.br` e
+`coolify-admin.tabuamare.api.br`. O `coolify-proxy` interno do Coolify deixa
+de publicar 80/443 no host e fica acessivel somente pela rede Docker
+`coolify:80`. O Nginx roteia `coolify-admin` para ele; o proxy continua
+servindo o painel do Coolify (`coolify:8080`).
 
-- `__APP_A_CONTAINER__`: nome consistente/UUID do container A;
-- `__APP_B_CONTAINER__`: nome consistente/UUID do container B.
-- `__DEPLOY_SMOKE_SECRET__`: segredo aleatorio de no minimo 32 caracteres, igual ao secret GitHub `DEPLOY_SMOKE_SECRET`.
+Por que substituir o Traefik na borda: o Traefik do Coolify nao tem
+`proxy_next_upstream` (retry em falha de upstream), nao tem rate limit por
+rota e o healthCheck ativo nao drena o server antes de devolver 503 ao
+cliente. O Nginx faz retry automatico para o proximo upstream quando um
+slot falha (timeout/502/503/504), eliminando o flap do 503 observado em
+producao.
 
-Gerar o valor fora de logs de CI:
+Provisionamento automatizado (faz tudo):
 
 ```bash
-openssl rand -hex 32
+# Na VPS, com o repo clonado em /root/tabuamare-api (ou copie ops/nginx/):
+export DEPLOY_SMOKE_SECRET='<seu secret do GitHub Actions, min 32 chars>'
+export COOLIFY_APP_A_UUID='<uuid da app A>'
+export COOLIFY_APP_B_UUID='<uuid da app B>'
+bash ops/nginx/migrate-from-coolify.sh
 ```
 
-O arquivo cria apex, redirect `www -> apex`, painel admin e balanceamento A/B com health check.
+O script:
+
+1. Valida os aliases estaveis `tabuamare-app-a` e `tabuamare-app-b` nos
+   containers correntes das apps A/B; sem alias, aborta antes de alterar a borda.
+2. Valida que o `coolify-proxy` do Coolify NAO esta mais publicando 80/443 no host
+   (se estiver, aborta com instrucoes de como remover via painel do
+   Coolify: Servers -> localhost -> Proxy, remover portas 80/443 do host).
+3. Renderiza `nginx.conf` somente com `DEPLOY_SMOKE_SECRET`; o vhost usa
+   aliases fixos e DNS dinamico do Docker, nao nomes ou IPs efemeros de
+   containers.
+4. Valida a sintaxe da config do Nginx dentro de um container efemero na rede `coolify`.
+5. Emite certificado Let's Encrypt via DNS-01 Cloudflare (se ainda nao
+   existir em /etc/letsencrypt/live/tabuamare.api.br/).
+6. Sobe Nginx + Certbot via docker compose up -d.
+7. Aguarda o Nginx responder em https://tabuamare.api.br/health/ready.
+8. Smoke por slot A e B via headers de deploy (bypassa o LB).
+
+Apos o script, falta um passo manual no painel do Coolify: apagar os
+routers/servicos do proxy para `tabuamare.api.br` e `www`
+(`tabuamare-apex`, `tabuamare-www`, `tabuamare-ab`,
+`tabuamare-deploy-slot-a/b`). Manter ou recriar um router simples para
+`coolify-admin.tabuamare.api.br` apontando para `coolify:8080` (sem TLS,
+HTTP plano -- o Nginx termina TLS na borda). O proprio script imprime
+essas instrucoes no final.
+
+Logs do Nginx:
+
+```bash
+ssh root@SEU_IP 'docker logs tabuamare-nginx --tail 100 -f'
+```
+
+O Nginx consulta o DNS embutido do Docker a cada poucos segundos. Assim, um
+deploy/restart que troca o IP de A ou B nao exige reiniciar manualmente o Nginx.
+O failover de conexao ao peer saudavel e limitado a 1 segundo.
+
+Validacao real da Stripe dentro dos dois containers (testa rede, secret key e
+os tres prices sem imprimir segredos):
+
+```bash
+COOLIFY_APP_A_UUID=... COOLIFY_APP_B_UUID=... \
+  bash ops/check-stripe-production.sh
+```
+
+Diagnostico de flap por slot (bypass do LB):
+
+```bash
+curl -H 'X-Tabuamare-Deploy-Slot: A' -H "X-Tabuamare-Deploy-Secret: $DEPLOY_SMOKE_SECRET" \
+  https://tabuamare.api.br/health/debug
+curl -H 'X-Tabuamare-Deploy-Slot: B' -H "X-Tabuamare-Deploy-Secret: $DEPLOY_SMOKE_SECRET" \
+  https://tabuamare.api.br/health/debug
+# sem os dois headers corretos, /health/debug responde 404 e nao expoe estado.
+```
+
+Para reverter (voltar tudo para Traefik do Coolify):
+
+```bash
+ssh root@SEU_IP 'docker compose -f /root/tabuamare-ops/nginx/docker-compose.yml down'
+# restaurar ports 80/443 no coolify-proxy e recriar routers no painel do Coolify
+```
 
 ## 6. Cloudflare
 
@@ -123,11 +181,12 @@ Antes de qualquer alteracao, o cliente valida as duas apps por `GET /api/v1/appl
 - porta interna somente `3330`, sem `ports_mappings` para host;
 - health check habilitado em `/health/ready` na porta `3330`;
 - 2 CPU, 512 MiB de limite e 256 MiB de reserva;
-- exatamente um storage em `/app/data`; identidade (`name` de volume ou `host_path`) diferente entre A/B.
+- exatamente um storage em `/app/data`; identidade (`name` de volume ou `host_path`) diferente entre A/B;
+- `custom_network_aliases` deve conter o alias estavel correspondente da app.
 
 O deploy exige A e B inicialmente `running:healthy`. Deploy e rollback sao stop-first: antes de cada stop, consultam novamente o peer e exigem `running:healthy`; entao marcam o slot como tocado, chamam `POST /applications/{uuid}/stop`, aguardam o GET reportar `exited`/`stopped` e somente depois alteram tag e iniciam. No rollback B -> A, A so e parada depois que B foi restaurada e voltou a `running:healthy`. Se restaurar B falhar, A permanece saudavel na tag nova e o script reporta rollback incompleto. Antes do primeiro deploy, conferir manualmente na UI que stop grace esta vazio/default ou `30s`; nunca configurar abaixo de 30s. Referencia do default fixado: [StopApplication.php do Coolify](https://github.com/coollabsio/coolify/blob/4.1.2/app/Actions/Application/StopApplication.php).
 
-O smoke publico envia o slot e `X-Tabuamare-Deploy-Secret`, sem registrar o segredo. Routers Traefik de prioridade 100 exigem ambos os headers; requisicoes normais continuam no balanceador `tabuamare-ab`.
+O smoke publico envia o slot e `X-Tabuamare-Deploy-Secret`, sem registrar o segredo. O `map` no `ops/nginx/nginx.conf` exige ambos os headers para rotear ao upstream de slot; sem o secret correto a request cai no balanceador `tabuamare_ab`.
 
 ## 8. Endurecer SSH por ultimo
 

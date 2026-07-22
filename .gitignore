@@ -35,7 +35,9 @@ bin/
 /.qodo
 /.trae
 /.superpowers/
+/docs/
 
 # SSH operacional local (nunca versionar)
 /run_ssh.sh
 __pycache__/
+tunnel.sh
