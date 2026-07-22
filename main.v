@@ -283,12 +283,33 @@ pub fn (app &App) health_live(mut ctx web_ctx.WsCtx) veb.Result {
 
 @['/health/ready'; get; head]
 pub fn (mut app App) health_ready(mut ctx web_ctx.WsCtx) veb.Result {
-	if app.health_state.is_ready_with_dependencies(infradb.sqlite_is_healthy(mut app.health_pool),
-		app.pg_holder.is_healthy())
-	{
+	sqlite_ok := infradb.sqlite_is_healthy(mut app.health_pool)
+	pg_ok := app.pg_holder.is_healthy()
+	ready := app.health_state.is_ready_with_dependencies(sqlite_ok, pg_ok)
+	if ready {
 		return ctx.no_content()
 	}
 
+	println('[health/ready] NOT READY ready=${app.health_state.is_ready()} sqlite=${sqlite_ok} pg=${pg_ok}')
 	ctx.res.set_status(.service_unavailable)
 	return ctx.send_response_to_client('', '')
+}
+
+// health_debug expoe o estado de cada dependencia para diagnostico de
+// flapping no Traefik. Sempre responde 200 com JSON; nao e' rota de
+// healthcheck, e' rota de diagnostico. Nao bloqueia o LB.
+@['/health/debug'; get]
+pub fn (mut app App) health_debug(mut ctx web_ctx.WsCtx) veb.Result {
+	sqlite_ok := infradb.sqlite_is_healthy(mut app.health_pool)
+	pg_ok := app.pg_holder.is_healthy()
+	ready := app.health_state.is_ready_with_dependencies(sqlite_ok, pg_ok)
+	ctx.res.set_status(.ok)
+	return ctx.json({
+		'ready':          ready
+		'app_ready_flag': app.health_state.is_ready()
+		'shutting_down':  app.health_state.is_shutting_down()
+		'sqlite_ok':      sqlite_ok
+		'pg_ok':          pg_ok
+		'pg_available':   app.pg_holder.available()
+	})
 }

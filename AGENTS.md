@@ -139,7 +139,7 @@ tests/             — integration tests (_test.v files, require DB)
 
   Counters and monthly credits persisted in PostgreSQL. Sem `api_key`, o middleware trata a requisição como anônima por IP, independentemente de JWT; a chave válida determina o plano e o bucket isolado. A aplicação é a única camada de rate-limit.
 
-  **IP real em produção:** o fluxo é Cloudflare proxy → Traefik → app. `veb.Context.ip()` prioriza `CF-Connecting-IP`; esse header só é confiável porque 80/443 da origem aceitam exclusivamente ranges oficiais Cloudflare. Acesso direto ao IP deve permanecer bloqueado.
+  **IP real em produção:** o fluxo é Cloudflare proxy → Nginx → Coolify A/B. `veb.Context.ip()` prioriza `CF-Connecting-IP`; esse header só é confiável porque 80/443 da origem aceitam exclusivamente ranges oficiais Cloudflare. Acesso direto ao IP deve permanecer bloqueado.
 
 - **Priority tiers (planned, not yet implemented as a queue):**
 
@@ -163,8 +163,8 @@ tests/             — integration tests (_test.v files, require DB)
 ### Production Deployment
 
 - **Root `Dockerfile`** — Alpine 3.22 multi-stage, uma instância V por container na porta `3330`, UID 10001 e volume `/app/data`.
-- **Produção** — duas aplicações regulares Coolify usando `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`, balanceadas pelo Traefik. O repositório não usa Compose para produção nem CI.
-- **Fluxo público** — Cloudflare proxy → Traefik/Coolify → A ou B. Sem nginx, Cloudflare Tunnel, Swarm ou Compose de produção.
+- **Produção** — duas aplicações regulares Coolify usando `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`, balanceadas pelo Nginx próprio. O repositório não usa Compose para as aplicações de produção nem CI.
+- **Fluxo público** — Cloudflare proxy → Nginx → A ou B; `coolify-admin` passa pelo `coolify-proxy` interno. Sem Cloudflare Tunnel ou Swarm.
 - **Operação** — scripts e runbook em `ops/`; deploy manual sequencial em `.github/workflows/deploy-production.yml`.
 
 Production binary:

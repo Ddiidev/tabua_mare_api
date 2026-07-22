@@ -223,7 +223,7 @@ install_systemd() {
 Description=Protege origem Tábua de Marés antes dos serviços web
 DefaultDependencies=no
 After=local-fs.target
-Before=docker.service docker.socket coolify.service traefik.service
+Before=docker.service docker.socket coolify.service
 Before=network-pre.target
 Wants=network-pre.target
 

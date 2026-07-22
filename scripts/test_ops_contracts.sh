@@ -4,7 +4,10 @@ set -euo pipefail
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 bootstrap="${root_dir}/ops/bootstrap_vps.sh"
 firewall="${root_dir}/ops/cloudflare-origin-firewall.sh"
-traefik="${root_dir}/ops/traefik/dynamic/tabuamare.yaml"
+nginx_conf="${root_dir}/ops/nginx/nginx.conf"
+nginx_vhost="${root_dir}/ops/nginx/conf.d/tabuamare.conf"
+nginx_compose="${root_dir}/ops/nginx/docker-compose.yml"
+nginx_issue="${root_dir}/ops/nginx/certbot/issue.sh"
 readme="${root_dir}/ops/README.md"
 
 bash "${root_dir}/scripts/test_pg_pool_contract.sh"
@@ -42,7 +45,7 @@ assert_last_before() {
 		fail "ordem insegura em ${file#"${root_dir}/"}: ultima chamada ${first} deve vir antes de ${second}"
 }
 
-for file in "${bootstrap}" "${firewall}" "${traefik}" "${readme}"; do
+for file in "${bootstrap}" "${firewall}" "${nginx_conf}" "${nginx_vhost}" "${nginx_compose}" "${nginx_issue}" "${readme}"; do
 	[[ -f "${file}" ]] || fail "arquivo ausente: ${file#"${root_dir}/"}"
 done
 
@@ -102,8 +105,8 @@ grep -Fq "cache_dir='/var/lib/tabuamare-cloudflare-firewall'" "${firewall}" || \
 	fail 'cache last-known-good ausente'
 grep -Fq -- '--restore-cache' "${firewall}" || fail 'restauracao fail-closed no boot ausente'
 grep -Fq -- '--refresh' "${firewall}" || fail 'refresh separado do boot ausente'
-grep -Fq 'Before=docker.service docker.socket coolify.service traefik.service' "${firewall}" || \
-	fail 'firewall nao ordenado antes de Docker/Coolify/Traefik'
+grep -Fq 'Before=docker.service docker.socket coolify.service' "${firewall}" || \
+	fail 'firewall nao ordenado antes de Docker/Coolify'
 grep -Fq 'ExecStart=/usr/local/sbin/tabuamare-cloudflare-firewall --restore-cache' "${firewall}" || \
 	fail 'servico de boot nao restaura cache em modo fail-closed'
 grep -Fq '/etc/systemd/system/docker.service.d/10-tabua-mare-firewall.conf' "${firewall}" || \
@@ -150,18 +153,75 @@ for function_name in configure_rules configure_input_rules; do
 		fail "${function_name}: portas administrativas devem ser bloqueadas antes de ESTABLISHED"
 done
 
-grep -Fq '__APP_A_CONTAINER__' "${traefik}" || fail 'placeholder A ausente'
-grep -Fq '__APP_B_CONTAINER__' "${traefik}" || fail 'placeholder B ausente'
-grep -Fq 'path: /health/ready' "${traefik}" || fail 'healthcheck Traefik ausente'
-grep -Fq 'interval: 5s' "${traefik}" || fail 'intervalo healthcheck incorreto'
-grep -Fq 'timeout: 2s' "${traefik}" || fail 'timeout healthcheck incorreto'
-grep -Fq 'certResolver: letsencrypt' "${traefik}" || fail 'resolver TLS ausente'
-grep -Fq 'coolify-admin.tabuamare.api.br' "${traefik}" || fail 'router admin ausente'
-grep -Fq 'www.tabuamare.api.br' "${traefik}" || fail 'router www ausente'
+grep -Fq 'tabuamare-app-a:3330' "${nginx_vhost}" || fail 'alias estavel A ausente no vhost nginx'
+grep -Fq 'tabuamare-app-b:3330' "${nginx_vhost}" || fail 'alias estavel B ausente no vhost nginx'
+if grep -Eq '__APP_[AB]_CONTAINER__' "${nginx_vhost}"; then
+	fail 'vhost nginx ainda depende de nome efemero de container'
+fi
+grep -Fq 'proxy_next_upstream error timeout http_500 http_502 http_503 http_504 invalid_header' "${nginx_vhost}" || \
+	fail 'nginx sem proxy_next_upstream (retry em falha do upstream)'
+grep -Fq 'fail_timeout=30s' "${nginx_vhost}" || fail 'passive health check (fail_timeout) ausente'
+grep -Fq 'max_fails=1' "${nginx_vhost}" || fail 'passive health check (max_fails) ausente'
+grep -Fq 'resolver 127.0.0.11 valid=5s ipv6=off' "${nginx_conf}" || fail 'Docker DNS resolver ausente'
+grep -Fq 'server tabuamare-app-a:3330 resolve' "${nginx_vhost}" || fail 'alias A sem DNS dinamico'
+grep -Fq 'server tabuamare-app-b:3330 resolve' "${nginx_vhost}" || fail 'alias B sem DNS dinamico'
+grep -Fq 'zone tabuamare_ab 64k' "${nginx_vhost}" || fail 'upstream A/B sem shared zone'
+grep -Fq 'proxy_connect_timeout 1s' "${nginx_vhost}" || fail 'failover A/B com connect timeout alto'
+grep -Fq 'limit_req zone=checkout' "${nginx_vhost}" || fail 'rate limit do checkout ausente'
+grep -Fq '__DEPLOY_SMOKE_SECRET__' "${nginx_conf}" || fail 'secret de deploy smoke ausente no map do nginx'
+grep -Fq 'coolify-admin.tabuamare.api.br' "${nginx_vhost}" || fail 'vhost coolify-admin ausente'
+grep -Fq 'upstream coolify_admin' "${nginx_vhost}" || fail 'upstream coolify_admin ausente'
+grep -Fq 'server coolify-proxy:80' "${nginx_vhost}" || fail 'coolify-proxy interno ausente'
+grep -Fq 'location = /health/debug' "${nginx_vhost}" || fail 'health/debug nao esta em location exata'
+grep -Fq 'return 404' "${nginx_vhost}" || fail 'health/debug nao esta protegido sem secret'
+grep -Fq 'www.tabuamare.api.br' "${nginx_vhost}" || fail 'vhost www ausente'
+grep -Fq 'dns-cloudflare' "${nginx_compose}" || fail 'certbot sem plugin dns-cloudflare'
+grep -Fq 'image: nginx:1.30.4-alpine' "${nginx_compose}" || fail 'nginx sem versao compativel com resolve OSS'
+grep -Fq 'pid: "service:nginx"' "${nginx_compose}" || fail 'certbot sem namespace compartilhado do nginx'
+grep -Fq 'kill -HUP 1' "${nginx_compose}" || fail 'certbot sem reload HUP no nginx'
+if grep -Eq '^[[:space:]]*- .*docker.sock' "${nginx_compose}"; then
+	fail 'certbot nao deve montar docker.sock'
+fi
+grep -Fq 'dns_cloudflare_api_token' "${nginx_issue}" || fail 'issue.sh nao usa dns_cloudflare_api_token'
+grep -Eq '^#!/bin/sh' "${nginx_issue}" || fail 'issue.sh sem shebang'
+[[ -x "${nginx_issue}" ]] || fail 'issue.sh nao executavel'
+
+migrate="${root_dir}/ops/nginx/migrate-from-coolify.sh"
+[[ -f "${migrate}" ]] || fail 'migrate-from-coolify.sh ausente'
+grep -Eq '^#!/usr/bin/env bash' "${migrate}" || fail 'migrate.sh sem shebang'
+[[ -x "${migrate}" ]] || fail 'migrate.sh nao executavel'
+grep -Fq 'assert_network_alias' "${migrate}" || fail 'migrate.sh sem validacao de alias estavel'
+grep -Fq 'label=coolify.name=${uuid}' "${migrate}" || fail 'migrate.sh nao localiza app pelo UUID do Coolify 4.1.2'
+grep -Fq 'label=com.docker.compose.project=${uuid}' "${migrate}" || fail 'migrate.sh sem fallback pelo projeto Compose'
+if grep -Fq 'label=coolify.applicationId=${uuid}' "${migrate}"; then
+	fail 'migrate.sh confunde UUID publico com applicationId numerico'
+fi
+grep -Fq 'tabuamare-app-a' "${migrate}" || fail 'migrate.sh sem alias A'
+grep -Fq 'tabuamare-app-b' "${migrate}" || fail 'migrate.sh sem alias B'
+if grep -Fq 'container_name_for' "${migrate}"; then
+	fail 'migrate.sh ainda depende de nome efemero de container'
+fi
+grep -Fq 'DEPLOY_SMOKE_SECRET' "${migrate}" || fail 'migrate.sh sem validacao de DEPLOY_SMOKE_SECRET'
+grep -Fq 'cloudflare-token.ini' "${migrate}" || fail 'migrate.sh sem token cloudflare'
+grep -Fq 'docker compose' "${migrate}" || fail 'migrate.sh sem docker compose'
+grep -Fq 'docker port coolify-proxy "${container_port}"' "${migrate}" || fail 'migrate.sh nao consulta publicacao exata de 80/443'
+if grep -Fq "grep -qE '0\\.0\\.0\\.0:(80|443)|:::(80|443)'" "${migrate}"; then
+	fail 'migrate.sh ainda confunde host port 8080 com 80'
+fi
+grep -Fq 'tabuamare-apex' "${migrate}" || fail 'migrate.sh nao lista router a apagar'
+
+stripe_check="${root_dir}/ops/check-stripe-production.sh"
+[[ -x "${stripe_check}" ]] || fail 'check-stripe-production.sh ausente ou nao executavel'
+grep -Fq 'label=coolify.name=${uuid}' "${stripe_check}" || fail 'stripe check nao localiza app pelo UUID do Coolify 4.1.2'
+grep -Fq 'https://api.stripe.com/v1/account' "${stripe_check}" || fail 'stripe check sem probe de conta'
+grep -Fq 'STRIPE_PRICE_PLANANNUAL' "${stripe_check}" || fail 'stripe check nao valida todos os prices'
+if grep -Fq 'printf "%s" "${STRIPE_SECRET_KEY}"' "${stripe_check}"; then
+	fail 'stripe check nao deve imprimir a secret key'
+fi
 
 if grep -RIEq '(sk_(live|test)_[A-Za-z0-9]{12,}|whsec_[A-Za-z0-9]{12,}|CF_DNS_API_TOKEN=[A-Za-z0-9_-]{12,}|SSH_PASS_VPS=.{8,})' \
 	"${root_dir}/ops"; then
 	fail 'possivel segredo em artefato versionado'
 fi
 
-printf 'PASS: contratos de bootstrap, firewall e Traefik\n'
+printf 'PASS: contratos de bootstrap, firewall e Nginx\n'

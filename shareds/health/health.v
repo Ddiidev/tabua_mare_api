@@ -25,6 +25,12 @@ pub fn (state &State) is_ready() bool {
 	return ready.load()
 }
 
+// is_shutting_down expoe o flag de shutdown para diagnostico em /health/debug.
+pub fn (state &State) is_shutting_down() bool {
+	mut shutting_down := state.shutting_down
+	return shutting_down.load()
+}
+
 pub fn (state &State) is_ready_with_dependencies(sqlite_ok bool, postgres_ok bool) bool {
 	return state.is_ready() && sqlite_ok && postgres_ok
 }

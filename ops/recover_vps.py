@@ -107,20 +107,25 @@ class Wizard:
         self.ssh("bash /root/tabuamare-ops/bootstrap_vps.sh")
         self.ssh("docker version --format '{{.Server.Version}}' && docker inspect coolify --format '{{.State.Health.Status}}'")
 
-        dynamic = ROOT / "ops/traefik/dynamic/tabuamare.yaml"
-        if dynamic.exists():
-            rendered = dynamic.read_text(encoding="utf-8").replace("tabuamare.api.br", self.domain)
-            self.upload_text(rendered, "/root/tabuamare-ops/tabuamare.yaml")
-            self.say("Configuração Traefik renderizada e enviada para /root/tabuamare-ops/tabuamare.yaml; aplique-a no Proxy do Coolify após revisar.")
+        nginx_dir = ROOT / "ops/nginx"
+        if nginx_dir.exists():
+            self.ssh("mkdir -p /root/tabuamare-ops/nginx")
+            for f in ("nginx.conf", "conf.d/tabuamare.conf", "docker-compose.yml", "certbot/issue.sh"):
+                src = nginx_dir / f
+                if src.exists():
+                    dst = f"/root/tabuamare-ops/nginx/{f}"
+                    self.ssh(f"mkdir -p $(dirname {dst})")
+                    self.upload(src, dst)
+            self.say("Configuração Nginx própria copiada para /root/tabuamare-ops/nginx/; configure os aliases de rede A/B no Coolify, exporte DEPLOY_SMOKE_SECRET e rode migrate-from-coolify.sh.")
 
         if self.confirm("Aplicar firewall fail-closed (80/443 somente Cloudflare; portas administrativas bloqueadas)?"):
             self.ssh("/usr/local/sbin/tabuamare-cloudflare-firewall --refresh")
 
-        self.say("A configuração do Coolify e do Traefik deve ser feita pelo painel/túnel; nenhum token é salvo pelo wizard.")
+        self.say("A configuração do Coolify deve ser feita pelo painel/túnel; nenhum token é salvo pelo wizard.")
         if any((self.coolify_backup, self.env_file, self.sqlite_a, self.sqlite_b)):
             self.say("Backups/env/SQLite foram apenas validados localmente; a importação deve ser feita no Coolify/volumes após revisar o formato e o destino.")
         self.say(f"Crie/recupere tabuamare-a e tabuamare-b com a imagem {self.image or 'sha-<commit>'}, domínio {self.domain}, porta 3330 e volumes SQLite distintos.")
-        self.say("Defina DNS-01 Cloudflare, Full (strict), health /health/ready e balanceamento A/B no Traefik.")
+        self.say("Defina DNS-01 Cloudflare no certbot, Full (strict) na Cloudflare, health /health/ready e aliases tabuamare-app-a/b no Coolify; o Nginx próprio (ops/nginx) balanceia A/B.")
         self.say("Checklist manual: DNS A/CNAME e nameservers; callback Google OAuth; webhook e preços Stripe live; smoke HTTP; backup Coolify e rollback.")
         if self.confirm("Executar validação final (Docker, Coolify, portas e HTTPS)?"):
             self.ssh("docker ps --format '{{.Names}} {{.Status}}'; ss -ltn '( sport = :22 or sport = :80 or sport = :443 )'")

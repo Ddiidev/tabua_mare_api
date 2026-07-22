@@ -3,7 +3,7 @@ FROM alpine:3.22 AS builder
 ENV V_COMMIT=45ae01d23168b6372f734eeb38a77360bbcf184a \
     VEEMARKER_COMMIT=1510ef5a7cbf980f2e075f02baada7190748e3f7 \
     DOTENV_COMMIT=1d9477c8b1a3f5ca14b2eb042c4e6d52449b75d4 \
-    V_STRIPE_COMMIT=ccc7e4151038589d97b47e3cc7d0de44abf3247c
+    V_STRIPE_COMMIT=dca05be5fca093fe31f9e7d5f3b356fd84e3a690
 
 RUN apk add --no-cache \
     build-base \
