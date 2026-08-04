@@ -3,7 +3,7 @@ module main
 import veb
 import db.pg
 import net.http
-import json
+import json2
 import shareds.web_ctx
 import shareds.conf_env
 import shareds.infradb_pg
@@ -198,7 +198,7 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 		return ctx.text('falha ao obter userinfo: ${err}')
 	}
 
-	raw_json := json.encode(user_info)
+	raw_json := json2.encode(user_info)
 
 	eprintln('[oauth] connecting postgres')
 	mut db := ac.db_conn() or {
@@ -241,7 +241,7 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 	})
 
 	eprintln('[oauth] callback completed')
-	next := safe_redirect_path(ctx.query['next'] or { '/' })
+	next := safe_redirect_path(ctx.query['next'] or { '/dashboard' })
 	return ctx.redirect(next, veb.RedirectParams{ typ: .found })
 }
 
@@ -363,7 +363,7 @@ pub fn (mut ac AuthController) api_keys_create(mut ctx web_ctx.WsCtx) veb.Result
 		return ctx.json(types.failure[string](401, 'nao autenticado'))
 	}
 
-	parsed := json.decode(ApiKeyCreatePayload, ctx.req.data) or {
+	parsed := json2.decode[ApiKeyCreatePayload](ctx.req.data) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'JSON invalido: ${err}'))
 	}
@@ -423,7 +423,7 @@ pub fn (mut ac AuthController) checkout(mut ctx web_ctx.WsCtx) veb.Result {
 		return ctx.json(types.failure[string](401, 'nao autenticado'))
 	}
 
-	parsed := json.decode(CheckoutPayload, ctx.req.data) or {
+	parsed := json2.decode[CheckoutPayload](ctx.req.data) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'JSON invalido: ${err}'))
 	}
@@ -797,7 +797,7 @@ struct StripeWebhookEventObject {
 }
 
 fn decode_stripe_event(event stripe.Event) !StripeWebhookEvent {
-	return json.decode(StripeWebhookEvent, event.raw_body) or {
+	return json2.decode[StripeWebhookEvent](event.raw_body) or {
 		error('falha ao parse raw_body: ${err}')
 	}
 }
