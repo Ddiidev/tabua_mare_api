@@ -10,6 +10,7 @@ TabuaMareAPI
 
 # Ignore binary output folders
 bin/
+node_modules/
 .velvet/
 
 # Ignore common editor/system specific metadata
@@ -31,11 +32,15 @@ bin/
 # Ignore files
 *.txt
 *.json
+!package.json
+!package-lock.json
 
 /.qodo
 /.trae
 /.superpowers/
 /docs/
+/out
+/TASKS
 
 # SSH operacional local (nunca versionar)
 /run_ssh.sh
