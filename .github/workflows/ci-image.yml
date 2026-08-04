@@ -105,6 +105,17 @@ jobs:
           ./scripts/test_coolify_deploy.sh
           ./scripts/test_health_lifecycle.sh
 
+      - name: Node.js e build dos assets CSS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Gerar CSS minificado por rota
+        run: |
+          npm ci
+          npm run css:build
+
       - name: Buildx
         uses: docker/setup-buildx-action@v3
 
