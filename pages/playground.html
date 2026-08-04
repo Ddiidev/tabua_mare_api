@@ -9,8 +9,7 @@
 
   <title>Playground - Tábua de Marés API</title>
   <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
-  <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+  <link rel="stylesheet" href="/pages/assets/css/playground.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-ghcolors.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
@@ -37,8 +36,8 @@
     .code-block pre {
       max-height: 500px;
       overflow-y: auto;
-      border: 1px solid var(--pico-muted-border-color);
-      border-radius: var(--pico-border-radius);
+      border: 1px solid var(--ui-muted-border-color);
+      border-radius: var(--ui-border-radius);
       padding-top: 60px;
     }
 
@@ -50,8 +49,8 @@
       padding: 4px 8px;
       font-size: 12px;
       width: auto;
-      background: var(--pico-primary-background);
-      color: var(--pico-primary-inverse);
+      background: var(--ui-primary-background);
+      color: var(--ui-primary-inverse);
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -425,42 +424,6 @@
   <!-- Footer -->
   ${ footer }
 
-  <!-- Contact Modal -->
-  <dialog id="contact-modal" class="modal">
-    <article class="modal-content">
-      <header class="modal-header">
-        <h3>Contato</h3>
-        <button class="close-btn" aria-label="Close" rel="prev"
-          onclick="document.getElementById('contact-modal').close()">
-          ×
-        </button>
-      </header>
-      <div class="modal-body">
-        <p>
-          Entre em contato conosco para dúvidas, sugestões ou suporte técnico.
-        </p>
-        <form class="contact-form">
-          <div class="form-group">
-            <label for="name">Nome:</label>
-            <input type="text" id="name" name="name" required />
-          </div>
-
-          <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required />
-          </div>
-
-          <div class="form-group">
-            <label for="message">Mensagem:</label>
-            <textarea id="message" name="message" rows="4" required></textarea>
-          </div>
-
-          <button type="submit" class="btn btn-primary">Enviar</button>
-        </form>
-      </div>
-    </article>
-  </dialog>
-
   <!-- Scripts -->
    <#noparse>
   <script>
@@ -468,9 +431,7 @@
 
     createApp({
       apiVersion: 'v2',
-      showContactModal: false,
       showMobileMenu: false,
-      showContact: false,
       loading: {
         states: false,
         harbors: false,

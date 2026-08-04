@@ -9,8 +9,7 @@
   ${ og }
 
   <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
-  <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+  <link rel="stylesheet" href="/pages/assets/css/dashboard.css" />
   <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
   <style>
@@ -406,10 +405,10 @@
         </p>
 
         <!-- Criar nova key -->
-        <details>
-          <summary role="button" class="button-yellow">Gerar nova API Key</summary>
+        <details class="api-key-create-details">
+          <summary role="button" class="button-yellow dashboard-details-toggle">Gerar nova API Key</summary>
           <form @submit.prevent="createKey" style="margin-top: 1rem;">
-            <div class="form-row">
+            <div class="form-row api-key-create-row">
               <div>
                 <label for="label">Label</label>
                 <input id="label" v-model="newLabel" placeholder="Ex: Produção" />
@@ -475,8 +474,8 @@
           </div>
         </div>
         <div class="empty-state" v-if="!rateLimit">Carregando limites...</div>
-        <details style="margin-top: 1rem;">
-          <summary role="button" class="outline">Testar limite de RPM</summary>
+        <details class="rpm-test-details" style="margin-top: 1rem;">
+          <summary role="button" class="outline dashboard-details-toggle">Testar limite de RPM</summary>
           <div style="margin-top: 1rem;">
             <div class="form-row">
               <div style="display: flex; align-items: center; gap: 0.5rem;">
