@@ -2,13 +2,13 @@ module rate_limit
 
 import veb
 import db.pg
+import shareds.types
 import shareds.web_ctx
 import shareds.conf_env
-import shareds.types
 import domain.auth_user
-import repository.auth as repo_auth
-import repository.rate_limit as rl
 import shareds.infradb_pg
+import repository.rate_limit as rl
+import repository.auth as repo_auth
 
 pub struct RateLimitOpts {
 pub mut:

@@ -1,18 +1,18 @@
 module main
 
 import veb
+import json2
 import db.pg
 import net.http
-import json2
+import shareds.types
+import v_stripe.stripe
 import shareds.web_ctx
 import shareds.conf_env
+import domain.auth_user
 import shareds.infradb_pg
-import shareds.types
 import shareds.rate_limit
 import repository.rate_limit as rl
-import domain.auth_user
 import repository.auth as repo_auth
-import v_stripe.stripe
 
 // AuthController trata das rotas de autenticacao (login Google, logout, /me, avatar).
 pub struct AuthController {
@@ -648,7 +648,7 @@ fn resolve_app_customer(mut stripe_client stripe.Client, existing_customer_id st
 	new_customer := stripe_client.create_customer_with_options(stripe.CustomerCreateParams{
 		email:       email
 		description: 'Tabua Mare API'
-		metadata: {
+		metadata:    {
 			'user_id': user_id.str()
 		}
 	}, stripe.RequestOptions{

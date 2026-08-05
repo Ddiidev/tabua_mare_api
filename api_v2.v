@@ -6,10 +6,10 @@ import shareds.types
 import shareds.web_ctx
 import shareds.conf_env
 import shareds.rate_limit
+import shareds.infradb_pg
+import repository.rate_limit as rl
 import repository.habor_mare as repo_habor_mare
 import repository.tabua_mare as repo_tabua_mare
-import repository.rate_limit as rl
-import shareds.infradb_pg
 
 // APIController Controller da API endpoint base: /api/v2
 pub struct APIControllerV2 {
@@ -104,8 +104,8 @@ pub fn (mut api APIControllerV2) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx,
 	lng := geo_latlng[1] or { 0.0 }
 
 	// TODO: Depois mover isso para dentro do método de get_tabua_mare_by_month_days
-	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state_v2(mut api.pool_conn,
-		lat, lng, state) or {
+	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state(mut api.pool_conn, lat,
+		lng, state) or {
 		ctx.res.set_status(.not_found)
 		return ctx.json(types.failure[string](404,
 			'Nenhum porto encontrado perto das coordenadas fornecidas.'))
@@ -128,8 +128,8 @@ pub fn (mut api APIControllerV2) get_nearest_harbor_by_state(mut ctx web_ctx.WsC
 	lat := geo_latlng[0] or { 0.0 }
 	lng := geo_latlng[1] or { 0.0 }
 
-	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state_v2(mut api.pool_conn,
-		lat, lng, state) or {
+	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state(mut api.pool_conn, lat,
+		lng, state) or {
 		ctx.res.set_status(.not_found)
 		return ctx.json(types.failure[string](404,
 			'Nenhum porto encontrado perto das coordenadas fornecidas.'))
@@ -145,7 +145,7 @@ pub fn (mut api APIControllerV2) get_nearest_harbor(mut ctx web_ctx.WsCtx, lat_l
 	lat := geo_latlng[0] or { 0.0 }
 	lng := geo_latlng[1] or { 0.0 }
 
-	nearest_harbor := repo_habor_mare.find_nearest_harbor_v2(mut api.pool_conn, lat, lng) or {
+	nearest_harbor := repo_habor_mare.find_nearest_harbor(mut api.pool_conn, lat, lng) or {
 		ctx.res.set_status(.not_found)
 		return ctx.json(types.failure[string](404,
 			'Nenhum porto encontrado perto das coordenadas fornecidas.'))

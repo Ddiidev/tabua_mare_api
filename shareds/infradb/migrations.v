@@ -1,8 +1,8 @@
 module infradb
 
 import db.sqlite
-import shareds.conf_env
 import shareds.geohash
+import shareds.conf_env
 
 // apply_startup_migrations keeps SQLite schema ready for geospatial nearest-harbor queries.
 // SQLite é sempre-on (dados de maré). PostgreSQL (auth/dash) tem migrações próprias em shareds.infradb_pg.

@@ -1,7 +1,7 @@
 module rate_limit
 
-import db.pg
 import time
+import db.pg
 
 // window_key_minute retorna a chave de janela de minuto (YYYYMMDDHHMM).
 pub fn window_key_minute() string {

@@ -2,11 +2,11 @@ module habor_mare
 
 import orm
 import pool
-import db.sqlite as db_provider
 import time
 import arrays
 import entities
 import shareds.types
+import db.sqlite as db_provider
 
 // list_States Lista apenas os estados
 pub fn list_states(mut pool_conn pool.ConnectionPool) !types.ResultValues[string] {
