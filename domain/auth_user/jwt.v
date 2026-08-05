@@ -1,10 +1,10 @@
 module auth_user
 
+import time
+import json2
 import crypto.hmac
 import crypto.sha256
 import encoding.base64
-import json
-import time
 
 struct JwtHeader {
 	alg string
@@ -23,8 +23,9 @@ pub:
 
 // make_token gera um JWT HS256 com as claims fornecidas e o secret.
 pub fn make_token(secret string, claims JwtClaims) string {
-	header := base64.url_encode(json.encode(JwtHeader{'HS256', 'JWT'}).bytes())
-	payload := base64.url_encode(json.encode(claims).bytes())
+	header :=
+		base64.url_encode(json2.encode(JwtHeader{'HS256', 'JWT'}, escape_unicode: true).bytes())
+	payload := base64.url_encode(json2.encode(claims, escape_unicode: true).bytes())
 	signature := base64.url_encode(hmac.new(secret.bytes(), '${header}.${payload}'.bytes(),
 		sha256.sum, sha256.block_size))
 	return '${header}.${payload}.${signature}'
@@ -53,7 +54,7 @@ pub fn decode(token string) !JwtClaims {
 		return error('token invalido')
 	}
 	payload := base64.url_decode_str(parts[1])
-	return json.decode(JwtClaims, payload)!
+	return json2.decode[JwtClaims](payload)!
 }
 
 // is_expired checa se exp ja passou (exp 0 = sem expiracao).

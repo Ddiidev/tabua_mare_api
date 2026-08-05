@@ -1,7 +1,7 @@
 module main
 
-import db.pg
 import os
+import db.pg
 import shareds.infradb_pg
 
 fn test_postgres_startup_migrations_are_idempotent() ! {

@@ -1,18 +1,18 @@
 module main
 
 import os
-import pool
-import sync.stdatomic
-import time
 import veb
-import shareds.web_ctx
+import pool
+import time
+import sync.stdatomic
 import shareds.health
 import shareds.infradb
-import shareds.infradb_pg
+import shareds.web_ctx
 import shareds.conf_env
+import domain.auth_user
+import shareds.infradb_pg
 import leafscale.veemarker
 import shareds.components_view
-import domain.auth_user
 
 const shutdown_requested = stdatomic.new_atomic[bool](false)
 
@@ -99,11 +99,6 @@ fn main() {
 		app.static_compression_mime_types = [veb.mime_types['.css']]
 	}
 
-	mut api_controller := &APIController{
-		pool_conn: infradb.new()!
-		env:       env
-	}
-
 	mut api_controller_v2 := &APIControllerV2{
 		pool_conn: infradb.new()!
 		env:       env
@@ -116,11 +111,9 @@ fn main() {
 		avatar_cache: auth_user.new_avatar_cache(env.avatar_cache_ttl_minutes)
 	}
 
-	api_controller.init_cors()
 	api_controller_v2.init_cors()
 	api_controller_v2.init_rate_limit(env, pg_holder)
 
-	// app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
 	app.register_controller[APIControllerV2, web_ctx.WsCtx]('/api/v2', mut api_controller_v2)!
 	app.register_controller[AuthController, web_ctx.WsCtx]('/auth', mut auth_controller)!
 	app.mount_static_folder_at('./pages/assets', '/pages/assets')!

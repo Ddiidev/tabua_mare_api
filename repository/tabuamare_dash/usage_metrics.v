@@ -1,7 +1,7 @@
 module tabuamare_dash
 
-import db.pg
 import db
+import db.pg
 
 // UsageSummary resume o uso de um bucket (ip ou api_key) no mes corrente.
 pub struct UsageSummary {

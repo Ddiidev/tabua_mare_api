@@ -1,8 +1,8 @@
 module infradb_pg
 
+import time
 import db.pg
 import net.urllib
-import time
 import shareds.conf_env
 
 // PgConn e' a conexao PostgreSQL compartilhada. O pg.DB mantem o pool interno
