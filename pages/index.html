@@ -64,7 +64,12 @@
               {{ requestState === 'loading' ? 'Consultando…' : 'Executar' }}
             </button>
           </div>
-          <div class="tide-track" aria-hidden="true"><span class="tide-water"></span><span class="tide-buoy"></span></div>
+          <div class="tide-track" aria-hidden="true">
+            <span class="tide-wave tide-wave--back"></span>
+            <span class="tide-wave tide-wave--middle"></span>
+            <span class="tide-wave tide-wave--front"></span>
+            <span class="tide-boat"></span>
+          </div>
           <pre class="tide-console__response" aria-live="polite"><code>{{ responseText }}</code></pre>
           <footer class="tide-console__footer">
             <span>Nenhuma API key enviada</span>
@@ -218,17 +223,62 @@
         requestState: 'idle',
         responseText: '{\n  "pronto": true,\n  "mensagem": "Clique em Executar para consultar a API"\n}',
         statusLabel: 'pronto',
+        tideFrame: 0,
+        tideOffset: 0,
+        tideLastFrame: 0,
+        tideSettlingAt: 0,
         selectEndpoint(endpoint, event) {
           this.selectedEndpoint = endpoint;
           this.requestState = 'idle';
           this.statusLabel = 'pronto';
           this.responseText = '{\n  "pronto": true,\n  "mensagem": "Clique em Executar para consultar a API"\n}';
+          cancelAnimationFrame(this.tideFrame);
+          this.tideLastFrame = 0;
+          this.tideSettlingAt = 0;
           event.currentTarget.closest('details').open = false;
+        },
+        startTide() {
+          cancelAnimationFrame(this.tideFrame);
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          this.tideLastFrame = 0;
+          this.tideSettlingAt = 0;
+          this.tideFrame = requestAnimationFrame((now) => this.moveTide(now));
+        },
+        moveTide(now) {
+          const elapsed = this.tideLastFrame ? Math.min(now - this.tideLastFrame, 32) : 0;
+          const settlingProgress = this.tideSettlingAt
+            ? Math.min((now - this.tideSettlingAt) / 2400, 1)
+            : 0;
+          const speed = this.tideSettlingAt ? Math.pow(1 - settlingProgress, 3) : 1;
+          this.tideOffset += elapsed * speed;
+          this.tideLastFrame = now;
+
+          const waves = document.querySelectorAll('.tide-wave');
+          if (waves.length === 3) {
+            waves[0].style.backgroundPositionX = (-this.tideOffset * 0.2) + 'px';
+            waves[1].style.backgroundPositionX = (this.tideOffset * 0.28) + 'px';
+            waves[2].style.backgroundPositionX = (-this.tideOffset * 0.16) + 'px';
+          }
+          const boat = document.querySelector('.tide-boat');
+          if (boat) {
+            const bob = Math.sin(this.tideOffset / 115);
+            boat.style.setProperty('--tide-bob', (-1 - bob * 3) + 'px');
+            boat.style.setProperty('--tide-roll', (bob * 3) + 'deg');
+          }
+
+          if (settlingProgress < 1) {
+            this.tideFrame = requestAnimationFrame((nextNow) => this.moveTide(nextNow));
+          }
+        },
+        settleTide() {
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          this.tideSettlingAt = performance.now();
         },
         async runDemo() {
           this.requestState = 'loading';
           this.statusLabel = 'consultando';
           this.responseText = '{\n  "carregando": true\n}';
+          requestAnimationFrame(() => this.startTide());
           try {
             const response = await fetch(this.selectedEndpoint.path, { credentials: 'same-origin' });
             const body = await response.json();
@@ -239,6 +289,8 @@
             this.requestState = 'error';
             this.statusLabel = 'falha de rede';
             this.responseText = JSON.stringify({ error: { message: error.message } }, null, 2);
+          } finally {
+            requestAnimationFrame(() => this.settleTide());
           }
         }
       }).mount();

@@ -1545,11 +1545,16 @@ nav a {
     transition-duration: 0.01ms !important;
   }
 
-  .tide-water,
-  .tide-buoy,
+  .tide-wave,
+  .tide-boat,
   .tide-console__response,
   .mobile-menu.show {
     transform: none !important;
+  }
+
+  .tide-wave,
+  .tide-boat {
+    will-change: auto;
   }
 }
 
@@ -3624,67 +3629,83 @@ h4,
 
 .tide-track {
   position: relative;
-  height: 25px;
+  height: 38px;
   overflow: hidden;
   border-block: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), rgba(8, 145, 178, 0.08));
 }
 
-.tide-water {
+.tide-wave {
   position: absolute;
-  inset: auto 0 0;
-  height: 7px;
-  background: var(--ocean-600);
-  transform: scaleX(0.08);
-  transform-origin: left;
-  transition: transform 600ms cubic-bezier(0.2, 0.9, 0.25, 1.2);
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  background-repeat: repeat-x;
+  will-change: background-position;
 }
 
-.tide-buoy {
+.tide-wave--back {
+  height: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='144' height='30' viewBox='0 0 144 30'%3E%3Cpath fill='%230e7490' d='M0 10C18 2 30 2 48 10s30 8 48 0 30-8 48 0v20H0Z'/%3E%3C/svg%3E");
+  background-size: 144px 30px;
+  opacity: 0.72;
+}
+
+.tide-wave--middle {
+  height: 25px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='25' viewBox='0 0 120 25'%3E%3Cpath fill='%230891b2' d='M0 8C15 1 25 1 40 8s25 7 40 0 25-7 40 0v17H0Z'/%3E%3C/svg%3E");
+  background-size: 120px 25px;
+  opacity: 0.8;
+}
+
+.tide-wave--front {
+  height: 19px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='168' height='19' viewBox='0 0 168 19'%3E%3Cpath fill='%2322b8cf' d='M0 6C21 0 35 0 56 6s35 6 56 0 35-6 56 0v13H0Z'/%3E%3C/svg%3E");
+  background-size: 168px 19px;
+  opacity: 0.88;
+}
+
+.tide-boat {
+  --tide-bob: -1px;
+  --tide-roll: 0deg;
   position: absolute;
-  bottom: 5px;
-  left: 7%;
-  width: 13px;
-  height: 13px;
-  border: 3px solid var(--ocean-950);
-  border-radius: 50%;
+  z-index: 2;
+  bottom: 11px;
+  left: 8%;
+  width: 32px;
+  height: 22px;
+  filter: drop-shadow(0 2px 1px rgba(3, 24, 38, 0.42));
+  transform: translateY(var(--tide-bob)) rotate(var(--tide-roll));
+  transform-origin: 50% 82%;
+  will-change: transform;
+}
+
+.tide-boat::before,
+.tide-boat::after {
+  position: absolute;
+  content: "";
+}
+
+.tide-boat::before {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 9px;
+  border: 1px solid rgba(8, 47, 73, 0.72);
   background: var(--sun-400);
-  transition: left 600ms cubic-bezier(0.2, 0.9, 0.25, 1.2);
+  clip-path: polygon(0 0, 100% 0, 82% 100%, 18% 100%);
 }
 
-.tide-console.is-loading .tide-water {
-  animation: tide-loading 1.2s ease-in-out infinite alternate;
-}
-
-.tide-console.is-loading .tide-buoy {
-  animation: buoy-loading 1.2s ease-in-out infinite alternate;
-}
-
-.tide-console.is-success .tide-water {
-  transform: scaleX(1);
-}
-
-.tide-console.is-success .tide-buoy {
-  left: calc(100% - 24px);
-}
-
-.tide-console.is-error .tide-water {
-  background: var(--danger);
-  transform: scaleX(0.35);
-}
-
-.tide-console.is-error .tide-buoy {
-  left: 30%;
-}
-
-@keyframes tide-loading {
-  from { transform: scaleX(0.15); }
-  to { transform: scaleX(0.72); }
-}
-
-@keyframes buoy-loading {
-  from { left: 13%; transform: translateY(0); }
-  to { left: 70%; transform: translateY(-3px); }
+.tide-boat::after {
+  bottom: 8px;
+  left: 8px;
+  width: 16px;
+  height: 10px;
+  border: 1px solid rgba(8, 47, 73, 0.72);
+  border-bottom: 0;
+  border-radius: 4px 5px 0 0;
+  background: linear-gradient(90deg, #e8f8fb 0 52%, #0c4a6e 53% 78%, #e8f8fb 79%);
+  clip-path: polygon(14% 0, 78% 0, 100% 100%, 0 100%);
 }
 
 .tide-console__response {
