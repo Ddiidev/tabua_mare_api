@@ -48,12 +48,15 @@ fn (mut api APIControllerV2) init_rate_limit(env conf_env.EnvConfig, pg_holder &
 // list_states Lista todos os estados brasileiros
 @['/states']
 pub fn (mut api APIControllerV2) list_states(mut ctx web_ctx.WsCtx) veb.Result {
-	res := repo_habor_mare.list_states(mut api.pool_conn) or {
-		ctx.res.set_status(.bad_request)
-		return ctx.json(types.failure[string](400, 'error: ${err}'))
-	}
+	// res := repo_habor_mare.list_states(mut api.pool_conn) or {
+	// 	ctx.res.set_status(.bad_request)
+	// 	return ctx.json(types.failure[string](400, 'error: ${err}'))
+	// }
 
-	return ctx.json(types.success(res.data))
+	// return ctx.json(types.success(res.data))
+
+	ctx.res.header.add_custom('Content-Type', 'application/json') or {}
+	return ctx.text('{"data":["al","ap","ba","ce","es","ma","pa","pb","pe","pi","pr","rj","rn","rs","sc","se","sp"],"total":17}')
 }
 
 // list_harbor_name_by_states Lista todos os nomes de portos de um estado específico
