@@ -22,11 +22,11 @@ pub fn list_harbor_name_by_states(mut pool_conn pool.ConnectionPool, state strin
 
 	harbor_name := qb
 		.where('year = ? && state = ?', year, state)!
-		.select('id_harbor_state', 'harbor_name', 'data_collection_institution', 'year')!
+		.select('id_harbor_state', 'harbor_name', 'data_collection_institution')!
 		.query()!
 		.map(dto.DTOHaborMareListHaborNameByState{
 			id:                          it.id_harbor_state
-			year:                        it.year
+			year:                        year
 			harbor_name:                 it.harbor_name
 			data_collection_institution: it.data_collection_institution
 		})

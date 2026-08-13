@@ -13,8 +13,8 @@ pub fn (ids StringRange) list_string() ![]string {
 		return []string{}
 	}
 
-	mut inters := []string{}
 	parts := content.split(',')
+	mut inters := []string{cap: parts.len}
 
 	for i, raw_part in parts {
 		part := raw_part.trim_space()

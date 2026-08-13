@@ -22,19 +22,17 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 	mut qb := orm.new_query[entities.DataMare](db)
 
 	year := time.now().year
-	harbors := qb.where('year = ? && id_harbor_state IN ?', year, ids_ordered.map(it))!.select('id_harbor_state',
-		'year', 'card', 'state', 'timezone', 'mean_level', 'harbor_name',
+	harbors := qb.where('year = ? && id_harbor_state IN ?', year, ids_ordered.map(it))!.select('id',
+		'id_harbor_state', 'year', 'card', 'state', 'timezone', 'mean_level', 'harbor_name',
 		'data_collection_institution')!.query()!
-	dump(harbors)
 	ids := harbors.map(it.id)
 
 	geo_location := sql db {
-		select from entities.GeoLocation where data_mare_id in ids
+		select lat, lng, decimal_lat, decimal_lng, lat_direction, lng_direction from entities.GeoLocation where data_mare_id in ids
 	}!
 
 	mut data_harbors := []dto.DTOHaborMareGetHarbor{}
 	for harbor in harbors {
-		filtered_geo := geo_location.filter(it.data_mare_id == harbor.id)
 		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id_harbor_state
 			year:                        harbor.year
@@ -44,7 +42,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 			mean_level:                  harbor.mean_level
 			harbor_name:                 harbor.harbor_name
 			data_collection_institution: harbor.data_collection_institution
-			geo_location:                filtered_geo.map(dto.GeoLocation{
+			geo_location:                geo_location.map(dto.GeoLocation{
 				lat:           it.lat
 				lng:           it.lng
 				decimal_lat:   it.decimal_lat
