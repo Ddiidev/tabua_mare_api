@@ -896,6 +896,7 @@ footer {
 .modal-header h3 {
   margin: 0;
   color: var(--ui-color);
+  font-weight: 700;
 }
 
 .close-btn {
@@ -1588,7 +1589,7 @@ nav a {
 .dashboard-heading h1 {
   margin: 0;
   color: var(--ocean-950);
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(1.7rem, 3.2vw, 2.3rem);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1885,8 +1886,9 @@ nav a {
 
 .dashboard-page .plan-card .price {
   color: var(--ocean-950);
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .dashboard-page .plan-card .limits {
@@ -1918,8 +1920,9 @@ nav a {
 
 .support-story h1 {
   margin: 0;
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(3rem, 6vw, 5.6rem);
+  font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.96;
 }
@@ -2005,8 +2008,9 @@ nav a {
 .pix-panel h2 {
   margin: 0.4rem 0 0;
   color: #fff;
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: 3.2rem;
+  font-weight: 700;
 }
 
 .pix-panel > p:not(.pix-panel__label, .pix-panel__feedback) {
@@ -2277,8 +2281,9 @@ nav a {
 
 .playground-hero h1 {
   margin: 0;
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(3rem, 7vw, 5.8rem);
+  font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.95;
 }
@@ -2601,8 +2606,9 @@ nav a {
 
 .docs-page .docs-hero h1 {
   margin: 0;
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(3rem, 7vw, 5.8rem);
+  font-weight: 700;
   letter-spacing: -0.055em;
   line-height: 0.95;
 }
@@ -2731,8 +2737,9 @@ nav a {
 
 .docs-workspace .section-header h2 {
   margin: 0;
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
   letter-spacing: -0.035em;
 }
 
@@ -3149,23 +3156,6 @@ h4,
   padding-inline: 0;
 }
 
-.skip-link {
-  position: fixed;
-  top: 0.75rem;
-  left: 0.75rem;
-  z-index: 10001;
-  padding: 0.65rem 0.9rem;
-  border-radius: 0.4rem;
-  background: var(--sun-400);
-  color: var(--ocean-950);
-  font-weight: 800;
-  transform: translateY(-180%);
-}
-
-.skip-link:focus {
-  transform: translateY(0);
-}
-
 .site-nav-shell {
   isolation: isolate;
   position: sticky;
@@ -3203,7 +3193,7 @@ h4,
 }
 
 .site-nav__brand span {
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: 1.16rem;
   font-weight: 700;
 }
@@ -3309,8 +3299,9 @@ h4,
 }
 
 .site-footer__brand strong {
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: 1.08rem;
+  font-weight: 700;
 }
 
 .site-footer__brand small {
@@ -3435,7 +3426,7 @@ h4,
   max-width: 760px;
   margin: 0;
   color: var(--ocean-950);
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(3rem, 6vw, 5.7rem);
   font-weight: 700;
   letter-spacing: -0.055em;
@@ -3791,8 +3782,9 @@ h4,
 .open-source-section h2,
 .final-cta h2 {
   margin: 0;
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(2.25rem, 4.8vw, 4.5rem);
+  font-weight: 700;
   letter-spacing: -0.045em;
   line-height: 1;
 }
@@ -3908,7 +3900,7 @@ h4,
 .price-card__price {
   margin: 1.1rem 0 0;
   color: #fff;
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: 2.5rem;
   font-weight: 700;
   line-height: 1;
@@ -4227,6 +4219,10 @@ h4,
   --weight-ui-strong: 500;
 }
 
+.site-nav__brand span {
+  font-weight: 700;
+}
+
 button,
 [role="button"],
 .site-nav__links a,
@@ -4250,10 +4246,13 @@ button.yellow {
   font-weight: 600;
 }
 
-.site-nav__brand span,
 .site-nav__brand small,
 .price-card__name {
   font-weight: 600;
+}
+
+.site-nav__brand span {
+  font-weight: 700;
 }
 
 /* Prism: tokens legíveis sobre o fundo oceânico dos exemplos. */
@@ -4313,8 +4312,9 @@ main.playground-page .code-block code {
 .rate-limit-test-hero h1 {
   margin: 0;
   color: var(--ocean-950);
-  font-family: "Spectral", Georgia, serif;
+  font-family: Georgia, "Spectral", serif;
   font-size: clamp(2.5rem, 6vw, 4.8rem);
+  font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 0.98;
 }
