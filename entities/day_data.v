@@ -10,7 +10,6 @@ pub mut:
 	hours         []HourData @[fkey: 'day_data_id'; skip]
 }
 
-
 @[table: 'day_data']
 pub struct DayDataWithoutFK {
 pub mut:
