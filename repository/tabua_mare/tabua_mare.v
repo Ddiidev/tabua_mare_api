@@ -16,36 +16,42 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 		pool_conn.put(conn) or { println(err.msg()) }
 	}
 
-	mut qb_month := orm.new_query[entities.MonthData](db)
-	mut qb_harbor := orm.new_query[entities.DataMare](db)
+	mut qb_harbor := orm.new_query[entities.DataMareWithoutFK](db)
 
 	year := time.now().year
-	harbor := qb_harbor
+
+	mut harbor := qb_harbor
 		.where('id_harbor_state = ? && year = ?', harbor_id, year)!
 		.query()!
+
+	dump(harbor)
 
 	if harbor.len == 0 {
 		return error('Nenhum dado de porto encontrado para o ID especificado')
 	}
 
+	mut qb_month := orm.new_query[entities.MonthDataWithoutFK](db)
 	mut month_data := qb_month
 		.where('data_mare_id = ? && month = ?', harbor[0].id, month)!
+		.select('id', 'month', 'month_name')!
 		.query()!
-
-	mut qb_month_days := orm.new_query[entities.DayData](db)
-	mut qb_hours := orm.new_query[entities.HourData](db)
 
 	if month_data.len == 0 {
 		return error('Nenhum dado mensal encontrado para o porto e mês especificados')
 	}
 
+	mut qb_month_days := orm.new_query[entities.DayDataWithoutFK](db)
+	mut qb_hours := orm.new_query[entities.HourData](db)
+
 	mut days_data := qb_month_days
-		.where('month_data_id = ? && day IN ?', month_data[0].id, days.map(orm.Primitive(it)))!
+		.where('month_data_id = ? && day IN ?', month_data[0].id, days.map(it))!
 		.order(.asc, 'day')!
+		.select('id', 'day', 'weekday_name')!
 		.query()!
 
 	mut hours_from_days := qb_hours
-		.where('day_data_id IN ?', orm.Primitive(days_data.map(orm.Primitive(it.id))))!
+		.where('day_data_id IN ?', days_data.map(it.id))!
+		.select('day_data_id', 'hour', 'level')!
 		.query()!
 
 	mut days_data_with_hours := []dto.DTODayData{}

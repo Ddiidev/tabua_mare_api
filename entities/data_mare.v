@@ -11,7 +11,21 @@ pub mut:
 	timezone                    string        @[sql_type: 'VARCHAR(20)']
 	card                        string        @[sql_type: 'VARCHAR(20)']
 	data_collection_institution string        @[sql_type: 'VARCHAR(10)']
-	geo_location                []GeoLocation @[fkey: 'data_mare_id'; skip]
 	mean_level                  f32           @[sql_type: 'REAL']
+	geo_location                []GeoLocation @[fkey: 'data_mare_id'; skip]
 	months                      []MonthData   @[fkey: 'data_mare_id'; skip]
+}
+
+@[table: 'data_mare']
+pub struct DataMareWithoutFK {
+pub mut:
+	id                          int @[primary; sql: serial]
+	year                        int
+	id_harbor_state             string @[sql_type: 'VARCHAR(5)']
+	harbor_name                 string @[sql_type: 'VARCHAR(255)']
+	state                       string @[sql_type: 'VARCHAR(2)']
+	timezone                    string @[sql_type: 'VARCHAR(20)']
+	card                        string @[sql_type: 'VARCHAR(20)']
+	data_collection_institution string @[sql_type: 'VARCHAR(10)']
+	mean_level                  f32    @[sql_type: 'REAL']
 }
