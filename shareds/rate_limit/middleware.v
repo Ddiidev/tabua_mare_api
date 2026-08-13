@@ -162,10 +162,13 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 		}
 	} else {
 		// plano ilimitado: apenas conta used
-		rl.inc(mut db, bucket, 'month', rl.window_key_month()) or {
-			eprintln('rate_limit month count failed: ${err}')
-			return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
-		}
+		go fn [mut db, bucket] () {
+			rl.inc(mut db, bucket, 'month', rl.window_key_month()) or {
+				//TODO: Logar
+				eprintln('rate_limit month count failed: ${err}')
+				// return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
+			}
+		}()
 	}
 
 	return true
