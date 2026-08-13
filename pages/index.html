@@ -73,6 +73,7 @@
           <pre class="tide-console__response" aria-live="polite"><code>{{ responseText }}</code></pre>
           <footer class="tide-console__footer">
             <span>Nenhuma API key enviada</span>
+            <span aria-live="polite">{{ responseTimeLabel }}</span>
             <span>JSON</span>
           </footer>
         </section>
@@ -223,6 +224,7 @@
         requestState: 'idle',
         responseText: '{\n  "pronto": true,\n  "mensagem": "Clique em Executar para consultar a API"\n}',
         statusLabel: 'pronto',
+        responseTimeLabel: 'tempo —',
         tideFrame: 0,
         tideOffset: 0,
         tideLastFrame: 0,
@@ -232,6 +234,7 @@
           this.requestState = 'idle';
           this.statusLabel = 'pronto';
           this.responseText = '{\n  "pronto": true,\n  "mensagem": "Clique em Executar para consultar a API"\n}';
+          this.responseTimeLabel = 'tempo —';
           cancelAnimationFrame(this.tideFrame);
           this.tideLastFrame = 0;
           this.tideSettlingAt = 0;
@@ -275,8 +278,10 @@
           this.tideSettlingAt = performance.now();
         },
         async runDemo() {
+          const startedAt = performance.now();
           this.requestState = 'loading';
           this.statusLabel = 'consultando';
+          this.responseTimeLabel = 'tempo …';
           this.responseText = '{\n  "carregando": true\n}';
           requestAnimationFrame(() => this.startTide());
           try {
@@ -290,6 +295,7 @@
             this.statusLabel = 'falha de rede';
             this.responseText = JSON.stringify({ error: { message: error.message } }, null, 2);
           } finally {
+            this.responseTimeLabel = 'tempo ' + Math.max(1, Math.round(performance.now() - startedAt)) + ' ms';
             requestAnimationFrame(() => this.settleTide());
           }
         }
