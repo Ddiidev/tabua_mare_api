@@ -9,7 +9,9 @@ pub fn (mut l Logger) save(params model.MsgLog) {
 	msg := json2.encode(model.MsgLog{
 		...params
 		id_application: 'app: ${l.id_application}'
-	}, escape_unicode: true)
+	},
+		escape_unicode: true
+	)
 	$if prod {
 		l.new_relic_info(msg) or {}
 	} $else {
