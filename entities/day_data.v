@@ -9,3 +9,13 @@ pub mut:
 	day           int
 	hours         []HourData @[fkey: 'day_data_id'; skip]
 }
+
+
+@[table: 'day_data']
+pub struct DayDataWithoutFK {
+pub mut:
+	id            int @[primary; sql: serial]
+	month_data_id int
+	weekday_name  string
+	day           int
+}
