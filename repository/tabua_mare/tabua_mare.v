@@ -24,8 +24,6 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 		.where('id_harbor_state = ? && year = ?', harbor_id, year)!
 		.query()!
 
-	dump(harbor)
-
 	if harbor.len == 0 {
 		return error('Nenhum dado de porto encontrado para o ID especificado')
 	}
