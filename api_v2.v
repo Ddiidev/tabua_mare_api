@@ -104,21 +104,22 @@ pub fn (mut api APIControllerV2) get_nearested_tabua_mare(mut ctx web_ctx.WsCtx,
 	lng := geo_latlng[1] or { 0.0 }
 
 	// TODO: Depois mover isso para dentro do método de get_tabua_mare_by_month_days
-	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state(mut api.pool_conn, lat,
-		lng, state) or {
+	nearest_harbor := repo_habor_mare.find_nearest_harbor_within_same_state_only_id(mut api.pool_conn,
+		lat, lng, state) or {
 		ctx.res.set_status(.not_found)
 		return ctx.json(types.failure[string](404,
 			'Nenhum porto encontrado perto das coordenadas fornecidas.'))
 	}
 
 	// TODO: CORRIGIR
-	result := repo_tabua_mare.get_tabua_mare_by_month_days(mut api.pool_conn, nearest_harbor.id,
+	result := repo_tabua_mare.get_tabua_mare_by_month_days(mut api.pool_conn, nearest_harbor,
 		month, types.IntRangeArr(days).ints()) or {
 		ctx.res.set_status(.bad_request)
 		return ctx.json(types.failure[string](400, 'error: ${err}'))
 	}
 
-	return ctx.json(types.success(result.data))
+	response := types.success(result.data)
+	return ctx.json(response)
 }
 
 // get_nearest_harbor retorna os dados do porto mais próximo com base nas coordenadas geográficas.
