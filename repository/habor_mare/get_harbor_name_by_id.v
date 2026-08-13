@@ -23,7 +23,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 
 	year := time.now().year
 	harbors := qb.where('year = ? && id_harbor_state IN ?', year, ids_ordered.map(it))!.select('id',
-		'id_harbor_state', 'year', 'card', 'state', 'timezone', 'mean_level', 'harbor_name',
+		'id_harbor_state', 'card', 'state', 'timezone', 'mean_level', 'harbor_name',
 		'data_collection_institution')!.query()!
 	ids := harbors.map(it.id)
 
@@ -35,7 +35,7 @@ pub fn get_harbor_by_ids(mut pool_conn pool.ConnectionPool, harbor_ids []string)
 	for harbor in harbors {
 		data_harbors << dto.DTOHaborMareGetHarbor{
 			id:                          harbor.id_harbor_state
-			year:                        harbor.year
+			year:                        year
 			card:                        harbor.card
 			state:                       harbor.state
 			timezone:                    harbor.timezone
