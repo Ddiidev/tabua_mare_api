@@ -23,7 +23,6 @@ env:
   DB_SQLITE_PATH: ${{ github.workspace }}/taubinha.sqlite
   POSTGRESQL_CONN_STR: postgresql://postgres:postgres@127.0.0.1:5432/tabuamare_ci
   RUN_POSTGRES_TEST: "1"
-  URL_ENV: https://tabuamare.api.br
 
 jobs:
   test-build-smoke:
