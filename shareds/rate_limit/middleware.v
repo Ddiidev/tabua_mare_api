@@ -2,13 +2,13 @@ module rate_limit
 
 import veb
 import db.pg
+import shareds.types
 import shareds.web_ctx
 import shareds.conf_env
-import shareds.types
 import domain.auth_user
-import repository.auth as repo_auth
-import repository.rate_limit as rl
 import shareds.infradb_pg
+import repository.rate_limit as rl
+import repository.auth as repo_auth
 
 pub struct RateLimitOpts {
 pub mut:
@@ -162,10 +162,13 @@ fn apply_limits(mut ctx web_ctx.WsCtx, mut db pg.DB, bucket string, plan string,
 		}
 	} else {
 		// plano ilimitado: apenas conta used
-		rl.inc(mut db, bucket, 'month', rl.window_key_month()) or {
-			eprintln('rate_limit month count failed: ${err}')
-			return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
-		}
+		go fn [mut db, bucket] () {
+			rl.inc(mut db, bucket, 'month', rl.window_key_month()) or {
+				// TODO: Logar
+				eprintln('rate_limit month count failed: ${err}')
+				// return reject_dependency(mut ctx, 'Falha ao registrar rate-limit')
+			}
+		}()
 	}
 
 	return true

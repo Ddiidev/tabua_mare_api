@@ -18,8 +18,10 @@ cd "$repo_dir"
 cp taubinha.sqlite "$tmp_dir/taubinha.sqlite"
 v -d new_veb -o "$tmp_dir/TabuaMareAPI" .
 
+base_url="http://127.0.0.1:${port}"
 DB_SQLITE_PATH="$tmp_dir/taubinha.sqlite" \
 	POSTGRESQL_CONN_STR='postgresql://health:health@127.0.0.1:1/health?connect_timeout=1' \
+	URL_ENV="$base_url" \
 	"$tmp_dir/TabuaMareAPI" "$port" >"$tmp_dir/stdout.log" 2>"$tmp_dir/stderr.log" &
 pid=$!
 
@@ -60,9 +62,9 @@ api_without_pg=$(request_code GET /api/v2/states)
 [ "$api_without_pg" = 503 ]
 curl -fsS "http://127.0.0.1:${port}/docs" -o "${tmp_dir}/docs.html"
 curl -fsS "http://127.0.0.1:${port}/playground" -o "${tmp_dir}/playground.html"
-grep -Fq '<link rel="canonical" href="https://tabuamare.api.br" />' \
+grep -Fq "<link rel=\"canonical\" href=\"${base_url}/docs\" />" \
 	"${tmp_dir}/docs.html"
-grep -Fq '<link rel="canonical" href="https://tabuamare.api.br" />' \
+grep -Fq "<link rel=\"canonical\" href=\"${base_url}/playground\" />" \
 	"${tmp_dir}/playground.html"
 
 started=$(date +%s)

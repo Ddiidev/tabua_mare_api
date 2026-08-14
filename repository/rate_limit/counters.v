@@ -1,7 +1,7 @@
 module rate_limit
 
-import db.pg
 import time
+import db.pg
 
 // window_key_minute retorna a chave de janela de minuto (YYYYMMDDHHMM).
 pub fn window_key_minute() string {
@@ -23,17 +23,12 @@ pub fn inc_and_check(mut db pg.DB, bucket string, window_kind string, window_key
 		return false
 	}
 
-	db.exec_param_many('INSERT INTO rate_limit_counters (bucket, window_kind, window_key, count) VALUES (($1), ($2), ($3), 1) ON CONFLICT (bucket, window_kind, window_key) DO UPDATE SET count = rate_limit_counters.count + 1', [
+	rows := db.exec_param_many('INSERT INTO rate_limit_counters (bucket, window_kind, window_key, count) VALUES (($1), ($2), ($3), 1) ON CONFLICT (bucket, window_kind, window_key) DO UPDATE SET count = rate_limit_counters.count + 1 RETURNING count', [
 		bucket,
 		window_kind,
 		window_key,
 	])!
 
-	rows := db.exec_param_many('SELECT count FROM rate_limit_counters WHERE bucket = ($1) AND window_kind = ($2) AND window_key = ($3) LIMIT 1', [
-		bucket,
-		window_kind,
-		window_key,
-	])!
 	if rows.len == 0 {
 		return false
 	}

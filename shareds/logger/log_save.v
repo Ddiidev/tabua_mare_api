@@ -1,15 +1,17 @@
 module logger
 
-import json
+import json2
 import net.http
 import shareds.types
 import shareds.logger.model
 
 pub fn (mut l Logger) save(params model.MsgLog) {
-	msg := json.encode(model.MsgLog{
+	msg := json2.encode(model.MsgLog{
 		...params
 		id_application: 'app: ${l.id_application}'
-	})
+	},
+		escape_unicode: true
+	)
 	$if prod {
 		l.new_relic_info(msg) or {}
 	} $else {

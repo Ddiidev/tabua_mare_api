@@ -1,11 +1,11 @@
 module auth_user
 
+import time
+import json2
 import net.http
 import net.urllib
-import json
 import crypto.rand
 import encoding.base64
-import time
 
 pub struct GoogleUserInfo {
 pub:
@@ -72,7 +72,7 @@ pub fn exchange_code(cfg GoogleConfig, code string) !string {
 		return error('token exchange returned HTTP ${resp.status_code}')
 	}
 
-	tokens := json.decode(TokenResponse, resp.body)!
+	tokens := json2.decode[TokenResponse](resp.body)!
 	if tokens.access_token == '' {
 		return error('token exchange returned an empty access token')
 	}
@@ -98,7 +98,7 @@ pub fn fetch_userinfo(cfg GoogleConfig, access_token string) !GoogleUserInfo {
 		return error('userinfo returned HTTP ${resp.status_code}')
 	}
 	eprintln('[oauth] userinfo request completed')
-	return json.decode(GoogleUserInfo, resp.body)!
+	return json2.decode[GoogleUserInfo](resp.body)!
 }
 
 struct TokenResponse {
