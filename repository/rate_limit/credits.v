@@ -25,7 +25,16 @@ pub fn credit_remaining(lim int, used int) int {
 pub fn ensure_credit_row(mut db pg.DB, bucket string, plan string, lim int) !CreditCheck {
 	month_key := window_key_month()
 	remaining_init := credit_remaining(lim, 0)
-	db.exec_param_many("INSERT INTO monthly_credits (bucket, month_key, plan, used, lim, remaining, reset_at)
+	if remaining_init == -1 && plan !in ['anon', 'free'] {
+		return CreditCheck{
+			exceeded:  false
+			remaining: remaining_init
+			used:      0
+			lim:       0
+		}
+	}
+
+	rows := db.exec_param_many("INSERT INTO monthly_credits (bucket, month_key, plan, used, lim, remaining, reset_at)
 		VALUES (($1), ($2), ($3), 0, ($4), ($5), date_trunc('month', CURRENT_TIMESTAMP) + interval '1 month')
 		ON CONFLICT (bucket, month_key) DO UPDATE SET
 			plan = EXCLUDED.plan,
@@ -34,7 +43,8 @@ pub fn ensure_credit_row(mut db pg.DB, bucket string, plan string, lim int) !Cre
 				WHEN EXCLUDED.lim = 0 THEN -1
 				ELSE GREATEST(EXCLUDED.lim - monthly_credits.used, 0)
 			END,
-			reset_at = EXCLUDED.reset_at", [
+			reset_at = EXCLUDED.reset_at
+			RETURNING used, lim, remaining", [
 		bucket,
 		month_key,
 		plan,
@@ -42,10 +52,6 @@ pub fn ensure_credit_row(mut db pg.DB, bucket string, plan string, lim int) !Cre
 		remaining_init.str(),
 	])!
 
-	rows := db.exec_param_many('SELECT used, lim, remaining FROM monthly_credits WHERE bucket = ($1) AND month_key = ($2) LIMIT 1', [
-		bucket,
-		month_key,
-	])!
 	if rows.len == 0 {
 		return CreditCheck{
 			exceeded:  false
@@ -99,24 +105,14 @@ pub fn get_current_month_usage(mut db pg.DB, bucket string, default_lim int) !Cr
 // lim 0 (ilimitado) nunca excede; apenas conta used (chamado via inc, nao decrement).
 pub fn decrement(mut db pg.DB, bucket string) !bool {
 	month_key := window_key_month()
-	res := db.exec_param_many('UPDATE monthly_credits SET used = used + 1, remaining = remaining - 1 WHERE bucket = ($1) AND month_key = ($2) AND remaining > 0 RETURNING lim, remaining', [
+	res := db.exec_param_many('UPDATE monthly_credits SET used = used + 1, remaining = remaining - 1 WHERE bucket = ($1) AND month_key = ($2) AND remaining > 0 RETURNING 1', [
 		bucket,
 		month_key,
 	])!
 	if res.len == 0 {
-		// nenhuma linha atualizada — verifica se e excedido (remaining <= 0)
-		// ou se a linha nao existe (ensure_credit_row falhou)
-		rows := db.exec_param_many('SELECT lim, remaining FROM monthly_credits WHERE bucket = ($1) AND month_key = ($2) LIMIT 1', [
-			bucket,
-			month_key,
-		])!
-		if rows.len == 0 {
-			return error('monthly credit row ausente')
-		}
-		l := val_int(rows[0], 0)
-		remaining := val_int(rows[0], 1)
-		return l != 0 && remaining <= 0
+		return true
 	}
+
 	// A linha foi atualizada: remaining == 0 e o ultimo credito ainda e valido.
 	return false
 }

@@ -2,10 +2,10 @@ module habor_mare
 
 import orm
 import pool
-import db.sqlite as db_provider
 import time
 import entities
 import shareds.types
+import db.sqlite as db_provider
 import repository.habor_mare.dto
 
 // list_all_harbors lista todos os portos
@@ -26,8 +26,7 @@ pub fn list_all_harbors(mut pool_conn pool.ConnectionPool) !types.ResultValues[d
 	for harbor in harbors {
 		filtered_geo := geo_location.filter(it.data_mare_id == harbor.id)
 		data_harbors << dto.DTOHaborMareGetHarbor{
-			id:                          harbor.id
-			harbor_id:                   harbor.id_harbor_state
+			id:                          harbor.id_harbor_state
 			year:                        harbor.year
 			card:                        harbor.card
 			state:                       harbor.state
@@ -72,8 +71,7 @@ pub fn list_all_harbors_by_state(mut pool_conn pool.ConnectionPool, state string
 	for harbor in harbors {
 		filtered_geo := geo_location.filter(it.data_mare_id == harbor.id)
 		data_harbors << dto.DTOHaborMareGetHarbor{
-			id:                          harbor.id
-			harbor_id:                   harbor.id_harbor_state
+			id:                          harbor.id_harbor_state
 			year:                        harbor.year
 			card:                        harbor.card
 			state:                       harbor.state

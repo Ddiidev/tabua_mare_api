@@ -1,18 +1,18 @@
 module main
 
 import os
-import pool
-import sync.stdatomic
-import time
 import veb
-import shareds.web_ctx
+import pool
+import time
+import sync.stdatomic
 import shareds.health
 import shareds.infradb
-import shareds.infradb_pg
+import shareds.web_ctx
 import shareds.conf_env
+import domain.auth_user
+import shareds.infradb_pg
 import leafscale.veemarker
 import shareds.components_view
-import domain.auth_user
 
 const shutdown_requested = stdatomic.new_atomic[bool](false)
 
@@ -94,10 +94,9 @@ fn main() {
 		pg_holder:    pg_holder
 		server_ready: chan &veb.Server{cap: 1}
 	}
-
-	mut api_controller := &APIController{
-		pool_conn: infradb.new()!
-		env:       env
+	$if dev_static_gzip ? {
+		app.enable_static_gzip = true
+		app.static_compression_mime_types = [veb.mime_types['.css']]
 	}
 
 	mut api_controller_v2 := &APIControllerV2{
@@ -112,14 +111,13 @@ fn main() {
 		avatar_cache: auth_user.new_avatar_cache(env.avatar_cache_ttl_minutes)
 	}
 
-	api_controller.init_cors()
 	api_controller_v2.init_cors()
 	api_controller_v2.init_rate_limit(env, pg_holder)
 
-	app.register_controller[APIController, web_ctx.WsCtx]('/api/v1', mut api_controller)!
 	app.register_controller[APIControllerV2, web_ctx.WsCtx]('/api/v2', mut api_controller_v2)!
 	app.register_controller[AuthController, web_ctx.WsCtx]('/auth', mut auth_controller)!
 	app.mount_static_folder_at('./pages/assets', '/pages/assets')!
+	app.mount_static_folder_at('./pages/static', '/')!
 	os.signal_opt(.term, request_shutdown) or {
 		panic('Failed to register SIGTERM handler: ${err}')
 	}
@@ -144,10 +142,18 @@ fn (app &App) is_logged_in(mut ctx web_ctx.WsCtx) bool {
 	return auth_user.verify(secret, token)
 }
 
+fn (app &App) base_url() string {
+	return rlock app.env {
+		app.env.url_env
+	}
+}
+
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('/', app.is_logged_in(mut ctx))
+	data['canonical_url'] = app.base_url() + '/'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -167,14 +173,14 @@ pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 		template_dir:  './pages'
 		cache_enabled: true
 	})
+	url_env := app.base_url()
+	data['url_env'] = url_env
+	data['canonical_url'] = url_env + '/docs'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['navbar'] = app.navbar('/docs', app.is_logged_in(mut ctx))
 	data['footer'] = app.footer()
 
-	url_env := rlock app.env {
-		app.env.url_env
-	}
-	data['url_env'] = url_env
 	return ctx.html(engine.render('docs.html', data) or { '' })
 }
 
@@ -182,6 +188,8 @@ pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('/playground', app.is_logged_in(mut ctx))
+	data['canonical_url'] = app.base_url() + '/playground'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -196,6 +204,8 @@ pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('/apoiar', app.is_logged_in(mut ctx))
+	data['canonical_url'] = app.base_url() + '/apoiar'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -210,6 +220,8 @@ pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 pub fn (app &App) privacidade(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('/privacidade', app.is_logged_in(mut ctx))
+	data['canonical_url'] = app.base_url() + '/privacidade'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -224,6 +236,8 @@ pub fn (app &App) privacidade(mut ctx web_ctx.WsCtx) veb.Result {
 pub fn (app &App) termos(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('/termos', app.is_logged_in(mut ctx))
+	data['canonical_url'] = app.base_url() + '/termos'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -238,6 +252,8 @@ pub fn (app &App) termos(mut ctx web_ctx.WsCtx) veb.Result {
 pub fn (app &App) rate_limit_test(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('', app.is_logged_in(mut ctx))
+	data['canonical_url'] = app.base_url() + '/rate-limit-test'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
 
@@ -255,13 +271,12 @@ pub fn (app &App) dashboard(mut ctx web_ctx.WsCtx) veb.Result {
 	}
 	mut data := map[string]veemarker.Any{}
 	data['navbar'] = app.navbar('/dashboard', true)
+	url_env := app.base_url()
+	data['url_env'] = url_env
+	data['canonical_url'] = url_env + '/dashboard'
+	data['base_url'] = app.base_url()
 	data['og'] = app.open_graph(data)
 	data['footer'] = app.footer()
-
-	url_env := rlock app.env {
-		app.env.url_env
-	}
-	data['url_env'] = url_env
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
 		template_dir:  './pages'

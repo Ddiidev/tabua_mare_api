@@ -9,8 +9,7 @@
   ${ og }
 
   <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css" />
-  <link rel="stylesheet" href="/pages/assets/custom-pico.css" />
+  <link rel="stylesheet" href="/pages/assets/css/docs.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-ghcolors.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
@@ -20,7 +19,7 @@
     h1,
     h2,
     h3 {
-      font-family: Spectral, serif;
+      font-family: Georgia, Spectral, serif;
     }
 
     pre,
@@ -191,7 +190,14 @@
 
             <div class="code-block">
               <button class="code-copy" type="button" data-copy-target="response-structure-code" onclick="copyCode(this)">Copiar</button>
-              <pre id="response-structure-code"><code class="language-json">{{code_estrutura_default}}</code></pre>
+              <pre id="response-structure-code"><code class="language-json">{
+  "data": [],
+  "total": 0,
+  "error": {
+    "msg": "",
+    "code": 0
+  }
+}</code></pre>
           </div>
 
           <div class="info-box warning">
@@ -236,7 +242,13 @@
 
             <h4>Resposta de sucesso (200):</h4>
             <div class="code-block">
-              <pre><code class="language-json">{{code_resposta_states}}</code></pre>
+              <pre><code class="language-json">{
+  "data": [
+    "al", "ap", "ba", "ce", "es", "ma", "pa", "pb",
+    "pe", "pi", "pr", "rj", "rn", "rs", "sc", "se", "sp"
+  ],
+  "total": 17
+}</code></pre>
             </div>
 
             <h4>Estados disponíveis:</h4>
@@ -293,7 +305,17 @@ curl -X GET "${url_env}/api/v2/harbor_names/pb"</code></pre>
 
             <h4>Exemplo de resposta:</h4>
             <div class="code-block">
-              <pre><code class="language-json">{{code_resposta_harbor_names}}</code></pre>
+              <pre><code class="language-json">{
+  "data": [
+    {
+      "id": 27,
+      "year": 2025,
+      "harbor_name": "PORTO DE CABEDELO (ESTADO DA PARAÍBA)",
+      "data_collection_institution": "DNPVN"
+    }
+  ],
+  "total": 1
+}</code></pre>
             </div>
           </div>
 
@@ -328,7 +350,29 @@ curl -X GET "${url_env}/api/v2/harbors/[pb01]"</code></pre>
 
             <h4>Exemplo de resposta:</h4>
             <div class="code-block">
-              <pre><code class="language-json">{{code_resposta_harbor_by_id}}</code></pre>
+              <pre><code class="language-json">{
+  "data": [
+    {
+      "id": 1,
+      "harbor_name": "PORTO DE MACEIÓ (ESTADO DE ALAGOAS)",
+      "state": "al",
+      "timezone": "UTC -03.0",
+      "card": "921",
+      "geo_location": [
+        {
+          "lat": "-9.683333333333334",
+          "lng": "-35.71666666666667",
+          "decimal_lat": "09° 41' S",
+          "decimal_lng": "35° 43'.5 W",
+          "lat_direction": "s",
+          "lng_direction": "w"
+        }
+      ],
+      "mean_level": 1.15999999854
+    }
+  ],
+  "total": 1
+}</code></pre>
             </div>
           </div>
 
@@ -368,7 +412,68 @@ curl -X GET "${url_env}/api/v2/tabua-mare/pb01/1/[1,2,3]"</code></pre>
 
             <h4>Exemplo de resposta:</h4>
             <div class="code-block">
-              <pre><code class="language-json">{{code_resposta_tabua_mare}}</code></pre>
+              <pre><code class="language-json">{
+    "data": [
+        {
+            "year": 2025,
+            "harbor_name": "PORTO DE MACEIÓ (ESTADO DE ALAGOAS)",
+            "state": "al",
+            "timezone": "UTC -03.0",
+            "card": "921",
+            "data_collection_institution": "DHN",
+            "mean_level": 1.1599999666213989,
+            "months": [
+                {
+                    "month_name": "Janeiro",
+                    "month": 1,
+                    "days": [
+                        {
+                            "weekday_name": "sexta",
+                            "day": 3,
+                            "hours": [
+                                {
+                                    "hour": "06:01:00",
+                                    "level": 1.8700000047683716
+                                },
+                                {
+                                    "hour": "12:04:00",
+                                    "level": 0.34999999403953552
+                                },
+                                {
+                                    "hour": "18:14:00",
+                                    "level": 1.9900000095367432
+                                }
+                            ]
+                        },
+                        {
+                            "weekday_name": "segunda",
+                            "day": 6,
+                            "hours": [
+                                {
+                                    "hour": "02:23:00",
+                                    "level": 0.43000000715255737
+                                },
+                                {
+                                    "hour": "08:32:00",
+                                    "level": 1.6599999666213989
+                                },
+                                {
+                                    "hour": "14:47:00",
+                                    "level": 0.56000000238418579
+                                },
+                                {
+                                    "hour": "20:55:00",
+                                    "level": 1.809999942779541
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "total": 1
+}</code></pre>
             </div>
           </div>
 
@@ -625,7 +730,12 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
 
             <h4>Formato de erro:</h4>
             <div class="code-block">
-              <pre><code class="language-json">{{code_formato_erro}}</code></pre>
+              <pre><code class="language-json">{
+  "error": {
+    "code": 404,
+    "message": "Recurso não encontrado (Exemplo)"
+  }
+}</code></pre>
             </div>
 
             <h4>Headers de rate-limit (429)</h4>
@@ -746,123 +856,6 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
       showQuickStart: false,
       showContactModal: false,
       showMobileMenu: false,
-      code_estrutura_default: `{
-  "data": [],
-  "total": 0,
-  "error": {
-    "msg": "",
-    "code": 0
-  }
-}`,
-      code_resposta_states: `{
-  "data": [
-    "al", "ap", "ba", "ce", "es", "ma", "pa", "pb",
-    "pe", "pi", "pr", "rj", "rn", "rs", "sc", "se", "sp"
-  ],
-  "total": 17
-}`,
-      code_resposta_harbor_names: `{
-  "data": [
-    {
-      "id": 27,
-      "year": 2025,
-      "harbor_name": "PORTO DE CABEDELO (ESTADO DA PARAÍBA)",
-      "data_collection_institution": "DNPVN"
-    }
-  ],
-  "total": 1
-}`,
-      code_resposta_harbor_by_id: `{
-  "data": [
-    {
-      "id": 1,
-      "harbor_name": "PORTO DE MACEIÓ (ESTADO DE ALAGOAS)",
-      "state": "al",
-      "timezone": "UTC -03.0",
-      "card": "921",
-      "geo_location": [
-        {
-          "lat": "-9.683333333333334",
-          "lng": "-35.71666666666667",
-          "decimal_lat": "09° 41' S",
-          "decimal_lng": "35° 43'.5 W",
-          "lat_direction": "s",
-          "lng_direction": "w"
-        }
-      ],
-      "mean_level": 1.15999999854
-    }
-  ],
-  "total": 1
-}`,
-      code_formato_erro: `{
-  "error": {
-    "code": 404,
-    "message": "Recurso não encontrado (Exemplo)"
-  }
-}`,
-      code_resposta_tabua_mare: `{
-    "data": [
-        {
-            "year": 2025,
-            "harbor_name": "PORTO DE MACEIÓ (ESTADO DE ALAGOAS)",
-            "state": "al",
-            "timezone": "UTC -03.0",
-            "card": "921",
-            "data_collection_institution": "DHN",
-            "mean_level": 1.1599999666213989,
-            "months": [
-                {
-                    "month_name": "Janeiro",
-                    "month": 1,
-                    "days": [
-                        {
-                            "weekday_name": "sexta",
-                            "day": 3,
-                            "hours": [
-                                {
-                                    "hour": "06:01:00",
-                                    "level": 1.8700000047683716
-                                },
-                                {
-                                    "hour": "12:04:00",
-                                    "level": 0.34999999403953552
-                                },
-                                {
-                                    "hour": "18:14:00",
-                                    "level": 1.9900000095367432
-                                }
-                            ]
-                        },
-                        {
-                            "weekday_name": "segunda",
-                            "day": 6,
-                            "hours": [
-                                {
-                                    "hour": "02:23:00",
-                                    "level": 0.43000000715255737
-                                },
-                                {
-                                    "hour": "08:32:00",
-                                    "level": 1.6599999666213989
-                                },
-                                {
-                                    "hour": "14:47:00",
-                                    "level": 0.56000000238418579
-                                },
-                                {
-                                    "hour": "20:55:00",
-                                    "level": 1.809999942779541
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ],
-    "total": 1
-}`,
       url_env: window.location.origin,
     }).mount();
 

@@ -1,9 +1,10 @@
 FROM alpine:3.22 AS builder
 
-ENV V_COMMIT=45ae01d23168b6372f734eeb38a77360bbcf184a \
+ENV V_COMMIT=cf7a81ebc3cc74612b151edbfa2781e2b29b65d6 \
+    VC_COMMIT=af031914695c1971c5bb309547525b4f7ddabd10 \
     VEEMARKER_COMMIT=1510ef5a7cbf980f2e075f02baada7190748e3f7 \
     DOTENV_COMMIT=1d9477c8b1a3f5ca14b2eb042c4e6d52449b75d4 \
-    V_STRIPE_COMMIT=dca05be5fca093fe31f9e7d5f3b356fd84e3a690
+    V_STRIPE_COMMIT=2c999a60f9569794f4f912e33b565501e8373420
 
 RUN apk add --no-cache \
     build-base \
@@ -18,8 +19,12 @@ RUN apk add --no-cache \
 
 RUN git clone https://github.com/vlang/v.git /opt/v \
     && git -C /opt/v checkout --detach "${V_COMMIT}" \
-    && make -C /opt/v \
+    && git clone https://github.com/vlang/vc.git /opt/v/vc \
+    && git -C /opt/v/vc checkout --detach "${VC_COMMIT}" \
+    && make -C /opt/v fresh_tcc \
+    && make -C /opt/v local=1 \
     && test "$(git -C /opt/v rev-parse HEAD)" = "${V_COMMIT}" \
+    && test "$(git -C /opt/v/vc rev-parse HEAD)" = "${VC_COMMIT}" \
     && /opt/v/v version | grep -F 'V 0.5.2'
 
 RUN mkdir -p /root/.vmodules/leafscale /root/.vmodules/ken0x0a \

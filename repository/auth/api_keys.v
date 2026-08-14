@@ -1,9 +1,9 @@
 module auth
 
 import db.pg
-import repository.auth.dto
 import crypto.rand
 import encoding.base64
+import repository.auth.dto
 
 // find_by_key retorna a api_key ativa (nao revogada) pelo seu valor, ou erro se nao encontrar.
 pub fn find_by_key(mut db pg.DB, key_value string) !dto.ApiKey {

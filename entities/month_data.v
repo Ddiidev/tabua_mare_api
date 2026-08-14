@@ -9,3 +9,12 @@ pub mut:
 	month        int
 	days         []DayData @[fkey: 'month_data_id'; skip]
 }
+
+@[table: 'month_data']
+pub struct MonthDataWithoutFK {
+pub mut:
+	id           int @[primary; sql: serial]
+	data_mare_id int
+	month_name   string
+	month        int
+}

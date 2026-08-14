@@ -12,6 +12,7 @@ tests
 logs
 temp
 bin
+node_modules
 
 .env
 .env.*
