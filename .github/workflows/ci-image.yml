@@ -108,7 +108,7 @@ jobs:
           ./scripts/test_seed_sqlite.sh
           ./scripts/test_alpine_image_static.sh
           ./scripts/test_coolify_deploy.sh
-          ./scripts/test_health_lifecycle.sh
+          bash ./scripts/test_health_lifecycle.sh
 
       - name: Node.js e build dos assets CSS
         uses: actions/setup-node@v4
