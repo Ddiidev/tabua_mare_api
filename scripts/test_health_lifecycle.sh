@@ -20,6 +20,16 @@ v -d new_veb -o "$tmp_dir/TabuaMareAPI" .
 
 DB_SQLITE_PATH="$tmp_dir/taubinha.sqlite" \
 	POSTGRESQL_CONN_STR='postgresql://health:health@127.0.0.1:1/health?connect_timeout=1' \
+	URL_ENV='https://tabuamare.api.br' \
+	SESSION_SECRET='ci-session-secret-012345678901234567890123' \
+	GOOGLE_CLIENT_ID='ci-google-client-id-1234567890' \
+	GOOGLE_CLIENT_SECRET='ci-google-client-secret' \
+	GOOGLE_REDIRECT_URI='https://tabuamare.api.br/auth/google/callback' \
+	STRIPE_SECRET_KEY='sk_live_ci_dummy_secret_x' \
+	STRIPE_WEBHOOK_SECRET='whsec_ci_dummy_secret_x' \
+	STRIPE_PRICE_PLAN5='price_ci_plan05' \
+	STRIPE_PRICE_PLAN10='price_ci_plan10' \
+	STRIPE_PRICE_PLANANNUAL='price_ci_annual0' \
 	"$tmp_dir/TabuaMareAPI" "$port" >"$tmp_dir/stdout.log" 2>"$tmp_dir/stderr.log" &
 pid=$!
 
