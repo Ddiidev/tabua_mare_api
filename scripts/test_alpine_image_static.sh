@@ -12,9 +12,9 @@ fail() {
 }
 
 grep -Fq 'VOLUME ["/app/data"]' "${dockerfile}" || fail '/app/data sem VOLUME declarado'
-grep -Fq 'ENV V_COMMIT=45ae01d23168b6372f734eeb38a77360bbcf184a' "${dockerfile}" || \
+grep -Fq 'ENV V_COMMIT=cf7a81ebc3cc74612b151edbfa2781e2b29b65d6' "${dockerfile}" || \
 	fail 'commit V nao esta fixado por ENV no builder'
-grep -Fq 'VC_COMMIT=7eb8c54a3843e5107d5af06d7a8c3e928f322475' "${dockerfile}" || \
+grep -Fq 'VC_COMMIT=af031914695c1971c5bb309547525b4f7ddabd10' "${dockerfile}" || \
 	fail 'commit VC correspondente nao esta fixado por ENV no builder'
 if grep -Eq '^ARG (V|VC|VEEMARKER|DOTENV|V_STRIPE)_COMMIT=' "${dockerfile}"; then
 	fail 'pin de dependencia pode ser sobrescrito por build-arg'
