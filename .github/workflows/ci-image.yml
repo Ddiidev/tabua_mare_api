@@ -17,7 +17,7 @@ env:
   VC_COMMIT: 9871c172787d9622611188b75cb55773b1db2020
   VEEMARKER_COMMIT: 1510ef5a7cbf980f2e075f02baada7190748e3f7
   DOTENV_COMMIT: 1d9477c8b1a3f5ca14b2eb042c4e6d52449b75d4
-  V_STRIPE_COMMIT: dca05be5fca093fe31f9e7d5f3b356fd84e3a690
+  V_STRIPE_COMMIT: 2c999a60f9569794f4f912e33b565501e8373420
   LOCAL_IMAGE: tabua-mare-api:ci-${{ github.sha }}
   GHCR_IMAGE: ghcr.io/ddiidev/tabua-mare-api:sha-${{ github.sha }}
   DB_SQLITE_PATH: ${{ github.workspace }}/taubinha.sqlite
