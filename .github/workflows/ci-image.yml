@@ -105,9 +105,9 @@ jobs:
       - name: Contratos shell e ciclo de vida
         run: |
           set -euo pipefail
-          ./scripts/test_seed_sqlite.sh
-          ./scripts/test_alpine_image_static.sh
-          ./scripts/test_coolify_deploy.sh
+          bash ./scripts/test_seed_sqlite.sh
+          bash ./scripts/test_alpine_image_static.sh
+          bash ./scripts/test_coolify_deploy.sh
           bash ./scripts/test_health_lifecycle.sh
 
       - name: Node.js e build dos assets CSS
