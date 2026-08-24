@@ -3957,10 +3957,10 @@ h4,
 
 .users-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   margin-top: 2rem;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: 0.7rem;
 }
@@ -3982,9 +3982,26 @@ h4,
   border-left: 0;
 }
 
+.user-card:nth-child(3n + 1) {
+  border-left: 0;
+}
+
+.user-card:nth-child(n + 4) {
+  border-top: 1px solid var(--line);
+}
+
 .user-card:hover,
-.user-card:focus-visible {
+.user-card:focus-visible,
+.user-card--with-preview:focus-within {
   background: var(--surface-muted);
+}
+
+.user-card--with-preview {
+  position: relative;
+}
+
+.user-card__project {
+  display: contents;
 }
 
 .user-card__logo {
@@ -4016,6 +4033,21 @@ h4,
   padding: 0.55rem;
 }
 
+.user-card__logo--morro {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.user-card__logo--morro img,
+.user-card__logo--swell-full img {
+  object-fit: cover;
+}
+
+.user-card__logo--detectai {
+  background: #eef3f2;
+  padding: 0.4rem;
+}
+
 .user-card__copy {
   display: grid;
   gap: 0.22rem;
@@ -4043,6 +4075,135 @@ h4,
   font-size: 1.1rem;
 }
 
+.user-card__actions {
+  align-self: start;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.user-card__site,
+.user-card__preview {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  place-items: center;
+  background: var(--surface);
+  color: var(--ocean-600);
+  text-decoration: none;
+}
+
+.user-card__site:hover,
+.user-card__site:focus-visible,
+.user-card__preview:hover,
+.user-card__preview:focus-visible {
+  border-color: var(--ocean-600);
+  background: var(--ocean-600);
+  color: #fff;
+}
+
+.user-card__site:focus-visible,
+.user-card__preview:focus-visible {
+  outline: 2px solid var(--sun-400);
+  outline-offset: 2px;
+}
+
+.user-card__site span {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.user-card__preview svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.user-card__preview::before {
+  position: absolute;
+  z-index: 1;
+  right: -0.35rem;
+  bottom: 100%;
+  width: min(340px, calc(100vw - 3rem));
+  height: 0.65rem;
+  content: '';
+}
+
+.user-card__preview-tooltip {
+  position: absolute;
+  z-index: 2;
+  right: -0.35rem;
+  bottom: calc(100% + 0.65rem);
+  display: grid;
+  width: min(340px, calc(100vw - 3rem));
+  gap: 0.45rem;
+  padding: 0.55rem;
+  visibility: hidden;
+  border: 1px solid #ffffff4d;
+  border-radius: 0.7rem;
+  background: var(--ocean-950);
+  box-shadow: 0 16px 38px rgb(8 47 73 / 24%);
+  color: #fff;
+  opacity: 0;
+  pointer-events: auto;
+  transform: translateY(0.35rem);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+}
+
+.user-card__preview:hover .user-card__preview-tooltip,
+.user-card__preview:focus-visible .user-card__preview-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.user-card__preview-viewport {
+  display: block;
+  width: 100%;
+  max-height: min(320px, calc(100vh - 6rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 0.45rem;
+  background: var(--ocean-950);
+  scrollbar-color: rgb(255 255 255 / 72%) rgb(255 255 255 / 12%);
+  touch-action: pan-y;
+}
+
+.user-card__preview-viewport::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.user-card__preview-viewport::-webkit-scrollbar-track {
+  background: rgb(255 255 255 / 12%);
+}
+
+.user-card__preview-viewport::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 72%);
+  background-clip: content-box;
+}
+
+.user-card__preview-viewport img {
+  display: block;
+  width: 100%;
+}
+
+.user-card__preview-caption {
+  padding: 0 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 @media (max-width: 767px) {
   .users-grid {
     grid-template-columns: 1fr;
@@ -4051,6 +4212,10 @@ h4,
   .user-card,
   .user-card:first-child {
     border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .user-card:nth-child(3n + 1) {
     border-left: 0;
   }
 
