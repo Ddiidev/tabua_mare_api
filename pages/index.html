@@ -7,6 +7,7 @@
     <title>Tábua de Maré API — dados brasileiros</title>
     <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
     <link rel="stylesheet" href="/pages/assets/css/home.css" />
+    <style>[v-cloak] { visibility: hidden; }</style>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
   </head>
@@ -33,7 +34,7 @@
           <p class="home-hero__legal"><a href="/privacidade">Política de privacidade</a><span aria-hidden="true">·</span><a href="/termos">Termos de serviço</a></p>
         </div>
 
-        <section id="console" class="tide-console" data-ui="tide-console" :class="'is-' + requestState" aria-labelledby="console-title">
+        <section id="console" class="tide-console" data-ui="tide-console" v-cloak :class="'is-' + requestState" aria-labelledby="console-title">
           <header class="tide-console__header">
             <div class="console-dots" aria-hidden="true"><span></span><span></span><span></span></div>
             <span id="console-title">requisição ao vivo</span>
@@ -146,16 +147,74 @@
             <p>Do planejamento de voos ao radar para quem vai surfar: a mesma API, aplicada a problemas diferentes.</p>
           </div>
           <div class="users-grid">
-            <a class="user-card" href="https://droneskull.com.br/" target="_blank" rel="noreferrer noopener">
-              <div class="user-card__logo user-card__logo--drone"><img src="https://droneskull.com.br/img/logo.png" alt="Logo Drone Skull"></div>
-              <div class="user-card__copy"><strong>Drone Skull</strong><span>Produção aérea cinematográfica</span><small>Dados para planejar cada voo com mais contexto.</small></div>
-              <span class="user-card__arrow" aria-hidden="true">↗</span>
-            </a>
-            <a class="user-card" href="https://swellcheckapp.vercel.app/" target="_blank" rel="noreferrer noopener">
-              <div class="user-card__logo user-card__logo--swell"><img src="https://swellcheckapp.vercel.app/Favicon.svg" alt="Logo Swell Check"></div>
-              <div class="user-card__copy"><strong>Swell Check</strong><span>Condições para quem vai surfar</span><small>Previsões organizadas para decidir quando entrar no mar.</small></div>
-              <span class="user-card__arrow" aria-hidden="true">↗</span>
-            </a>
+            <article class="user-card user-card--with-preview">
+              <div class="user-card__project">
+                <div class="user-card__logo user-card__logo--drone"><img src="https://droneskull.com.br/img/logo.png" alt="Logo Drone Skull"></div>
+                <div class="user-card__copy"><strong>Drone Skull</strong><span>Produção aérea cinematográfica</span><small>Dados para planejar cada voo com mais contexto.</small></div>
+              </div>
+              <div class="user-card__actions">
+                <a class="user-card__site" href="https://droneskull.com.br/" target="_blank" rel="noreferrer noopener" aria-label="Abrir o site Drone Skull"><span aria-hidden="true">↗</span></a>
+                <button class="user-card__preview" type="button" aria-label="Ver prévia do Drone Skull">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                  <span class="user-card__preview-tooltip" role="tooltip"><span class="user-card__preview-viewport"><img src="/pages/assets/images/site-previews/drone-skull.png" alt="Prévia completa do site Drone Skull"></span><span class="user-card__preview-caption">Drone Skull</span></span>
+                </button>
+              </div>
+            </article>
+            <article class="user-card user-card--with-preview">
+              <div class="user-card__project">
+                <div class="user-card__logo user-card__logo--swell-full"><img src="https://swellcheckapp.vercel.app/Favicon.svg" alt="Logo Swell Check"></div>
+                <div class="user-card__copy"><strong>Swell Check</strong><span>Condições para quem vai surfar</span><small>Previsões organizadas para decidir quando entrar no mar.</small></div>
+              </div>
+              <div class="user-card__actions">
+                <a class="user-card__site" href="https://swellcheckapp.vercel.app/" target="_blank" rel="noreferrer noopener" aria-label="Abrir o site Swell Check"><span aria-hidden="true">↗</span></a>
+                <button class="user-card__preview" type="button" aria-label="Ver prévia do Swell Check">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                  <span class="user-card__preview-tooltip" role="tooltip"><span class="user-card__preview-viewport"><img src="/pages/assets/images/site-previews/ondina.png" alt="Prévia completa do Ondina"></span><span class="user-card__preview-caption">Swell Check</span></span>
+                </button>
+              </div>
+            </article>
+            <article class="user-card user-card--with-preview">
+              <div class="user-card__project">
+                <div class="user-card__logo user-card__logo--detectai"><img src="https://detectai.com.br/assets/assets/images/detectai_logo_oficial.png" alt="Logo DetectAI"></div>
+                <div class="user-card__copy"><strong>DetectAI</strong><span>Detector de metais para objetos perdidos</span><small>Conecta você a detectoristas profissionais para recuperar o que foi perdido.</small></div>
+              </div>
+              <div class="user-card__actions">
+                <a class="user-card__site" href="https://detectai.com.br/" target="_blank" rel="noreferrer noopener" aria-label="Abrir o site DetectAI"><span aria-hidden="true">↗</span></a>
+                <button class="user-card__preview" type="button" aria-label="Ver prévia do DetectAI">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                  <span class="user-card__preview-tooltip" role="tooltip"><span class="user-card__preview-viewport"><img src="/pages/assets/images/site-previews/detectai.png" alt="Prévia completa do site DetectAI"></span><span class="user-card__preview-caption">DetectAI</span></span>
+                </button>
+              </div>
+            </article>
+            <article class="user-card user-card--with-preview">
+              <div class="user-card__project">
+                <div class="user-card__logo user-card__logo--swell"><img src="https://ibexgo.app/wp-content/uploads/2026/04/cropped-logo_ibex-192x192.png" alt="Logo ibexGo"></div>
+                <div class="user-card__copy"><strong>Pro Site Turismo</strong><span>Estrutura digital para agências de turismo</span><small>Reúne site, páginas de venda e ferramentas para organizar a divulgação e as vendas.</small></div>
+              </div>
+              <div class="user-card__actions">
+                <a class="user-card__site" href="https://ibexgo.app/prositeturismo/" target="_blank" rel="noreferrer noopener" aria-label="Abrir o site Pro Site Turismo"><span aria-hidden="true">↗</span></a>
+                <button class="user-card__preview" type="button" aria-label="Ver prévia do Pro Site Turismo">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                  <span class="user-card__preview-tooltip" role="tooltip">
+                    <span class="user-card__preview-viewport"><img src="/pages/assets/images/site-previews/ibexgo.png" alt="Prévia completa do Pro Site Turismo"></span>
+                    <span class="user-card__preview-caption">Pro Site Turismo</span>
+                  </span>
+                </button>
+              </div>
+            </article>
+            <article class="user-card user-card--with-preview">
+              <div class="user-card__project">
+                <div class="user-card__logo user-card__logo--morro"><img src="https://morroexperience.com/wp-content/uploads/2026/07/cropped-sua-logo-1-192x192.png" alt="Logo Morro Experience"></div>
+                <div class="user-card__copy"><strong>Morro Experience</strong><span>Passeios e experiências em Morro de São Paulo</span><small>Integra a tábua de maré ao planejamento de atividades e da viagem.</small></div>
+              </div>
+              <div class="user-card__actions">
+                <a class="user-card__site" href="https://morroexperience.com/tabua-da-mare/" target="_blank" rel="noreferrer noopener" aria-label="Abrir o site Morro Experience"><span aria-hidden="true">↗</span></a>
+                <button class="user-card__preview" type="button" aria-label="Ver prévia do Morro Experience">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+                  <span class="user-card__preview-tooltip" role="tooltip"><span class="user-card__preview-viewport"><img src="/pages/assets/images/site-previews/morro-experience.png" alt="Prévia completa do site Morro Experience"></span><span class="user-card__preview-caption">Morro Experience</span></span>
+                </button>
+              </div>
+            </article>
           </div>
         </div>
       </section>
