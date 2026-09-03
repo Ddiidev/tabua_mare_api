@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Documentação - Tábua de Marés API</title>
+  <title>${ page_title }</title>
 
   ${ og }
 
@@ -167,13 +167,42 @@
               <li><strong>R$ 70/ano:</strong> 2.048 req/min + ilimitado req/mês; economize R$ 50 por ano</li>
             </ul>
             <p>
-              Envie a api_key no header <code>Authorization: Bearer &lt;api_key&gt;</code>
-              ou <code>X-Api-Key</code>.
-            </p>
-            <p>
               <strong>Login Google:</strong> Clique em <a href="/auth/google"><strong>Criar/Logar</strong></a>
               no menu superior para gerenciar sua conta e api_keys.
             </p>
+          </div>
+
+          <h3 id="api-key-header">Como enviar a API Key</h3>
+          <p>
+            A forma recomendada é enviar a chave no header HTTP <code>Authorization</code>,
+            usando o prefixo <code>Bearer</code> antes do valor:
+          </p>
+          <div class="code-block">
+            <pre><code>Authorization: Bearer SUA_API_KEY</code></pre>
+          </div>
+          <p>
+            Ao usar <code>Authorization</code>, escreva <code>Bearer</code>, um espaço e a API Key.
+            Como alternativa, use <code>X-Api-Key: SUA_API_KEY</code>, sem <code>Bearer</code>.
+            Envie apenas um desses headers.
+          </p>
+
+          <h4>Exemplo com curl:</h4>
+          <div class="code-block">
+            <pre><code>curl "${url_env}/api/v2/states" \
+  -H "Authorization: Bearer SUA_API_KEY"</code></pre>
+          </div>
+
+          <h4>Exemplo com JavaScript:</h4>
+          <div class="code-block">
+            <pre><code>const apiKey = 'SUA_API_KEY';
+
+fetch('${url_env}/api/v2/states', {
+  headers: {
+    Authorization: 'Bearer ' + apiKey
+  }
+})
+  .then(response => response.json())
+  .then(data => console.log(data));</code></pre>
           </div>
         </section>
 
