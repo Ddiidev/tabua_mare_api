@@ -88,26 +88,26 @@ fn main() {
 	}
 
 	mut app := &App{
-		env:          env
+		env: env
 		health_state: health.new_state()
-		health_pool:  infradb.new()!
-		pg_holder:    pg_holder
-		server_ready: chan &veb.Server{cap: 1}
+		health_pool: infradb.new()!
+		pg_holder: pg_holder
+		server_ready: chan &veb.Server{ cap: 1 }
 	}
-	$if dev_static_gzip ? {
+	$if dev_static_gzip? {
 		app.enable_static_gzip = true
 		app.static_compression_mime_types = [veb.mime_types['.css']]
 	}
 
 	mut api_controller_v2 := &APIControllerV2{
 		pool_conn: infradb.new()!
-		env:       env
+		env: env
 		pg_holder: pg_holder
 	}
 
 	mut auth_controller := &AuthController{
-		env:          env
-		pg_holder:    pg_holder
+		env: env
+		pg_holder: pg_holder
 		avatar_cache: auth_user.new_avatar_cache(env.avatar_cache_ttl_minutes)
 	}
 
@@ -121,8 +121,8 @@ fn main() {
 	os.signal_opt(.term, request_shutdown) or {
 		panic('Failed to register SIGTERM handler: ${err}')
 	}
-	spawn wait_for_shutdown(app.health_state, app.server_ready)
 
+	spawn wait_for_shutdown(app.health_state, app.server_ready)
 	println('Starting Tabua Mare API on port ${port}')
 	defer { app.pg_holder.close() }
 	veb.run[App, web_ctx.WsCtx](mut app, port)
@@ -151,6 +151,8 @@ fn (app &App) base_url() string {
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'API de Tábua de Maré do Brasil — Dados de Maré em JSON'
+	data['page_description'] = 'Consulte horários, alturas e portos da tábua de maré brasileira por API REST. Dados em JSON, geolocalização e acesso sem cadastro.'
 	data['navbar'] = app.navbar('/', app.is_logged_in(mut ctx))
 	data['canonical_url'] = app.base_url() + '/'
 	data['base_url'] = app.base_url()
@@ -158,7 +160,7 @@ pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
 	data['footer'] = app.footer()
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 
@@ -168,9 +170,11 @@ pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
 @['/docs']
 pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'Documentação da API de Marés | Tábua de Maré API'
+	data['page_description'] = 'Documentação da API de marés brasileira com endpoints, parâmetros, autenticação e exemplos de respostas em JSON.'
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 	url_env := app.base_url()
@@ -187,6 +191,8 @@ pub fn (app &App) docs(mut ctx web_ctx.WsCtx) veb.Result {
 @['/playground']
 pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'Como consultar dados de maré em JSON | Tábua de Maré API'
+	data['page_description'] = 'Monte requisições para a API de marés, execute endpoints reais e inspecione respostas JSON diretamente no navegador.'
 	data['navbar'] = app.navbar('/playground', app.is_logged_in(mut ctx))
 	data['canonical_url'] = app.base_url() + '/playground'
 	data['base_url'] = app.base_url()
@@ -194,7 +200,7 @@ pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 	data['footer'] = app.footer()
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 	return ctx.html(engine.render('playground.html', data) or { '' })
@@ -203,6 +209,8 @@ pub fn (app &App) playground(mut ctx web_ctx.WsCtx) veb.Result {
 @['/apoiar']
 pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'Apoie a API Brasileira de Dados de Maré | Tábua de Maré API'
+	data['page_description'] = 'Ajude a manter aberta a API brasileira de dados de maré, portos, horários e alturas para projetos e aplicações.'
 	data['navbar'] = app.navbar('/apoiar', app.is_logged_in(mut ctx))
 	data['canonical_url'] = app.base_url() + '/apoiar'
 	data['base_url'] = app.base_url()
@@ -210,7 +218,7 @@ pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 	data['footer'] = app.footer()
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 	return ctx.html(engine.render('apoiar.html', data) or { '' })
@@ -219,6 +227,8 @@ pub fn (app &App) apoiar(mut ctx web_ctx.WsCtx) veb.Result {
 @['/privacidade']
 pub fn (app &App) privacidade(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'Política de Privacidade | Tábua de Maré API'
+	data['page_description'] = 'Política de privacidade da Tábua de Maré API e informações sobre dados pessoais, cookies e serviços utilizados.'
 	data['navbar'] = app.navbar('/privacidade', app.is_logged_in(mut ctx))
 	data['canonical_url'] = app.base_url() + '/privacidade'
 	data['base_url'] = app.base_url()
@@ -226,7 +236,7 @@ pub fn (app &App) privacidade(mut ctx web_ctx.WsCtx) veb.Result {
 	data['footer'] = app.footer()
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 	return ctx.html(engine.render('privacidade.html', data) or { '' })
@@ -235,6 +245,8 @@ pub fn (app &App) privacidade(mut ctx web_ctx.WsCtx) veb.Result {
 @['/termos']
 pub fn (app &App) termos(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'Termos de Serviço | Tábua de Maré API'
+	data['page_description'] = 'Termos de serviço aplicáveis ao site, à documentação e aos endpoints da Tábua de Maré API.'
 	data['navbar'] = app.navbar('/termos', app.is_logged_in(mut ctx))
 	data['canonical_url'] = app.base_url() + '/termos'
 	data['base_url'] = app.base_url()
@@ -242,7 +254,7 @@ pub fn (app &App) termos(mut ctx web_ctx.WsCtx) veb.Result {
 	data['footer'] = app.footer()
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 	return ctx.html(engine.render('termos.html', data) or { '' })
@@ -251,6 +263,8 @@ pub fn (app &App) termos(mut ctx web_ctx.WsCtx) veb.Result {
 @['/rate-limit-test']
 pub fn (app &App) rate_limit_test(mut ctx web_ctx.WsCtx) veb.Result {
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'Teste de Rate Limit | Tábua de Maré API'
+	data['page_description'] = 'Ferramenta de diagnóstico para testar limites de requisições da Tábua de Maré API pelo navegador.'
 	data['navbar'] = app.navbar('', app.is_logged_in(mut ctx))
 	data['canonical_url'] = app.base_url() + '/rate-limit-test'
 	data['base_url'] = app.base_url()
@@ -258,7 +272,7 @@ pub fn (app &App) rate_limit_test(mut ctx web_ctx.WsCtx) veb.Result {
 	data['footer'] = app.footer()
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 	return ctx.html(engine.render('rate_limit_test.html', data) or { '' })
@@ -270,6 +284,8 @@ pub fn (app &App) dashboard(mut ctx web_ctx.WsCtx) veb.Result {
 		return ctx.redirect('/auth/google?next=/dashboard', veb.RedirectParams{ typ: .found })
 	}
 	mut data := map[string]veemarker.Any{}
+	data['page_title'] = 'Dashboard de API Keys | Tábua de Maré API'
+	data['page_description'] = 'Gerencie API keys, acompanhe o consumo e escolha o plano da sua integração com a Tábua de Maré API.'
 	data['navbar'] = app.navbar('/dashboard', true)
 	url_env := app.base_url()
 	data['url_env'] = url_env
@@ -279,7 +295,7 @@ pub fn (app &App) dashboard(mut ctx web_ctx.WsCtx) veb.Result {
 	data['footer'] = app.footer()
 
 	mut engine := veemarker.new_engine(veemarker.EngineConfig{
-		template_dir:  './pages'
+		template_dir: './pages'
 		cache_enabled: true
 	})
 	return ctx.html(engine.render('dashboard.html', data) or { '' })

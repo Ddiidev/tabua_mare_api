@@ -7,7 +7,19 @@ Crawl-delay: 1
 Sitemap: https://tabuamare.api.br/sitemap.xml
 
 # Mecanismos de busca tradicionais são bem-vindos.
-# Bots de IA/LLM para treinamento, scraping e geração de resumos NÃO são permitidos.
+# Busca e acesso solicitado pelo usuário são permitidos. Treinamento e scraping não são.
+
+User-agent: OAI-SearchBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Claude-SearchBot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Claude-User
+Allow: /
+Crawl-delay: 1
 
 User-agent: GPTBot
 Disallow: /
@@ -52,9 +64,6 @@ User-agent: meta-externalagent
 Disallow: /
 
 User-agent: FacebookBot
-Disallow: /
-
-User-agent: OAI-SearchBot
 Disallow: /
 
 User-agent: ImagesiftBot
