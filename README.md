@@ -36,6 +36,16 @@ A versão 2 da API traz uma mudança importante na identificação dos portos:
 
 Para saber como utilizar a API, incluindo todos os endpoints disponíveis e estrutura de resposta, acesse: **https://tabuamare.api.br/docs**
 
+### SDKs oficiais
+
+Use um cliente pronto para integrar a API v2 à sua aplicação. Os SDKs são mantidos no repositório [Ddiidev/sdks-tabua-mare](https://github.com/Ddiidev/sdks-tabua-mare):
+
+- **JavaScript/TypeScript** — instale com `npm install tabua-mare-sdk` e consulte o [pacote no npm](https://www.npmjs.com/package/tabua-mare-sdk) e o [README do cliente](https://github.com/Ddiidev/sdks-tabua-mare/tree/main/tabua-mare-sdk-js-ts).
+- **Go** — instale com `go get github.com/Ddiidev/sdks-tabua-mare/tabua-mare-sdk-go` e consulte a [documentação no pkg.go.dev](https://pkg.go.dev/github.com/Ddiidev/sdks-tabua-mare/tabua-mare-sdk-go) e o [README do cliente](https://github.com/Ddiidev/sdks-tabua-mare/tree/main/tabua-mare-sdk-go).
+- **C#/.NET** — instale com `dotnet add package TabuaMare.SDK` e consulte o [pacote no NuGet](https://www.nuget.org/packages/TabuaMare.SDK/) e o [README do cliente](https://github.com/Ddiidev/sdks-tabua-mare/tree/main/tabua-mare-sdk-csharp).
+
+Cada cliente documenta instalação, autenticação por API key e exemplos específicos da linguagem. A API key deve ser enviada como `Authorization: Bearer <api_key>` ou `X-Api-Key: <api_key>`; veja a seção [Como enviar a API key](https://tabuamare.api.br/docs#api-key-header).
+
 ### Principais Endpoints (V2)
 
 - `GET /api/v2/states`
