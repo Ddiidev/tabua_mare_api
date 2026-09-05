@@ -1,0 +1,105 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Tábua de Maré API",
+    "version": "2.0.0",
+    "description": "API REST pública para consultar estados costeiros, portos e tábuas de maré brasileiras. A versão atual é /api/v2.",
+    "contact": { "url": "https://tabuamare.api.br/docs" },
+    "license": { "name": "MIT", "url": "https://github.com/Ddiidev/tabua_mare_api/blob/main/LICENSE" }
+  },
+  "servers": [{ "url": "https://tabuamare.api.br", "description": "Produção" }],
+  "paths": {
+    "/api/v2/states": {
+      "get": {
+        "operationId": "listStates",
+        "summary": "Lista estados costeiros",
+        "responses": { "200": { "$ref": "#/components/responses/States" }, "429": { "$ref": "#/components/responses/RateLimited" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    },
+    "/api/v2/harbor_names/{state}": {
+      "get": {
+        "operationId": "listHarborNamesByState",
+        "summary": "Lista portos de um estado",
+        "parameters": [{ "$ref": "#/components/parameters/State" }],
+        "responses": { "200": { "$ref": "#/components/responses/JsonSuccess" }, "400": { "$ref": "#/components/responses/BadRequest" }, "429": { "$ref": "#/components/responses/RateLimited" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    },
+    "/api/v2/harbors/{ids}": {
+      "get": {
+        "operationId": "getHarborsByIds",
+        "summary": "Obtém um ou mais portos por ID",
+        "parameters": [{ "$ref": "#/components/parameters/HarborIds" }],
+        "responses": { "200": { "$ref": "#/components/responses/JsonSuccess" }, "400": { "$ref": "#/components/responses/BadRequest" }, "429": { "$ref": "#/components/responses/RateLimited" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    },
+    "/api/v2/tabua-mare/{harbor}/{month}/{days}": {
+      "get": {
+        "operationId": "getTideTable",
+        "summary": "Consulta a tábua de maré de um porto",
+        "parameters": [{ "$ref": "#/components/parameters/HarborId" }, { "$ref": "#/components/parameters/Month" }, { "$ref": "#/components/parameters/Days" }],
+        "responses": { "200": { "$ref": "#/components/responses/JsonSuccess" }, "400": { "$ref": "#/components/responses/BadRequest" }, "429": { "$ref": "#/components/responses/RateLimited" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    },
+    "/api/v2/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}": {
+      "get": {
+        "operationId": "getNearestTideTable",
+        "summary": "Consulta a tábua de maré do porto mais próximo no estado",
+        "parameters": [{ "$ref": "#/components/parameters/Coordinates" }, { "$ref": "#/components/parameters/State" }, { "$ref": "#/components/parameters/Month" }, { "$ref": "#/components/parameters/Days" }],
+        "responses": { "200": { "$ref": "#/components/responses/JsonSuccess" }, "400": { "$ref": "#/components/responses/BadRequest" }, "404": { "$ref": "#/components/responses/NotFound" }, "429": { "$ref": "#/components/responses/RateLimited" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    },
+    "/api/v2/nearested-harbor/{state}/{lat_lng}": {
+      "get": {
+        "operationId": "getNearestHarborInState",
+        "summary": "Obtém o porto mais próximo dentro de um estado",
+        "parameters": [{ "$ref": "#/components/parameters/State" }, { "$ref": "#/components/parameters/Coordinates" }],
+        "responses": { "200": { "$ref": "#/components/responses/JsonSuccess" }, "404": { "$ref": "#/components/responses/NotFound" }, "429": { "$ref": "#/components/responses/RateLimited" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    },
+    "/api/v2/nearest-harbor-independent-state/{lat_lng}": {
+      "get": {
+        "operationId": "getNearestHarbor",
+        "summary": "Obtém o porto mais próximo sem restringir o estado",
+        "parameters": [{ "$ref": "#/components/parameters/Coordinates" }],
+        "responses": { "200": { "$ref": "#/components/responses/JsonSuccess" }, "404": { "$ref": "#/components/responses/NotFound" }, "429": { "$ref": "#/components/responses/RateLimited" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    },
+    "/api/v2/usage": {
+      "get": {
+        "operationId": "getUsage",
+        "summary": "Consulta limites e consumo da API key",
+        "security": [{ "BearerAuth": [] }, { "ApiKeyHeader": [] }],
+        "responses": { "200": { "$ref": "#/components/responses/JsonSuccess" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "503": { "$ref": "#/components/responses/ServiceUnavailable" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "API key" },
+      "ApiKeyHeader": { "type": "apiKey", "in": "header", "name": "X-Api-Key" }
+    },
+    "parameters": {
+      "State": { "name": "state", "in": "path", "required": true, "description": "Sigla minúscula de um estado costeiro brasileiro.", "schema": { "type": "string", "pattern": "^[a-z]{2}$" }, "example": "pb" },
+      "HarborIds": { "name": "ids", "in": "path", "required": true, "description": "Lista de IDs no formato de intervalo aceito pela API.", "schema": { "type": "string" }, "example": "[pb01,pe02]" },
+      "HarborId": { "name": "harbor", "in": "path", "required": true, "description": "ID de porto com prefixo do estado.", "schema": { "type": "string", "pattern": "^[a-z]{2}[0-9]+$" }, "example": "pb01" },
+      "Coordinates": { "name": "lat_lng", "in": "path", "required": true, "description": "Latitude e longitude no formato [lat,lng].", "schema": { "type": "string" }, "example": "[-7.11509,-34.864]" },
+      "Month": { "name": "month", "in": "path", "required": true, "schema": { "type": "integer", "minimum": 1, "maximum": 12 }, "example": 1 },
+      "Days": { "name": "days", "in": "path", "required": true, "description": "Dias ou intervalos no formato [1,2,10-30].", "schema": { "type": "string" }, "example": "[1,2,3]" }
+    },
+    "schemas": {
+      "ApiError": { "type": "object", "required": ["code", "message", "resolution"], "properties": { "code": { "type": "integer" }, "message": { "type": "string" }, "resolution": { "type": "string", "description": "Próximo passo recomendado." } } },
+      "ErrorResponse": { "type": "object", "required": ["data", "total", "error"], "properties": { "data": { "type": "array", "maxItems": 0, "items": {} }, "total": { "type": "integer", "const": 0 }, "error": { "$ref": "#/components/schemas/ApiError" } } },
+      "JsonSuccess": { "type": "object", "required": ["data", "total"], "properties": { "data": { "type": "array", "items": { "type": "object", "additionalProperties": true } }, "total": { "type": "integer", "minimum": 0 } } },
+      "StatesResponse": { "type": "object", "required": ["data", "total"], "properties": { "data": { "type": "array", "items": { "type": "string", "pattern": "^[a-z]{2}$" } }, "total": { "type": "integer", "minimum": 0 } } }
+    },
+    "responses": {
+      "States": { "description": "Estados disponíveis.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/StatesResponse" } } } },
+      "JsonSuccess": { "description": "Resposta JSON de sucesso.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonSuccess" } } } },
+      "BadRequest": { "description": "Parâmetros inválidos.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "Unauthorized": { "description": "API key ausente, inválida ou revogada.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "NotFound": { "description": "Recurso ou endpoint não encontrado.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "RateLimited": { "description": "Limite por minuto ou cota mensal excedidos.", "headers": { "Retry-After": { "description": "Segundos até poder tentar novamente.", "schema": { "type": "integer", "minimum": 1 } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "ServiceUnavailable": { "description": "Dependência temporariamente indisponível.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+    }
+  }
+}

@@ -14,6 +14,8 @@ import shareds.infradb_pg
 import leafscale.veemarker
 import shareds.components_view
 
+const agent_home_markdown = '# Tábua de Maré API\n\n> API REST pública para consultar estados costeiros, portos e tábuas de maré brasileiras em JSON.\n\nUse esta API quando precisar de horários e alturas de maré, descobrir o porto mais próximo ou integrar dados de maré do litoral brasileiro. Comece por `GET /api/v2/states`; a API aceita chamadas anônimas com limite por IP.\n\n## Recursos para agentes\n\n- [Documentação da API](/docs): visão geral, autenticação e exemplos.\n- [Especificação OpenAPI](/openapi.json): contrato legível por ferramentas.\n- [Instruções de integração](/llms.txt): quando usar, limites e links de recuperação.\n- [Playground](/playground): chamadas reais no navegador.\n'
+
 const shutdown_requested = stdatomic.new_atomic[bool](false)
 
 struct App {
@@ -94,7 +96,7 @@ fn main() {
 		pg_holder: pg_holder
 		server_ready: chan &veb.Server{ cap: 1 }
 	}
-	$if dev_static_gzip? {
+	$if dev_static_gzip ? {
 		app.enable_static_gzip = true
 		app.static_compression_mime_types = [veb.mime_types['.css']]
 	}
@@ -150,6 +152,18 @@ fn (app &App) base_url() string {
 
 @['/']
 pub fn (app &App) index(mut ctx web_ctx.WsCtx) veb.Result {
+	ctx.res.header.set(.vary, 'Accept, Accept-Encoding')
+	match web_ctx.select_page_representation(ctx.req.header.get(.accept) or { '' }) {
+		.markdown {
+			return ctx.send_response_to_client('text/markdown; charset=utf-8', agent_home_markdown)
+		}
+		.not_acceptable {
+			ctx.res.set_status(.not_acceptable)
+			return ctx.send_response_to_client('text/plain; charset=utf-8', 'Not Acceptable: supported representations are text/html and text/markdown.')
+		}
+		.html {}
+	}
+
 	mut data := map[string]veemarker.Any{}
 	data['page_title'] = 'API de Tábua de Maré do Brasil — Dados de Maré em JSON'
 	data['page_description'] = 'Consulte horários, alturas e portos da tábua de maré brasileira por API REST. Dados em JSON, geolocalização e acesso sem cadastro.'

@@ -12,6 +12,7 @@ This document defines the rules for using content from `https://tabuamare.api.br
 - Brief summaries or quotations of public HTML pages with a link back to the source in search results.
 - Consuming data exclusively through the official API endpoints (`/api/v2/*`), respecting rate limits, authentication, and terms of use.
 - Reading this file (`/llm.md`) by crawlers that want to learn the usage policy.
+- Reading `/llms.txt`, the official API documentation, and the OpenAPI specification on demand to answer a user request or build an integration that respects these rules.
 
 ## 2. Prohibited uses without prior written authorization
 

@@ -41,12 +41,13 @@
     <section class="docs-hero" aria-labelledby="docs-title">
       <div>
         <p class="eyebrow">Referência V2</p>
-        <h1 id="docs-title">Documentação da API</h1>
+        <h1 id="docs-title">Documentação da Tábua de Maré API</h1>
         <p>Integre dados de maré brasileiros com exemplos diretos e respostas previsíveis.</p>
         <div class="docs-actions">
           <button class="btn btn-primary" @click="showQuickStart = true">
             Quick start
           </button>
+          <a href="/openapi.json" role="button" class="outline">OpenAPI JSON</a>
           <a href="/playground" role="button" class="outline">Abrir playground</a>
         </div>
       </div>
@@ -223,8 +224,9 @@ fetch('${url_env}/api/v2/states', {
   "data": [],
   "total": 0,
   "error": {
-    "msg": "",
-    "code": 0
+    "code": 0,
+    "message": "",
+    "resolution": ""
   }
 }</code></pre>
           </div>
@@ -581,7 +583,7 @@ curl -X GET "${url_env}/api/v2/tabua-mare/pb01/1/[1,2,3]"</code></pre>
             </p>
 
             <div class="endpoint-url">
-              <strong>GET</strong> /geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
+              <strong>GET</strong> /api/v2/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
             </div>
 
             <h4>Parâmetros:</h4>
@@ -594,7 +596,7 @@ curl -X GET "${url_env}/api/v2/tabua-mare/pb01/1/[1,2,3]"</code></pre>
 
             <h4>Exemplo de requisição:</h4>
             <div class="code-block">
-              <pre><code>curl -X GET "${url_env}/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"</code></pre>
+              <pre><code>curl -X GET "${url_env}/api/v2/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"</code></pre>
             </div>
 
             <h4>Exemplo com Fetch:</h4>
@@ -637,7 +639,7 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
     : '';
 
   // 4. Chamar o endpoint geo-tabua-mare
-  const url = url_env + '/geo-tabua-mare/[' + lat + ',' + lng + ']/' + sigla + '/1/[1,2,3]';
+  const url = url_env + '/api/v2/geo-tabua-mare/[' + lat + ',' + lng + ']/' + sigla + '/1/[1,2,3]';
   const resp = await fetch(url);
   const data = await resp.json();
   console.log(data);
@@ -762,7 +764,8 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
               <pre><code class="language-json">{
   "error": {
     "code": 404,
-    "message": "Recurso não encontrado (Exemplo)"
+    "message": "Recurso não encontrado (Exemplo)",
+    "resolution": "Consulte /openapi.json ou /docs para localizar uma rota válida."
   }
 }</code></pre>
             </div>
@@ -772,7 +775,7 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
               <li><strong>Retry-After:</strong> segundos até poder tentar
                 novamente (60 para RPM, 3600 para cota mensal).</li>
               <li><strong>Content-Type:</strong> application/json — o corpo
-                contém <code>{"data": [], "error": {"code": 429, "message": "..."}}</code>.</li>
+                contém <code>{"data": [], "error": {"code": 429, "message": "...", "resolution": "..."}}</code>.</li>
             </ul>
           </div>
         </section>
