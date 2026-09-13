@@ -23,7 +23,7 @@ v -prod . -o TabuaMareAPI
 - **Split persistence**: SQLite (tide data) + PostgreSQL external (auth/dash/rate_limit).
 - **V2 is current** (`/api/v2`, harbor IDs are strings like `pb01`). V1 responds 410 Gone.
 - **Auth**: Google OAuth + JWT HS256 (`SESSION_SECRET`). `/auth/me` reads plan from DB.
-- **Rate limiting** (middleware on `/api/v2/*`): sem api_key 16 RPM por IP, Free com chave 64 RPM/32k mês, Plan5 512 RPM/256k, Plan10 2.048 RPM/unlimited, Anual 4.096 RPM/unlimited.
+- **Rate limiting** (middleware on `/api/v2/*`): sem api_key 16 RPM por IP (bucket compartilhado), Free com chave 24 RPM não concorrentes (bucket `user:<id>`)/32k mês, Pro (`plan15`/`plan70`) 512 RPM/256k, Ultra (`plan30`/`plan150`) 2.048 RPM/unlimited. Chaves não têm plano próprio — limites seguem o plano do usuário dono da chave.
 - **Stripe**: checkout, webhooks, billing portal, cancel subscription.
 - **Templating**: `leafscale.veemarker` uses `${ ... }` — never use JS `${...}` template literals in `.html` files.
 - **Dashboard**: PetiteVue, API keys masked (copy allowed, no reveal).

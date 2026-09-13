@@ -22,6 +22,7 @@ pub:
 	bucket    string
 	plan      string
 	key_value string
+	user_id   int
 }
 
 // rate_limit_middleware retorna um MiddlewareOptions para o veb que aplica rate-limit por IP/api_key.
@@ -39,6 +40,8 @@ pub fn rate_limit_middleware(opts RateLimitOpts) veb.MiddlewareOptions[web_ctx.W
 
 // do_rate_limit executa a logica de rate-limit fora da closure para evitar
 // o limite de niveis de expressao do checker do V.
+// Sem api_key: bucket anonimo por IP. Com api_key valida: bucket do usuario
+// dono da chave ('user:<id>') com os limites do plano atual dele.
 fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, pg_holder &infradb_pg.PgHolder) bool {
 	ip := ctx.ip()
 	ctx.ip = ip
@@ -69,30 +72,36 @@ fn do_rate_limit(mut ctx web_ctx.WsCtx, env conf_env.EnvConfig, pg_holder &infra
 
 // plan_limits resolve o RPM e a cota mensal para um plano.
 // sem api_key, qualquer cliente (inclusive JWT logado) usa anon por IP;
-// free usa rate_limit_free_* somente para api_keys Free;
-// plan5/plan10/planannual usam os campos correspondentes.
+// free usa rate_limit_free_* somente para usuarios Free;
+// plan15/plan70/plan30/plan150 usam os campos correspondentes.
 // ATENCAO: regra espelhada em pages/dashboard.html:isPlanAllowed() — nao confundir.
 pub fn plan_limits(env conf_env.EnvConfig, plan string) (int, int) {
 	return match plan {
 		'anon' { env.rate_limit_anon_rpm, env.rate_limit_anon_monthly }
-		'plan5' { env.rate_limit_plan5_rpm, env.rate_limit_plan5_monthly }
-		'plan10', 'planannual' { env.rate_limit_plan10_rpm, env.rate_limit_plan10_monthly }
+		'plan15', 'plan70' { env.rate_limit_plan15_rpm, env.rate_limit_plan15_monthly }
+		'plan30', 'plan150' { env.rate_limit_plan30_rpm, env.rate_limit_plan30_monthly }
 		else { env.rate_limit_free_rpm, env.rate_limit_free_monthly }
 	}
 }
 
 // is_plan_allowed retorna true se o plano da api_key ainda e valido para o usuario.
-// Regras: plan10/planannual requerem usuario plan10/planannual; plan5 requer plan5 ou superior;
+// Regras: plan30/plan150 requerem usuario plan30/plan150; plan15/plan70 requerem plan15/plan70 ou superior;
 // free e sempre valido.
 pub fn is_plan_allowed(key_plan string, user_plan string) bool {
 	if key_plan == 'free' {
 		return true
 	}
-	if key_plan == 'plan5' {
-		return user_plan in ['plan5', 'plan10', 'planannual']
+	if key_plan == 'plan15' {
+		return user_plan in ['plan15', 'plan70', 'plan30', 'plan150']
 	}
-	if key_plan in ['plan10', 'planannual'] {
-		return user_plan in ['plan10', 'planannual']
+	if key_plan == 'plan70' {
+		return user_plan in ['plan70', 'plan30', 'plan150']
+	}
+	if key_plan == 'plan30' {
+		return user_plan == 'plan30'
+	}
+	if key_plan == 'plan150' {
+		return user_plan == 'plan150'
 	}
 	return false
 }
@@ -108,6 +117,9 @@ pub fn effective_plan(key_plan string, user_plan string) string {
 
 // resolve_api_key_identity concentra a consulta e a regra de downgrade de uma chave.
 // Chave ausente/revogada vira anonimo; falha real no banco sobe para 503 no chamador.
+// Com chave valida, o bucket e o plano vem do USUARIO dono da chave
+// (bucket 'user:<id>'), nao da chave: todas as chaves de um usuario compartilham
+// a mesma cota e os limites seguem o plano atual dele.
 pub fn resolve_api_key_identity(mut db pg.DB, api_key string) !ApiKeyIdentity {
 	if api_key == '' {
 		return ApiKeyIdentity{}
@@ -124,9 +136,10 @@ pub fn resolve_api_key_identity(mut db pg.DB, api_key string) !ApiKeyIdentity {
 	user_plan := repo_auth.find_plan_by_id(mut db, key.user_id)!
 	return ApiKeyIdentity{
 		found:     true
-		bucket:    'key:${key.key_value}'
-		plan:      effective_plan(key.plan, user_plan)
+		bucket:    'user:${key.user_id}'
+		plan:      user_plan
 		key_value: key.key_value
+		user_id:   key.user_id
 	}
 }
 

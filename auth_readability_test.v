@@ -13,12 +13,14 @@ fn test_safe_redirect_path_accepts_only_local_paths() {
 
 fn test_stripe_price_id_is_selected_from_plan() {
 	env := conf_env.EnvConfig{
-		stripe_price_plan5:      'price_plan5'
-		stripe_price_plan10:     'price_plan10'
-		stripe_price_planannual: 'price_annual'
+		stripe_price_plan15:  'price_plan15'
+		stripe_price_plan70:  'price_plan70'
+		stripe_price_plan30:  'price_plan30'
+		stripe_price_plan150: 'price_plan150'
 	}
-	assert stripe_price_id(env, 'plan5') or { '' } == 'price_plan5'
-	assert stripe_price_id(env, 'plan10') or { '' } == 'price_plan10'
-	assert stripe_price_id(env, 'planannual') or { '' } == 'price_annual'
+	assert stripe_price_id(env, 'plan15') or { '' } == 'price_plan15'
+	assert stripe_price_id(env, 'plan70') or { '' } == 'price_plan70'
+	assert stripe_price_id(env, 'plan30') or { '' } == 'price_plan30'
+	assert stripe_price_id(env, 'plan150') or { '' } == 'price_plan150'
 	assert stripe_price_id(env, 'free') or { '' } == ''
 }

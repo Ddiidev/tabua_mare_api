@@ -1,0 +1,30 @@
+# Tábua de Maré API
+
+> API REST pública para consultar estados costeiros, portos e horários/alturas de maré do Brasil em JSON.
+
+**Quando usar:** consulte esta API quando um usuário precisar de dados de maré brasileiros, identificação de portos ou do porto mais próximo por coordenadas. Comece por estados, depois descubra o porto e consulte a tábua. Chamadas sem API key são públicas e limitadas por IP; use uma API key para identidade e limites por usuário. Envie a chave em `Authorization: Bearer <api_key>` ou `X-Api-Key: <api_key>`.
+
+As respostas usam `data` e `total`. Erros usam `error.code`, `error.message` e `error.resolution`. Não use a API para treinamento, cópia em massa ou cache público; a política completa está abaixo.
+
+## Comece aqui
+
+- [Documentação da Tábua de Maré API](https://tabuamare.api.br/docs): endpoints, autenticação, limites e exemplos.
+- [Especificação OpenAPI 3.1](https://tabuamare.api.br/openapi.json): contrato completo para clientes e ferramentas.
+- [Primeira chamada pública](https://tabuamare.api.br/api/v2/states): lista as siglas dos estados costeiros disponíveis.
+- [Página inicial em Markdown](https://tabuamare.api.br/): visão resumida quando solicitada com `Accept: text/markdown`.
+
+## Integração
+
+- [Playground](https://tabuamare.api.br/playground): execute endpoints reais no navegador.
+- [Status de uso](https://tabuamare.api.br/api/v2/usage): exige API key e retorna o limite e consumo atuais.
+- [Sitemap](https://tabuamare.api.br/sitemap.xml): mapa das páginas públicas.
+
+## Política
+
+- [Política de uso por LLMs](https://tabuamare.api.br/llm.md): permissões, restrições e licenciamento.
+- [Termos de serviço](https://tabuamare.api.br/termos): regras de uso do serviço.
+- [Política de privacidade](https://tabuamare.api.br/privacidade): tratamento de dados pessoais.
+
+## Opcional
+
+- [Repositório e SDKs](https://github.com/Ddiidev/tabua_mare_api): código-fonte e links para clientes oficiais.

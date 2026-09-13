@@ -45,9 +45,10 @@ fn safe_redirect_path(next string) string {
 // stripe_price_id concentra a tabela de planos em um unico ponto do checkout.
 fn stripe_price_id(env conf_env.EnvConfig, plan string) !string {
 	price_id := match plan {
-		'plan5' { env.stripe_price_plan5 }
-		'plan10' { env.stripe_price_plan10 }
-		'planannual' { env.stripe_price_planannual }
+		'plan15' { env.stripe_price_plan15 }
+		'plan70' { env.stripe_price_plan70 }
+		'plan30' { env.stripe_price_plan30 }
+		'plan150' { env.stripe_price_plan150 }
 		else { return error('plano invalido') }
 	}
 
@@ -355,7 +356,8 @@ pub fn (mut ac AuthController) api_keys_list(mut ctx web_ctx.WsCtx) veb.Result {
 }
 
 // api_keys_create cria uma nova api_key para o usuario corrente.
-// Body JSON: {"label": "...", "plan": "free|plan5|plan10"}
+// Body JSON: {"label": "..."} — a chave nao tem plano proprio; os limites
+// seguem o plano do usuario dono da chave.
 @['/api-keys'; post]
 pub fn (mut ac AuthController) api_keys_create(mut ctx web_ctx.WsCtx) veb.Result {
 	uid := ac.require_user_id(mut ctx) or {
@@ -368,27 +370,14 @@ pub fn (mut ac AuthController) api_keys_create(mut ctx web_ctx.WsCtx) veb.Result
 		return ctx.json(types.failure[string](400, 'JSON invalido: ${err}'))
 	}
 
-	// valida plano
-	match parsed.plan {
-		'free', 'plan5', 'plan10', 'planannual' {}
-		else {
-			ctx.res.set_status(.bad_request)
-			return ctx.json(types.failure[string](400, 'plano invalido: ${parsed.plan}'))
-		}
-	}
-
 	mut db := ac.db_conn() or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'banco indisponivel: ${err}'))
 	}
 
 	user_plan := repo_auth.find_plan_by_id(mut db, uid) or { 'free' }
-	if !rate_limit.is_plan_allowed(parsed.plan, user_plan) {
-		ctx.res.set_status(.forbidden)
-		return ctx.json(types.failure[string](403, 'plano nao permitido para o usuario'))
-	}
 
-	key_value := repo_auth.issue(mut db, uid, parsed.label, parsed.plan) or {
+	key_value := repo_auth.issue(mut db, uid, parsed.label, user_plan) or {
 		ctx.res.set_status(.internal_server_error)
 		return ctx.json(types.failure[string](500, 'erro ao criar api_key: ${err}'))
 	}
@@ -397,7 +386,7 @@ pub fn (mut ac AuthController) api_keys_create(mut ctx web_ctx.WsCtx) veb.Result
 		{
 			'key_value': key_value
 			'label':     parsed.label
-			'plan':      parsed.plan
+			'plan':      user_plan
 		},
 	]))
 }

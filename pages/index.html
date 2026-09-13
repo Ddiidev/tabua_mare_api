@@ -7,7 +7,80 @@
     <title>${ page_title }</title>
     <link rel="icon" type="image/png" href="/pages/assets/favicon-192x192.png" />
     <link rel="stylesheet" href="/pages/assets/css/home.css" />
-    <style>[v-cloak] { visibility: hidden; }</style>
+    <style>
+      [v-cloak] { visibility: hidden; }
+      .billing-switch {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.45rem 0.5rem;
+        margin: 0 0 0.9rem;
+        cursor: pointer;
+        font-size: 0.82rem;
+        line-height: 1.25;
+        color: #fff;
+      }
+      .billing-switch input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .billing-switch__track {
+        display: inline-flex;
+        align-items: center;
+        width: 2.3rem;
+        height: 1.25rem;
+        flex: 0 0 auto;
+        padding: 0.14rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        transition: background 160ms ease, border-color 160ms ease;
+      }
+      .billing-switch__thumb {
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        transition: transform 160ms ease;
+      }
+      .billing-switch.is-annual .billing-switch__track {
+        border-color: var(--sun-400, #f9c74f);
+        background: var(--sun-400, #f9c74f);
+      }
+      .billing-switch.is-annual .billing-switch__thumb {
+        transform: translateX(1.02rem);
+        background: var(--ocean-950, #082f49);
+      }
+      .billing-switch input:focus-visible + .billing-switch__track {
+        outline: 2px solid var(--sun-400, #f9c74f);
+        outline-offset: 2px;
+      }
+      .billing-switch__label {
+        font-weight: 600;
+      }
+      .billing-switch__saving {
+        flex-basis: 100%;
+        width: fit-content;
+        padding: 0.12rem 0.5rem;
+        border: 1px solid var(--sun-400, #f9c74f);
+        border-radius: 999px;
+        color: var(--sun-400, #f9c74f);
+        font-size: 0.72rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .billing-switch:hover .billing-switch__track {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .billing-switch.is-annual:hover .billing-switch__track {
+        background: var(--sun-500, #f2b934);
+      }
+    </style>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=Kode+Mono:wght@400;600&amp;family=Spectral:wght@600;700&amp;display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
   </head>
@@ -92,7 +165,7 @@
         <div class="section-heading">
           <p class="eyebrow">Do terminal para o litoral</p>
           <h2 id="how-title">Três passos. Sem barreira de entrada.</h2>
-          <p>Use agora. Crie conta e API key somente quando quiser mais capacidade e controle.</p>
+          <p>Use agora. Crie conta e API key somente quando quiser mais capacidade e controle. Para guias e bastidores do projeto, acompanhe o <a href="/blog" target="_blank" rel="noreferrer noopener">blog ↗</a>.</p>
         </div>
         <ol class="steps-list">
           <li><span>1</span><div><strong>Escolha o endpoint</strong><p>Consulte estados, portos, tábua mensal ou posição geográfica.</p></div></li>
@@ -115,24 +188,49 @@
             </article>
             <article class="price-card">
               <p class="price-card__name">Free</p><p class="price-card__price">R$ 0</p><p class="price-card__period">com conta</p>
-              <ul><li>64 req/min</li><li>32 mil req/mês</li><li>API key gratuita</li></ul>
+              <ul><li>24 req/min</li><li>32 mil req/mês</li><li>API key gratuita</li></ul>
               <a href="/auth/google?next=/dashboard" role="button" class="outline">Criar conta</a>
             </article>
             <article class="price-card price-card--featured">
               <span class="price-card__tag">Mais espaço</span>
-              <p class="price-card__name">Plan 5</p><p class="price-card__price"><small>R$</small> 5</p><p class="price-card__period">por mês</p>
-              <ul><li>512 req/min</li><li>256 mil req/mês</li><li>API key isolada</li></ul>
+              <p class="price-card__name">Pro</p>
+              <p class="price-card__price"><small>R$</small> {{ billing === 'annual' ? '69,99' : '14,99' }}</p>
+              <p class="price-card__period">{{ billing === 'annual' ? 'por ano' : 'por mês' }}</p>
+              <ul>
+                <li>512 req/min</li>
+                <li>256 mil req/mês</li>
+              </ul>
+              <label class="billing-switch" :class="{ 'is-annual': billing === 'annual' }">
+                <input type="checkbox" :checked="billing === 'annual'"
+                  @change="billing = $event.target.checked ? 'annual' : 'monthly'"
+                  aria-label="Cobrança anual do plano Pro" />
+                <span class="billing-switch__track" aria-hidden="true">
+                  <span class="billing-switch__thumb"></span>
+                </span>
+                <span class="billing-switch__label">Anual</span>
+                <span class="billing-switch__saving">economia de R$ 110</span>
+              </label>
               <a href="/auth/google?next=/dashboard" role="button" class="button-sun">Começar</a>
             </article>
-            <article class="price-card">
-              <p class="price-card__name">Plan 10</p><p class="price-card__price"><small>R$</small> 10</p><p class="price-card__period">por mês</p>
-              <ul><li>2.048 req/min</li><li>Mensal ilimitado</li><li>API key isolada</li></ul>
-              <a href="/auth/google?next=/dashboard" role="button" class="outline">Começar</a>
-            </article>
             <article class="price-card price-card--featured">
-              <span class="price-card__tag">Economize R$ 50/ano</span>
-              <p class="price-card__name">Plano Anual</p><p class="price-card__price"><small>R$</small> 70</p><p class="price-card__period">por ano</p>
-              <ul><li>2.048 req/min</li><li>Mensal ilimitado</li><li>API key isolada</li></ul>
+              <span class="price-card__tag" v-if="billing === 'annual'">Economize R$ 209/ano</span>
+              <p class="price-card__name">Ultra</p>
+              <p class="price-card__price"><small>R$</small> {{ billing === 'annual' ? '149,99' : '29,99' }}</p>
+              <p class="price-card__period">{{ billing === 'annual' ? 'por ano' : 'por mês' }}</p>
+              <ul>
+                <li>2.048 req/min</li>
+                <li>Mensal ilimitado</li>
+              </ul>
+              <label class="billing-switch" :class="{ 'is-annual': billing === 'annual' }">
+                <input type="checkbox" :checked="billing === 'annual'"
+                  @change="billing = $event.target.checked ? 'annual' : 'monthly'"
+                  aria-label="Cobrança anual do plano Ultra" />
+                <span class="billing-switch__track" aria-hidden="true">
+                  <span class="billing-switch__thumb"></span>
+                </span>
+                <span class="billing-switch__label">Anual</span>
+                <span class="billing-switch__saving">economia de R$ 209</span>
+              </label>
               <a href="/auth/google?next=/dashboard" role="button" class="button-sun">Economizar</a>
             </article>
           </div>
@@ -229,7 +327,7 @@
             <a href="https://github.com/Ddiidev/tabua_mare_api" target="_blank" rel="noreferrer" role="button">Abrir GitHub ↗</a>
             <a href="/apoiar">Apoiar o projeto</a>
             <a href="https://www.youtube.com/@mais.foco42" target="_blank" rel="noreferrer">YouTube</a>
-            <a href="https://andrelz.invdual.com/" target="_blank" rel="noreferrer">Blog</a>
+            <a href="/blog" target="_blank" rel="noreferrer noopener">Blog ↗</a>
           </div>
         </div>
       </section>
@@ -278,6 +376,7 @@
         }
       ];
       createApp({
+        billing: 'monthly',
         endpoints: endpointOptions,
         selectedEndpoint: endpointOptions[0],
         requestState: 'idle',

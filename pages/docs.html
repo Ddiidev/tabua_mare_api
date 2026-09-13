@@ -41,12 +41,13 @@
     <section class="docs-hero" aria-labelledby="docs-title">
       <div>
         <p class="eyebrow">Referência V2</p>
-        <h1 id="docs-title">Documentação da API</h1>
+        <h1 id="docs-title">Documentação da Tábua de Maré API</h1>
         <p>Integre dados de maré brasileiros com exemplos diretos e respostas previsíveis.</p>
         <div class="docs-actions">
           <button class="btn btn-primary" @click="showQuickStart = true">
             Quick start
           </button>
+          <a href="/openapi.json" role="button" class="outline">OpenAPI JSON</a>
           <a href="/playground" role="button" class="outline">Abrir playground</a>
         </div>
       </div>
@@ -155,17 +156,18 @@
               — pode haver mais de um usuário no mesmo IP.
             </p>
             <p>
-              <strong>Free com api_key:</strong> 64 requisições por minuto,
-              bucket isolado por chave e 32.000 requisições por mês.
+              <strong>Free com api_key:</strong> 24 requisições por minuto
+              <strong>não concorrentes</strong> (bucket isolado por usuário — diferente do
+              anônimo, suas requisições não dividem cota com outros clientes no mesmo IP)
+              e 32.000 requisições por mês.
             </p>
             <p>
-              <strong>Planos pagos (por api_key):</strong>
+              <strong>Planos pagos (por usuário):</strong> todas as API keys do usuário
+              compartilham a mesma cota, com os limites do plano atual dele —
+              Pro (512 req/min + 256.000 req/mês) e Ultra (2.048 req/min + mensal ilimitado),
+              cada um com opção anual. Veja preços e economia na
+              <a href="/#planos"><strong>página de preços</strong></a>.
             </p>
-            <ul>
-              <li><strong>R$ 5/mês:</strong> 512 req/min + 256.000 req/mês</li>
-              <li><strong>R$ 10/mês:</strong> 2.048 req/min + ilimitado req/mês</li>
-              <li><strong>R$ 70/ano:</strong> 2.048 req/min + ilimitado req/mês; economize R$ 50 por ano</li>
-            </ul>
             <p>
               <strong>Login Google:</strong> Clique em <a href="/auth/google"><strong>Criar/Logar</strong></a>
               no menu superior para gerenciar sua conta e api_keys.
@@ -223,8 +225,9 @@ fetch('${url_env}/api/v2/states', {
   "data": [],
   "total": 0,
   "error": {
-    "msg": "",
-    "code": 0
+    "code": 0,
+    "message": "",
+    "resolution": ""
   }
 }</code></pre>
           </div>
@@ -581,7 +584,7 @@ curl -X GET "${url_env}/api/v2/tabua-mare/pb01/1/[1,2,3]"</code></pre>
             </p>
 
             <div class="endpoint-url">
-              <strong>GET</strong> /geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
+              <strong>GET</strong> /api/v2/geo-tabua-mare/{lat_lng}/{state}/{month}/{days}
             </div>
 
             <h4>Parâmetros:</h4>
@@ -594,7 +597,7 @@ curl -X GET "${url_env}/api/v2/tabua-mare/pb01/1/[1,2,3]"</code></pre>
 
             <h4>Exemplo de requisição:</h4>
             <div class="code-block">
-              <pre><code>curl -X GET "${url_env}/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"</code></pre>
+              <pre><code>curl -X GET "${url_env}/api/v2/geo-tabua-mare/[-7.11509,-34.864]/pb/1/[1,2,3]"</code></pre>
             </div>
 
             <h4>Exemplo com Fetch:</h4>
@@ -637,7 +640,7 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
     : '';
 
   // 4. Chamar o endpoint geo-tabua-mare
-  const url = url_env + '/geo-tabua-mare/[' + lat + ',' + lng + ']/' + sigla + '/1/[1,2,3]';
+  const url = url_env + '/api/v2/geo-tabua-mare/[' + lat + ',' + lng + ']/' + sigla + '/1/[1,2,3]';
   const resp = await fetch(url);
   const data = await resp.json();
   console.log(data);
@@ -681,7 +684,7 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
           <div class="code-block">
             <pre><code class="language-json">{
   "data": [{
-    "plan": "plan5",
+    "plan": "plan15",
     "limit_rpm": "512",
     "used_rpm": "3",
     "remaining_rpm": "509",
@@ -696,7 +699,7 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
           <h4>Notas:</h4>
           <ul>
             <li><strong>remaining_rpm</strong> e <strong>remaining_monthly</strong> retornam <code>-1</code> quando o limite é <strong>ilimitado</strong> (0 = unlimited no servidor).</li>
-            <li>O plano retornado reflete o plano efetivo da chave: se o usuário fez downgrade e a chave é de plano superior ao atual, o plano retornado cai para o plano do usuário (ver <code>is_plan_allowed</code>).</li>
+            <li>O plano retornado é o plano atual do usuário dono da chave (as chaves não têm plano próprio; o bucket de consumo é por usuário).</li>
             <li>Este endpoint <strong>não</strong> consome cota mensal (é fora do middleware de rate-limit). Pode ser chamado a qualquer momento para checar saldo.</li>
           </ul>
         </div>
@@ -729,9 +732,8 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
               </li>
               <li>
                 <strong>403 - Forbidden:</strong> Ação não permitida para o
-                plano do usuário. Ex: tentar criar uma api_key de plano
-                superior ao do usuário (criar uma chave <code>plan10</code>
-                estando no plano <code>free</code>).
+                plano do usuário. Ex: tentar assinar um plano sem price ID
+                configurado ou usar recurso restrito ao plano atual.
               </li>
               <li>
                 <strong>404 - Not Found:</strong> Recurso não encontrado.
@@ -762,7 +764,8 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
               <pre><code class="language-json">{
   "error": {
     "code": 404,
-    "message": "Recurso não encontrado (Exemplo)"
+    "message": "Recurso não encontrado (Exemplo)",
+    "resolution": "Consulte /openapi.json ou /docs para localizar uma rota válida."
   }
 }</code></pre>
             </div>
@@ -772,7 +775,7 @@ navigator.geolocation.getCurrentPosition(async (pos) => {
               <li><strong>Retry-After:</strong> segundos até poder tentar
                 novamente (60 para RPM, 3600 para cota mensal).</li>
               <li><strong>Content-Type:</strong> application/json — o corpo
-                contém <code>{"data": [], "error": {"code": 429, "message": "..."}}</code>.</li>
+                contém <code>{"data": [], "error": {"code": 429, "message": "...", "resolution": "..."}}</code>.</li>
             </ul>
           </div>
         </section>

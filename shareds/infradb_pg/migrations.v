@@ -25,6 +25,7 @@ pub fn apply_pg_startup_migrations() ! {
 	ensure_users_tables(mut db)!
 	ensure_rate_limit_tables(mut db)!
 	ensure_monthly_credits_table(mut db)!
+	remap_legacy_plans(mut db)!
 }
 
 fn ensure_users_tables(mut db pg.DB) ! {
@@ -78,6 +79,19 @@ fn ensure_users_tables(mut db pg.DB) ! {
 	// Adiciona colunas Stripe ao users (idempotente)
 	db.exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT NOT NULL DEFAULT '';")!
 	db.exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT NOT NULL DEFAULT '';")!
+}
+
+// remap_legacy_plans converte os planos antigos (plan5/plan10/planannual) para a
+// nova nomenclatura por preco: plan15 (Pro mensal), plan30 (Ultra mensal) e
+// plan150 (Ultra anual). O anual do Pro (plan70) nao tem predecessor direto.
+// Idempotente: roda em todo startup e so toca linhas nos valores antigos.
+fn remap_legacy_plans(mut db pg.DB) ! {
+	db.exec("UPDATE users SET plan = 'plan15', updated_at = now() WHERE plan = 'plan5';")!
+	db.exec("UPDATE users SET plan = 'plan30', updated_at = now() WHERE plan = 'plan10';")!
+	db.exec("UPDATE users SET plan = 'plan150', updated_at = now() WHERE plan = 'planannual';")!
+	db.exec("UPDATE api_keys SET plan = 'plan15' WHERE plan = 'plan5';")!
+	db.exec("UPDATE api_keys SET plan = 'plan30' WHERE plan = 'plan10';")!
+	db.exec("UPDATE api_keys SET plan = 'plan150' WHERE plan = 'planannual';")!
 }
 
 fn ensure_rate_limit_tables(mut db pg.DB) ! {

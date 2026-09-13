@@ -20,7 +20,7 @@ if errorlevel 1 (
     goto :finish
 )
 
-v -cc msvc -g -ldflags "/LIBPATH:%COMPAT_LIB_DIRe %" -o "%~dp0out\tabua-mare-api.exe" -d using_sqlite -d dev_static_gzip watch --only-watch=*.v,*.html,*.css,*.js --before "taskkill /f /im tabua-mare-api.exe" --before "cls" run . 3330
+v -cc msvc -g -ldflags "/LIBPATH:%COMPAT_LIB_DIR%" -o "%~dp0out\tabua-mare-api.exe" -d using_sqlite -d dev_static_gzip watch --clear --only-watch=*.v,*.html,*.css,*.js --before "%~dp0kill-tabua-mare.bat" run . 3330
 set "EXIT_CODE=%errorlevel%"
 
 :finish

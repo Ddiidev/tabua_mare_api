@@ -132,12 +132,13 @@ tests/             — integration tests (_test.v files, require DB)
 | Tier | RPM | Monthly |
 |---|---|---|
 | Anon (sem api_key, por IP) | 16 | unlimited |
-| Free (api_key) | 64 | 32.000 |
-| Plan 5 (api_key) | 512 | 256.000 |
-| Plan 10 (api_key) | 2.048 | unlimited |
-| Anual (api_key) | 2.048 | unlimited |
+| Free (api_key) | 24 | 32.000 |
+| Pro (`plan15`/`plan70`) | 512 | 256.000 |
+| Ultra (`plan30`/`plan150`) | 2.048 | unlimited |
 
-  Counters and monthly credits persisted in PostgreSQL. Sem `api_key`, o middleware trata a requisição como anônima por IP, independentemente de JWT; a chave válida determina o plano e o bucket isolado. A aplicação é a única camada de rate-limit.
+  Counters and monthly credits persisted in PostgreSQL. Sem `api_key`, o middleware trata a requisição como anônima por IP (bucket compartilhado `ip:...`, 16 RPM); com `api_key` válida, o bucket é isolado por usuário (`user:<user_id>`) e os limites seguem o plano atual do usuário — Free com api_key tem 24 RPM **não concorrentes** (não divide cota com outros clientes do mesmo IP). A aplicação é a única camada de rate-limit.
+
+  **Preços/planos (nomenclatura interna = preço):** `plan15` Pro R$14,99/mês; `plan70` Pro anual R$69,99/ano; `plan30` Ultra R$29,99/mês; `plan150` Ultra anual R$149,99/ano. Migration `remap_legacy_plans` (infradb_pg) converte `plan5→plan15`, `plan10→plan30`, `planannual→plan150` no startup.
 
   **IP real em produção:** o fluxo é Cloudflare proxy → Nginx → Coolify A/B. `veb.Context.ip()` prioriza `CF-Connecting-IP`; esse header só é confiável porque 80/443 da origem aceitam exclusivamente ranges oficiais Cloudflare. Acesso direto ao IP deve permanecer bloqueado.
 
@@ -152,7 +153,7 @@ tests/             — integration tests (_test.v files, require DB)
 
   Rationale: Free users **with** an api_key (priority 2) must take precedence over clients **without** an api_key (priority 3), because the key proves isolated identity. When a future priority queue is added, lower numeric priority wins; on contention, priority 3 requests are throttled first.
 
-- **api_key** — sent via `Authorization: Bearer <key>` or `X-Api-Key` header. `is_plan_allowed(key_plan, user_plan)` prevents revoked/downgraded plans from using old paid keys. Valid plans for api_keys: `free`, `plan5`, `plan10`, `planannual`.
+- **api_key** — sent via `Authorization: Bearer <key>` or `X-Api-Key` header. Chaves não têm plano próprio: limites e bucket seguem o plano atual do usuário dono da chave (`user:<user_id>`). `is_plan_allowed(key_plan, user_plan)` permanece como defesa para chaves antigas legadas.
 - **plan_limits(env, plan)** — single source of truth for `(limit_rpm, limit_monthly)` per plan. Defined in `shareds/rate_limit/middleware.v`, used by middleware and `/auth/rate-limit-status`.
 - **extract_api_key(ctx)** — `pub` in `shareds/rate_limit/middleware.v`. Parses Bearer, `X-Api-Key` header, or `api_key` form field. Reused by middleware and `/auth/rate-limit-status`.
 - **Stripe webhooks** — `/auth/webhook` verifies signature with `STRIPE_WEBHOOK_SECRET` (300s tolerance). Handles: `checkout.session.completed`, `customer.subscription.created/updated/deleted`, `invoice.payment_failed`. Updates `users.plan`, `stripe_customer_id`, `stripe_subscription_id`. All events decoded with a single `StripeWebhookEvent` struct (`json.decode` ignores absent fields).
@@ -188,25 +189,25 @@ ctx.html(engine.render('index.html', data) or { '' })
 - `code` inline próximo a texto deve permanecer alinhado à linha (`vertical-align: baseline`); não usar deslocamento vertical que faça o bloco “flutuar”.
 - Blocos de código e respostas do playground devem ser compactos, mantendo apenas o espaço necessário para leitura e o botão de cópia.
 - Validar mudanças visuais no navegador nas rotas `/docs` e `/playground`, além de conferir `git diff --check`.
-- O plano anual (`planannual`) tem o mesmo limite do Plan 10: `2.048 req/min` e mensal ilimitado. A comunicação pública deve mostrar o valor anual e a economia em reais: `R$ 70/ano`, economia de `R$ 50/ano` contra doze mensalidades de R$ 10.
+- O plano anual do Ultra (`plan150`) tem o mesmo limite do Ultra mensal: `2.048 req/min` e mensal ilimitado. A comunicação pública deve mostrar o valor anual e a economia em reais: Pro anual `R$ 69,99/ano` (economia de `R$ 110/ano` contra 12× R$14,99); Ultra anual `R$ 149,99/ano` (economia de `R$ 209/ano` contra 12× R$29,99).
 - Assets referenciados nas páginas devem existir e responder pela rota estática antes de serem usados; preferir assets locais ou URLs oficiais verificadas.
 
 ### Preços Stripe
 
 - `stripe_price_ids` em `shareds/conf_env/conf_env.v` é a fonte única dos IDs.
-- Com `-d env_dev`, os preços vêm de `STRIPE_PRICE_PLAN5`, `STRIPE_PRICE_PLAN10` e `STRIPE_PRICE_PLANANNUAL`.
+- Com `-d env_dev`, os preços vêm de `STRIPE_PRICE_PLAN15`, `STRIPE_PRICE_PLAN70`, `STRIPE_PRICE_PLAN30` e `STRIPE_PRICE_PLAN150`.
 - Sem `-d env_dev`, usar os IDs live fixos definidos no código. Não criar produtos ou prices durante mudanças de interface.
 
 ### Dashboard (`pages/dashboard.html`)
 
 Uses **PetiteVue** (lightweight Vue) for client-side reactivity. Shows:
 - User profile + plan badge + monthly usage (from `/auth/rate-limit-status`)
-- Plan cards (Free/Plan5/Plan10/Anual) with Stripe checkout buttons
+- Plan cards (Free/Pro/Ultra, com opção anual em cada card) with Stripe checkout buttons
 - Subscription management (billing portal opens in a new tab, cancel)
-- API keys CRUD (masked display, copy allowed, no reveal; revoked keys are hidden from the list)
+- API keys CRUD (masked display, copy allowed, no reveal; revoked keys are hidden from the list) — sem seleção de plano: a chave herda o plano do usuário
 - Rate-limit test tool (configurable count, 5 parallel, stop button, optional api_key)
 
-**Plan badge convention:** the internal plan value `planannual` is displayed visually as `plan∞` in badges via the `planLabel()` helper. The internal value `planannual` is preserved everywhere (Stripe, DB, JWT, API), only the display label changes.
+**Plan badge convention:** `planLabel()` in dashboard maps internal values to display labels: `plan15` → `pro`, `plan70` → `pro anual`, `plan30` → `ultra`, `plan150` → `ultra anual`. Internal values preserved everywhere (Stripe, DB, JWT, API).
 
 ## Security Notes
 

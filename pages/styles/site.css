@@ -3851,7 +3851,7 @@ h4,
 
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
   gap: 0;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 0.8rem;
@@ -3863,7 +3863,7 @@ h4,
   min-width: 0;
   flex-direction: column;
   margin: 0;
-  padding: 1.6rem;
+  padding: clamp(1.5rem, 2vw, 1.9rem);
   border: 0;
   border-left: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0;
@@ -3873,6 +3873,11 @@ h4,
 
 .price-card:first-child {
   border-left: 0;
+  border-radius: 0.8rem 0 0 0.8rem;
+}
+
+.price-card:last-child {
+  border-radius: 0 0.8rem 0.8rem 0;
 }
 
 .price-card--featured {
@@ -3881,20 +3886,26 @@ h4,
 
 .price-card__tag {
   position: absolute;
-  top: -0.75rem;
-  right: 1rem;
+  top: 1rem;
+  right: 1.1rem;
+  max-width: calc(100% - 2.2rem);
   padding: 0.26rem 0.55rem;
   border-radius: 999px;
   background: var(--sun-400);
   color: var(--ocean-950);
   font-size: 0.66rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .price-card__name {
   margin: 0;
   color: #fff;
   font-weight: 800;
+}
+
+.price-card--featured .price-card__name {
+  padding-right: 8.5rem;
 }
 
 .price-card__price {
@@ -4287,9 +4298,24 @@ h4,
     border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 
-  .price-card:nth-child(4),
-  .price-card:nth-child(5) {
+  .price-card:nth-child(4) {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .price-card:first-child {
+    border-radius: 0.8rem 0 0 0;
+  }
+
+  .price-card:nth-child(2) {
+    border-radius: 0 0.8rem 0 0;
+  }
+
+  .price-card:nth-child(3) {
+    border-radius: 0 0 0 0.8rem;
+  }
+
+  .price-card:last-child {
+    border-radius: 0 0 0.8rem 0;
   }
 }
 
@@ -4356,14 +4382,23 @@ h4,
   .price-card,
   .price-card:nth-child(2),
   .price-card:nth-child(3),
-  .price-card:nth-child(4),
-  .price-card:nth-child(5) {
+  .price-card:nth-child(4) {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     border-left: 0;
   }
 
   .price-card:first-child {
     border-top: 0;
+    border-radius: 0.8rem 0.8rem 0 0;
+  }
+
+  .price-card:nth-child(2),
+  .price-card:nth-child(3) {
+    border-radius: 0;
+  }
+
+  .price-card:last-child {
+    border-radius: 0 0 0.8rem 0.8rem;
   }
 
   .open-source-section__mark {

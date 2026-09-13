@@ -22,9 +22,10 @@ fn production_env() conf_env.EnvConfig {
 		session_secret:          'test-only-session-' + fake_secret
 		stripe_secret_key:       'sk_' + 'live_' + fake_secret
 		stripe_webhook_secret:   production_webhook_secret()
-		stripe_price_plan5:      'price_live_plan5'
-		stripe_price_plan10:     'price_live_plan10'
-		stripe_price_planannual: 'price_live_planannual'
+		stripe_price_plan15:  'price_live_plan15'
+		stripe_price_plan70:  'price_live_plan70'
+		stripe_price_plan30:  'price_live_plan30'
+		stripe_price_plan150: 'price_live_plan150'
 	}
 }
 
@@ -137,19 +138,19 @@ fn test_production_rejects_non_live_stripe_and_invalid_prices() {
 
 	no_price := conf_env.EnvConfig{
 		...production_env()
-		stripe_price_plan5: ''
+		stripe_price_plan15: ''
 	}
-	assert_invalid(no_price, 'STRIPE_PRICE_PLAN5')
+	assert_invalid(no_price, 'STRIPE_PRICE_PLAN15')
 
 	prefix_only_price := conf_env.EnvConfig{
 		...production_env()
-		stripe_price_plan5: 'price_'
+		stripe_price_plan15: 'price_'
 	}
-	assert_invalid(prefix_only_price, 'STRIPE_PRICE_PLAN5')
+	assert_invalid(prefix_only_price, 'STRIPE_PRICE_PLAN15')
 
 	duplicate_prices := conf_env.EnvConfig{
 		...production_env()
-		stripe_price_plan10: 'price_live_plan5'
+		stripe_price_plan30: 'price_live_plan15'
 	}
 	assert_invalid(duplicate_prices, 'Stripe prices')
 }

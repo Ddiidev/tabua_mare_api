@@ -76,17 +76,22 @@
       color: #333;
     }
 
-    .plan-plan5 {
+    .plan-plan15 {
       background-color: #f9c74f;
       color: #333;
     }
 
-    .plan-plan10 {
+    .plan-plan70 {
+      background-color: #e8a33d;
+      color: #333;
+    }
+
+    .plan-plan30 {
       background-color: #277da1;
       color: #fff;
     }
 
-    .plan-planannual {
+    .plan-plan150 {
       background-color: #43aa8b;
       color: #fff;
     }
@@ -239,6 +244,85 @@
       display: none;
     }
 
+    .plan-card .billing-toggle--card {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      width: 100%;
+      margin: 0 0 0.6rem;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      font-size: 0.78rem;
+    }
+
+    .plan-card .billing-toggle--card input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .plan-card .billing-toggle__track {
+      display: inline-flex;
+      align-items: center;
+      width: 2.1rem;
+      height: 1.15rem;
+      flex: 0 0 auto;
+      padding: 0.12rem;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.18);
+      transition: background 160ms ease;
+    }
+
+    .plan-card .billing-toggle__thumb {
+      width: 0.9rem;
+      height: 0.9rem;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      transition: transform 160ms ease;
+    }
+
+    .plan-card .billing-toggle--card.is-annual .billing-toggle__track {
+      background: #43aa8b;
+    }
+
+    .plan-card .billing-toggle--card.is-annual .billing-toggle__thumb {
+      transform: translateX(0.95rem);
+    }
+
+    .plan-card .billing-toggle--card input:focus-visible + .billing-toggle__track {
+      outline: 2px solid var(--ocean-600, #0891b2);
+      outline-offset: 2px;
+    }
+
+    .plan-card .billing-toggle__label {
+      font-weight: 600;
+      color: inherit;
+    }
+
+    .plan-card .billing-toggle__saving {
+      padding: 0.1rem 0.5rem;
+      border: 1px solid #17805f;
+      border-radius: 999px;
+      color: #17805f;
+      font-size: 0.7rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .plan-card .billing-toggle--card:hover .billing-toggle__track {
+      background: rgba(0, 0, 0, 0.28);
+    }
+
+    .plan-card .billing-toggle--card.is-annual:hover .billing-toggle__track {
+      background: #3b9a7e;
+    }
+
     .plans-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -329,54 +413,62 @@
       <!-- Planos -->
       <div class="plans-workspace section-card" v-if="user">
         <h3>Planos</h3>
-        <p><small>Assine um plano para ter limites maiores na API.</small></p>
+        <p><small>Assine um plano para ter limites maiores na API. Alterne Anual no card para ver o preço do ano.</small></p>
         <div class="plans-grid">
           <div class="plan-card" :class="{ current: user.plan === 'free' }">
             <div class="plan-card-body">
               <h4>Free</h4>
               <div class="price">Grátis</div>
-              <div class="limits">64 req/min · 32k req/mês</div>
+              <div class="limits">24 req/min · 32k req/mês</div>
             </div>
             <div class="plan-card-footer">
               <button class="outline" disabled v-if="user.plan === 'free'">Atual</button>
             </div>
           </div>
-          <div class="plan-card" :class="{ current: user.plan === 'plan5' }">
+          <div class="plan-card" :class="{ current: ['plan15','plan70'].includes(user.plan) }">
             <div class="plan-card-body">
-              <h4>Plan 5</h4>
-              <div class="price">R$ 5/mês</div>
+              <h4>Pro</h4>
+              <div class="price" v-if="billing === 'monthly'">R$ 14,99/mês</div>
+              <div class="price" v-else>R$ 69,99/ano</div>
               <div class="limits">512 req/min · 256k req/mês</div>
             </div>
             <div class="plan-card-footer">
-              <button class="button-yellow" @click="checkout('plan5')" :disabled="checkoutLoading === 'plan5'"
-                v-if="user.plan !== 'plan5'">Assinar</button>
-              <button class="outline" disabled v-if="user.plan === 'plan5'">Atual</button>
+              <label class="billing-toggle billing-toggle--card" :class="{ 'is-annual': billing === 'annual' }">
+                <input type="checkbox" :checked="billing === 'annual'"
+                  @change="billing = $event.target.checked ? 'annual' : 'monthly'"
+                  :aria-label="'Cobrança anual do plano Pro'" />
+                <span class="billing-toggle__track" aria-hidden="true">
+                  <span class="billing-toggle__thumb"></span>
+                </span>
+                <span class="billing-toggle__label">Anual</span>
+                <span class="billing-toggle__saving">economia de R$ 110</span>
+              </label>
+              <button class="button-yellow" @click="checkout(billing === 'annual' ? 'plan70' : 'plan15')"
+                :disabled="checkoutLoading !== ''" v-if="!['plan15','plan70'].includes(user.plan)">Assinar</button>
+              <button class="outline" disabled v-if="['plan15','plan70'].includes(user.plan)">Atual</button>
             </div>
           </div>
-          <div class="plan-card" :class="{ current: user.plan === 'plan10' }">
+          <div class="plan-card" :class="{ current: ['plan30','plan150'].includes(user.plan) }">
             <div class="plan-card-body">
-              <h4>Plan 10</h4>
-              <div class="price">R$ 10/mês</div>
+              <h4>Ultra</h4>
+              <div class="price" v-if="billing === 'monthly'">R$ 29,99/mês</div>
+              <div class="price" v-else>R$ 149,99/ano</div>
               <div class="limits">2.048 req/min · ilimitado/mês</div>
-              <div class="annual-saving">No anual: economize R$ 50/ano</div>
             </div>
             <div class="plan-card-footer">
-              <button class="button-yellow" @click="checkout('plan10')" :disabled="checkoutLoading === 'plan10'"
-                v-if="user.plan !== 'plan10'">Assinar</button>
-              <button class="outline" disabled v-if="user.plan === 'plan10'">Atual</button>
-            </div>
-          </div>
-          <div class="plan-card" :class="{ current: user.plan === 'planannual' }">
-            <div class="plan-card-body">
-              <h4>Plan Anual</h4>
-              <div class="price">R$ 70/ano</div>
-              <div class="limits">2.048 req/min · ilimitado/mês</div>
-              <div class="annual-saving">Economize R$ 50 por ano</div>
-            </div>
-            <div class="plan-card-footer">
-              <button class="button-yellow" @click="checkout('planannual')" :disabled="checkoutLoading === 'planannual'"
-                v-if="user.plan !== 'planannual'">Assinar</button>
-              <button class="outline" disabled v-if="user.plan === 'planannual'">Atual</button>
+              <label class="billing-toggle billing-toggle--card" :class="{ 'is-annual': billing === 'annual' }">
+                <input type="checkbox" :checked="billing === 'annual'"
+                  @change="billing = $event.target.checked ? 'annual' : 'monthly'"
+                  :aria-label="'Cobrança anual do plano Ultra'" />
+                <span class="billing-toggle__track" aria-hidden="true">
+                  <span class="billing-toggle__thumb"></span>
+                </span>
+                <span class="billing-toggle__label">Anual</span>
+                <span class="billing-toggle__saving">economia de R$ 209</span>
+              </label>
+              <button class="button-yellow" @click="checkout(billing === 'annual' ? 'plan150' : 'plan30')"
+                :disabled="checkoutLoading !== ''" v-if="!['plan30','plan150'].includes(user.plan)">Assinar</button>
+              <button class="outline" disabled v-if="['plan30','plan150'].includes(user.plan)">Atual</button>
             </div>
           </div>
         </div>
@@ -401,7 +493,7 @@
         <h3>Minhas API Keys</h3>
         <p>
           <small>Use uma API Key no header <code>Authorization: Bearer &lt;sua_key&gt;</code> para acessar os
-              endpoints com o limite da sua chave.
+              endpoints com o limite do seu plano — todas as suas chaves compartilham a mesma cota.
               <a href="/docs#api-key-header">Veja onde informar a API Key e exemplos de uso.</a></small>
         </p>
 
@@ -410,18 +502,9 @@
           <summary role="button" class="button-yellow dashboard-details-toggle">Gerar nova API Key</summary>
           <form @submit.prevent="createKey" style="margin-top: 1rem;">
             <div class="form-row api-key-create-row">
-              <div>
+              <div style="flex: 2;">
                 <label for="label">Label</label>
                 <input id="label" v-model="newLabel" placeholder="Ex: Produção" />
-              </div>
-              <div>
-                <label for="plan">Plano</label>
-                <select id="plan" v-model="newPlan">
-                  <option value="free" v-if="isPlanAllowed('free')">Free</option>
-                  <option value="plan5" v-if="isPlanAllowed('plan5')">Plan 5</option>
-                  <option value="plan10" v-if="isPlanAllowed('plan10')">Plan 10</option>
-                  <option value="planannual" v-if="isPlanAllowed('planannual')">Plan Anual</option>
-                </select>
               </div>
               <div>
                 <button type="submit" :disabled="creating">Gerar</button>
@@ -517,12 +600,12 @@
       keys: [],
       loadingKeys: true,
       newLabel: '',
-      newPlan: 'free',
       newKey: null,
       creating: false,
       createError: '',
       checkoutLoading: '',
       checkoutError: '',
+      billing: 'monthly',
       portalLoading: false,
       portalError: '',
       cancelLoading: false,
@@ -588,7 +671,7 @@
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ label: this.newLabel, plan: this.newPlan })
+            body: JSON.stringify({ label: this.newLabel })
           });
           const body = await res.json();
           if (!res.ok) {
@@ -598,7 +681,6 @@
           const arr = body.data || body;
           this.newKey = Array.isArray(arr) ? arr[0] : arr;
           this.newLabel = '';
-          this.newPlan = 'free';
           await this.loadKeys();
         } catch (e) {
           this.createError = 'Erro: ' + e.message;
@@ -720,9 +802,9 @@
       isPlanAllowed(keyPlan) {
         const userPlan = this.user && this.user.plan ? this.user.plan : 'free';
         if (keyPlan === 'free') return true;
-        if (keyPlan === 'plan5') return ['plan5', 'plan10', 'planannual'].includes(userPlan);
-        if (keyPlan === 'plan10') return ['plan10', 'planannual'].includes(userPlan);
-        if (keyPlan === 'planannual') return ['planannual'].includes(userPlan);
+        if (keyPlan === 'plan15') return ['plan15', 'plan70', 'plan30', 'plan150'].includes(userPlan);
+        if (keyPlan === 'plan70') return ['plan70', 'plan30', 'plan150'].includes(userPlan);
+        if (keyPlan === 'plan30' || keyPlan === 'plan150') return ['plan30', 'plan150'].includes(userPlan);
         return false;
       },
 
@@ -733,10 +815,17 @@
         return first + '••••' + last;
       },
 
-      // planLabel retorna o label visual do plano (planannual -> plan∞).
-      // Internamente o valor permanece 'planannual' para Stripe, DB e logica.
+      // planLabel retorna o label visual do plano.
+      // Internamente o valor permanece plan15/plan70/plan30/plan150 para Stripe, DB e logica.
       planLabel(plan) {
-        return plan === 'planannual' ? 'plan∞' : plan;
+        const labels = {
+          free: 'free',
+          plan15: 'pro',
+          plan70: 'pro anual',
+          plan30: 'ultra',
+          plan150: 'ultra anual'
+        };
+        return labels[plan] || plan;
       },
 
       async loadRateLimit() {

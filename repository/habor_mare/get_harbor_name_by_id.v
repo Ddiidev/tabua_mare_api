@@ -77,6 +77,5 @@ pub fn get_harbor_by_ids_only_id(mut pool_conn pool.ConnectionPool, harbor_ids [
 		.select('id_harbor_state')!
 		.query()!
 
-	dump(harbors)
 	return harbors[0] or { return error('Não foi encontrado um porto perto das coordenadas') }.id_harbor_state
 }

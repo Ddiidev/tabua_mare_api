@@ -1,4 +1,5 @@
 # Tábua de Maré API - robots.txt
+# Recursos para agentes: https://tabuamare.api.br/llms.txt
 # Política de uso para LLMs e crawlers de IA: https://tabuamare.api.br/llm.md
 
 User-agent: *

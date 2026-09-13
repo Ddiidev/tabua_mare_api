@@ -35,6 +35,8 @@ node_modules/
 *.json
 !package.json
 !package-lock.json
+!pages/static/llms.txt
+!pages/static/openapi.json
 
 /.qodo
 /.trae

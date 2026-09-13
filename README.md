@@ -101,10 +101,13 @@ Observações:
 ## Limites e uso
 
 - Sem api_key (anônimo por IP): 16 req/min, ilimitado/mês.
-- Free com api_key: 64 req/min, 32k req/mês.
-- Plan 5 (R$ 5/mês, api_key): 512 req/min, 256k req/mês.
-- Plan 10 (R$ 10/mês, api_key): 2.048 req/min, ilimitado/mês.
-- Plan Anual (R$ 70/ano, api_key): 4.096 req/min, ilimitado/mês.
+- Free com api_key: 24 req/min não concorrentes (bucket isolado por usuário), 32k req/mês.
+- Pro (R$ 14,99/mês): 512 req/min, 256k req/mês.
+- Pro anual (R$ 69,99/ano): mesmos limites do Pro — economize R$ 110/ano.
+- Ultra (R$ 29,99/mês): 2.048 req/min, ilimitado/mês.
+- Ultra anual (R$ 149,99/ano): mesmos limites do Ultra — economize R$ 209/ano.
+
+Todas as API keys de um usuário compartilham a mesma cota (`user:<id>`), com os limites do plano atual dele.
 
 ## Executando localmente
 
