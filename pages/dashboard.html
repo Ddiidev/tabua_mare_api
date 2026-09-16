@@ -246,8 +246,9 @@
 
     .plan-card .billing-toggle--card {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.45rem 0.5rem;
       width: 100%;
       margin: 0 0 0.6rem;
       padding: 0;
@@ -306,6 +307,8 @@
     }
 
     .plan-card .billing-toggle__saving {
+      flex-basis: 100%;
+      width: fit-content;
       padding: 0.1rem 0.5rem;
       border: 1px solid #17805f;
       border-radius: 999px;
