@@ -17,10 +17,16 @@ RUN apk add --no-cache \
     postgresql-dev \
     sqlite-dev
 
-RUN git clone https://github.com/vlang/v.git /opt/v \
-    && git -C /opt/v checkout --detach "${V_COMMIT}" \
-    && git clone https://github.com/vlang/vc.git /opt/v/vc \
-    && git -C /opt/v/vc checkout --detach "${VC_COMMIT}" \
+# Busca somente o commit pinado de vlang/v e vlang/vc: um clone completo de vlang/vc
+# baixa ~1,8 GB de historico e era o maior custo desta layer (~4,5 min).
+RUN git init -q /opt/v \
+    && git -C /opt/v remote add origin https://github.com/vlang/v.git \
+    && git -C /opt/v fetch --depth 1 --quiet origin "${V_COMMIT}" \
+    && git -C /opt/v checkout --detach --quiet FETCH_HEAD \
+    && git init -q /opt/v/vc \
+    && git -C /opt/v/vc remote add origin https://github.com/vlang/vc.git \
+    && git -C /opt/v/vc fetch --depth 1 --quiet origin "${VC_COMMIT}" \
+    && git -C /opt/v/vc checkout --detach --quiet FETCH_HEAD \
     && make -C /opt/v fresh_tcc \
     && make -C /opt/v local=1 \
     && test "$(git -C /opt/v rev-parse HEAD)" = "${V_COMMIT}" \
