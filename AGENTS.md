@@ -165,6 +165,7 @@ tests/             — integration tests (_test.v files, require DB)
 
 - **Root `Dockerfile`** — Alpine 3.22 multi-stage, uma instância V por container na porta `3330`, UID 10001 e volume `/app/data`.
 - **Produção** — duas aplicações regulares Coolify usando `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`, balanceadas pelo Nginx próprio. O repositório não usa Compose para as aplicações de produção nem CI.
+- **Blog** — aplicação separada (`Ddiidev/tabua-mare-api-blog`, app C no Nginx) servida em `/blog`, com `BLOG_BASE_PATH=/blog`. O blog publica o próprio `/blog/sitemap.xml` (dinâmico, um URL por post) e esse sitemap é declarado no `robots.txt` da borda (`pages/static/robots.txt`), junto com a entrada `/blog` do `pages/static/sitemap.xml`.
 - **Fluxo público** — Cloudflare proxy → Nginx → A ou B; `coolify-admin` passa pelo `coolify-proxy` interno. Sem Cloudflare Tunnel ou Swarm.
 - **Operação** — scripts e runbook em `ops/`; deploy manual sequencial em `.github/workflows/deploy-production.yml`.
 

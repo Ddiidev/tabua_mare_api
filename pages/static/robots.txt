@@ -6,6 +6,7 @@ User-agent: *
 Allow: /
 Crawl-delay: 1
 Sitemap: https://tabuamare.api.br/sitemap.xml
+Sitemap: https://tabuamare.api.br/blog/sitemap.xml
 
 # Mecanismos de busca tradicionais são bem-vindos.
 # Busca e acesso solicitado pelo usuário são permitidos. Treinamento e scraping não são.

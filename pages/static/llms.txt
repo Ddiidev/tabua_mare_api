@@ -27,4 +27,5 @@ As respostas usam `data` e `total`. Erros usam `error.code`, `error.message` e `
 
 ## Opcional
 
+- [Blog Tábua de Maré](https://tabuamare.api.br/blog): artigos sobre maré, portos, dados abertos e bastidores da API.
 - [Repositório e SDKs](https://github.com/Ddiidev/tabua_mare_api): código-fonte e links para clientes oficiais.

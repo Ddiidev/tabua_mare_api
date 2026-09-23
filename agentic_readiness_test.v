@@ -63,8 +63,7 @@ fn test_api_errors_include_resolution() {
 	assert error_response.error?.resolution.contains('Retry-After')
 }
 
-fn test_agent_machine_readable_resources_are_well_formed() ! {
-	openapi_source := os.read_file('pages/static/openapi.json')!
+fn test_agent_machine_readable_resources_are_well_formed() ! {	openapi_source := os.read_file('pages/static/openapi.json')!
 	assert openapi_source.contains('"openapi": "3.1.1"')
 	assert openapi_source.contains('"title": "Tábua de Maré API"')
 	assert openapi_source.contains('"/api/v2/states"')
@@ -81,4 +80,16 @@ fn test_agent_machine_readable_resources_are_well_formed() ! {
 	assert og.contains('"url": "https://tabuamare.api.br"')
 	assert og.contains('"sameAs": [')
 	assert og.contains('"logo": {')
+}
+
+fn test_search_indexing_declares_the_blog() ! {
+	robots := os.read_file('pages/static/robots.txt')!
+	assert robots.contains('Sitemap: https://tabuamare.api.br/sitemap.xml')
+	assert robots.contains('Sitemap: https://tabuamare.api.br/blog/sitemap.xml')
+
+	sitemap := os.read_file('pages/static/sitemap.xml')!
+	assert sitemap.starts_with('<?xml version="1.0" encoding="UTF-8"?>')
+	assert sitemap.contains('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+	assert sitemap.contains('<loc>https://tabuamare.api.br/docs</loc>')
+	assert sitemap.contains('<loc>https://tabuamare.api.br/blog</loc>')
 }

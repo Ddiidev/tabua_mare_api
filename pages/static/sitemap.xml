@@ -21,6 +21,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://tabuamare.api.br/blog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://tabuamare.api.br/apoiar</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
