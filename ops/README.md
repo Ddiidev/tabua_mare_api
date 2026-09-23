@@ -2,7 +2,7 @@
 
 ## 1. Bootstrap da VPS
 
-O script aceita somente Ubuntu 24.04 e instala atualizacoes, timezone `America/Sao_Paulo`, fail2ban, swap 2 GiB, `swappiness=10`, Docker/Coolify `4.1.2` e firewall da origem.
+O script aceita Ubuntu 24.04 ou Debian 12/13 (Debian 13 foi validado de ponta a ponta em WSL) e instala atualizacoes, timezone `America/Sao_Paulo`, fail2ban, swap 2 GiB, `swappiness=10`, Docker/Coolify `4.1.2` e firewall da origem.
 
 Use `ops/recover_vps.py` para uma VPS nova ou reconstruída. O wizard pede a chave SSH, caminhos dos backups, domínio e segredos sem gravá-los no Git, valida os arquivos locais e executa bootstrap/firewall. A importação do backup Coolify, env e SQLite continua com confirmação manual no painel/volumes, porque o formato e o destino dependem da instalação. `run_ssh.sh` é um atalho local ignorado pelo repositório.
 
@@ -16,6 +16,14 @@ ssh root@SEU_IP 'bash /root/tabuamare-ops/bootstrap_vps.sh'
 
 O bootstrap fixa `AUTOUPDATE=false`. Atualizacoes futuras do Coolify ficam manuais.
 O firewall entra antes de Docker/Coolify. No boot, restaura os ultimos ranges Cloudflare validos; sem cache, bloqueia 80/443 ate obter uma lista oficial valida. As portas 8000/6001/6002 permanecem acessiveis apenas via loopback/tunnel SSH.
+
+Em ambiente local de teste (WSL/VM sem IP publico), execute o bootstrap com
+`TABUAMARE_DEV_LOCAL=yes`: o firewall e reaplicado em modo local, aceitando
+origens RFC1918/ULA antes dos bloqueios (necesário porque o WSL em rede
+mirrored entrega o trafego do host Windows sem passar pelo `lo`). Para
+voltar ao modo fail-closed de producao, rode
+`/usr/local/sbin/tabuamare-cloudflare-firewall --remove-dev-local` (o boot
+tambem restaura o modo producao, pois o servico systemd roda sem a flag).
 
 ## 2. Primeiro admin, sem expor porta 8000
 
@@ -43,7 +51,9 @@ chmod 600 /root/.config/tabua-mare/cloudflare-token.ini
 unset CF_DNS_API_TOKEN
 ```
 
-## 4. Aplicacoes A/B
+## 4. Aplicacoes A/B e blog
+
+### API A/B
 
 Criar duas aplicacoes regulares baseadas em Docker Image:
 
@@ -67,6 +77,29 @@ DB_SQLITE_PATH=/app/data/taubinha.sqlite
 ```
 
 Produção bloqueada com `sk_test_*`. Usar `sk_live_*`, prices live e webhook live em `https://tabuamare.api.br/auth/webhook`.
+
+### Blog (app C)
+
+Criar uma aplicacao regular baseada em repositorio publico:
+
+- repositorio `https://github.com/Ddiidev/tabua-mare-api-blog`, branch `main`;
+- Build Pack `dockerfile` — o Dockerfile compila V do zero (build demora 5-15 min);
+- porta exposta `8080`, mapping `8085:8080`;
+- health check `GET /health` na porta `8080`, return code `204`,
+  intervalo 5s, timeout 5s, retries `3`, start period `30`;
+- Network Alias na rede `coolify`: `tabuamare-app-c`;
+- env: `PORT=8080` (`BLOG_BASE_PATH` opcional).
+
+O blog publica `https://tabuamare.api.br/blog/sitemap.xml` (gerado a partir do
+`db.json`, um URL por post). Esse sitemap e declarado no `robots.txt` da borda
+(`pages/static/robots.txt`) e `/blog` tambem entra em
+`pages/static/sitemap.xml`. No Google Search Console, cadastre a propriedade de
+`tabuamare.api.br` e envie os dois sitemaps (`/sitemap.xml` e
+`/blog/sitemap.xml`).
+
+O blog nao usa o workflow `deploy-production` (que e somente para as imagens
+GHCR da API A/B): o Coolify faz deploy automatico por webhook git a cada
+push no `main` do repositorio do blog.
 
 ## 5. Nginx proprio (substitui Traefik na borda)
 
@@ -174,7 +207,9 @@ docker manifest inspect ghcr.io/ddiidev/tabua-mare-api:sha-<commit>
 
 Tags `sha-*` existentes nunca sao sobrescritas; o CI falha se a tag ja existir.
 
-O workflow `Deploy manual de producao A/B` recebe SHA completo. Atualiza A, smoke, B; falha restaura tags anteriores.
+O workflow `Deploy manual de producao A/B` recebe SHA completo. O formato da
+tag e `sha-<sha-completo-de-40-caracteres>`; SHA curto nao tem tag no GHCR e o
+deploy falha. Atualiza A, smoke, B; falha restaura tags anteriores.
 
 Antes de qualquer alteracao, o cliente valida as duas apps por `GET /api/v1/applications/{uuid}` e `GET /api/v1/applications/{uuid}/storages`. Campos oficiais usados: `ports_exposes`, `ports_mappings`, `health_check_enabled`, `health_check_path`, `health_check_port`, `limits_cpus`, `limits_memory`, `limits_memory_reservation`; storage usa `name`, `mount_path`, `host_path`. Invariantes exigidas:
 
@@ -202,3 +237,53 @@ Resultado: `PasswordAuthentication no` e `PermitRootLogin prohibit-password`.
 ## 9. Recovery bundle
 
 Apos criar o admin, gerar o recovery/backup inicial do Coolify e guardar fora do repositorio e da VPS. Backup S3 e PostgreSQL externo continuam em ciclo separado.
+
+## 10. Dia zero em ambiente local (WSL)
+
+Fluxo validado de ponta a ponta em WSL (Debian 13) com Coolify `4.1.2`,
+duas apps servindo dados reais em localhost. Use como ensaio do dia zero de
+producao sem custar VPS.
+
+Passos:
+
+```powershell
+wsl --install -d Debian --name TabuaDayZero   # Debian 13 com systemd
+wsl -d TabuaDayZero -u root -- bash -c "echo '[boot]\nsystemd=true' > /etc/wsl.conf"
+# Manter a VM ligada: ela desliga quando nao ha nenhuma sessao WSL ativa
+wsl -d TabuaDayZero -u root -- bash -c "sleep infinity"   # deixar rodando em background
+```
+
+Dentro da distro, atualizar o sistema e executar o bootstrap normal (o gate
+de SO aceita Debian 12/13). Com IP privado, use o modo local do firewall:
+
+```bash
+TABUAMARE_DEV_LOCAL=yes bash /root/tabuamare-ops/bootstrap_vps.sh
+```
+
+Depois do Coolify healthy:
+
+- criar o admin em `http://<ip-da-distro>:8000` (rede mirrored do WSL nao
+  expoe `localhost` entre Windows e distro; use o IP, p.ex. `192.168.0.4`);
+- subir um PostgreSQL externo (container na rede `coolify`) — a API em
+  producao exige `POSTGRESQL_CONN_STR` e o health `/health/ready` so
+  responde `204` com o pool PG ok;
+- criar as apps conforme as secoes 4 (API A/B por imagem GHCR
+  `sha-<sha-completo>` e blog por repositorio publico + dockerfile).
+
+Limitacoes conhecidas do ambiente local:
+
+- **IP nao publico**: sem TLS, DNS, Cloudflare e webhooks Stripe/Google
+  reais. A validacao termina no uso em localhost (painel 8000, API 3330,
+  blog 8085).
+- **Rede mirrored do WSL**: o firewall de producao bloqueia o trafego do
+  host Windows; o modo `TABUAMARE_DEV_LOCAL=yes` resolve aceitando origens
+  RFC1918. As regras sao runtime-only (somem no reboot da distro).
+- **UI do Coolify em automacao headless**: o modal de Persistent Storage
+  (dropdown Alpine) nao abre de forma confiavel via Playwright; crie
+  volumes `/app/data` pelo painel manualmente ou pela API.
+- **A imagem da API valida env de producao no startup**: sem
+  `SESSION_SECRET` (>=32 chars), `POSTGRESQL_CONN_STR`, Google e Stripe
+  (`sk_live_`/`whsec_`) preenchidos, o container entra em restart loop.
+  Em teste local, use valores dummy validos.
+- **GHCR**: somente tags `sha-<sha-completo-40-chars>` existem; SHA curto
+  nao tem imagem publicada.

@@ -45,6 +45,7 @@ node_modules/
 /out
 /TASKS
 /v-compiler-bug-repro
+.playwright-mcp/
 
 # SSH operacional local (nunca versionar)
 /run_ssh.sh

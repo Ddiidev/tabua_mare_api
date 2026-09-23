@@ -98,7 +98,7 @@ class Wizard:
     def execute(self) -> None:
         self.collect()
         self.say("Ações irreversíveis exigem confirmação explícita.")
-        if not self.confirm("Instalar/atualizar Ubuntu, Docker, firewall e Coolify 4.1.2 na VPS?"):
+        if not self.confirm("Instalar/atualizar Ubuntu/Debian, Docker, firewall e Coolify 4.1.2 na VPS?"):
             self.say("Cancelado antes de alterar a VPS.")
             return
         if not self.dry:

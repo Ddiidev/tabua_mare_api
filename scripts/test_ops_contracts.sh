@@ -78,6 +78,16 @@ grep -Fq "readonly swap_size_bytes='2147483648'" "${bootstrap}" || \
 grep -Fq 'stat -c %s /swapfile' "${bootstrap}" || fail 'swap nao valida tamanho real'
 grep -Fq "stat -c %F /swapfile" "${bootstrap}" || fail 'swap nao valida arquivo regular'
 grep -Fq "swapon --show=NAME --noheadings" "${bootstrap}" || fail 'swap ativa nao validada'
+grep -Fq '"${ID}" == debian' "${bootstrap}" || fail 'gate de SO nao aceita Debian 12/13'
+grep -Fq 'Ubuntu 24.04 ou Debian 12/13' "${bootstrap}" || \
+	fail 'gate de SO nao informa sistemas suportados'
+grep -Fq 'TABUAMARE_DEV_LOCAL' "${bootstrap}" || \
+	fail 'bootstrap nao repassa o modo dev-local do firewall'
+grep -Fq 'tabuamare-app-c' "${readme}" || fail 'runbook sem o blog (app C)'
+grep -Fq 'tabua-mare-api-blog' "${readme}" || fail 'runbook sem o repositorio do blog'
+grep -Fq 'TABUAMARE_DEV_LOCAL' "${readme}" || fail 'runbook sem modo dev-local do firewall'
+grep -Fq 'sha-completo' "${readme}" || \
+	fail 'runbook nao documenta o formato completo da tag GHCR'
 if grep -Eq 'swapon .*(\|\| true|2>/dev/null)' "${bootstrap}"; then
 	fail 'falha de swapon ainda ignorada'
 fi
@@ -151,7 +161,32 @@ for function_name in configure_rules configure_input_rules; do
 	established_line="$(printf '%s\n' "${function_body}" | grep -nF 'ESTABLISHED,RELATED' | head -n1 | cut -d: -f1)"
 	[[ -n "${admin_line}" && -n "${established_line}" && "${admin_line}" -lt "${established_line}" ]] || \
 		fail "${function_name}: portas administrativas devem ser bloqueadas antes de ESTABLISHED"
+	dev_accept_line="$(printf '%s\n' "${function_body}" | grep -nF -- '-s "${lan_net}" -j ACCEPT' | head -n1 | cut -d: -f1)"
+	dev_gate_line="$(printf '%s\n' "${function_body}" | grep -nF 'if is_dev_local; then' | head -n1 | cut -d: -f1)"
+	first_drop_line="$(printf '%s\n' "${function_body}" | grep -nF -- '-j DROP' | head -n1 | cut -d: -f1)"
+	[[ -n "${dev_accept_line}" && -n "${dev_gate_line}" && -n "${first_drop_line}" ]] && \
+		[[ "${dev_accept_line}" -lt "${first_drop_line}" ]] || \
+		fail "${function_name}: aceites dev-local devem preceder os bloqueios"
 done
+
+grep -Fq 'readonly forward_chain_local=' "${firewall}" || \
+	fail 'cadeia geracional do modo local FORWARD ausente'
+grep -Fq 'readonly input_chain_local=' "${firewall}" || \
+	fail 'cadeia geracional do modo local INPUT ausente'
+grep -Fq -- '--dev-local' "${firewall}" || fail 'comando --dev-local ausente'
+grep -Fq -- '--remove-dev-local' "${firewall}" || fail 'comando --remove-dev-local ausente'
+if grep -Fq '10.0.0.0/8' <(sed -n '/^lan_networks()/,/^}/p' "${firewall}") && \
+	grep -Fq 'fc00::/7' <(sed -n '/^lan_networks()/,/^}/p' "${firewall}"); then
+	:
+else
+	fail 'redes locais (RFC1918/ULA) do modo dev ausentes em lan_networks()'
+fi
+# Aceites dev-local so podem existir dentro do gate is_dev_local
+dev_body="$(cat "${firewall}")"
+accept_count="$(grep -cF -- '-s "${lan_net}" -j ACCEPT' <<<"${dev_body}")"
+gate_count="$(grep -cF 'if is_dev_local; then' <<<"${dev_body}")"
+[[ "${accept_count}" -le "${gate_count}" ]] || \
+	fail 'aceite dev-local fora do gate is_dev_local'
 
 grep -Fq 'tabuamare-app-a:3330' "${nginx_vhost}" || fail 'alias estavel A ausente no vhost nginx'
 grep -Fq 'tabuamare-app-b:3330' "${nginx_vhost}" || fail 'alias estavel B ausente no vhost nginx'

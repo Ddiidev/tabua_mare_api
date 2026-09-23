@@ -8,6 +8,11 @@ readonly cf6_stage='tabuamare_cf6_stage'
 readonly filter_chain='TABUAMARE-CF'
 readonly forward_chain="${filter_chain}-V2"
 readonly input_chain="${filter_chain}-IN-V2"
+# Geracao separada do modo local: o toggle dev<->producao nunca precisa
+# esvaziar cadeia ativa — cada modo tem cadeia propria e o activate remove
+# o jump da geracao oposta.
+readonly forward_chain_local="${forward_chain}-LOCAL"
+readonly input_chain_local="${input_chain}-LOCAL"
 readonly legacy_input_chain="${filter_chain}-IN"
 readonly admin_ports='8000,6001,6002'
 readonly cache_dir='/var/lib/tabuamare-cloudflare-firewall'
@@ -17,6 +22,21 @@ readonly public_iface='eth0'
 
 log() {
 	printf '[firewall] %s\n' "$*"
+}
+
+# Modo local (WSL/VM de teste): TABUAMARE_DEV_LOCAL=yes aceita origens
+# RFC1918/ULA antes dos bloqueios. Producao permanece fail-closed sem a flag.
+is_dev_local() {
+	[[ "${TABUAMARE_DEV_LOCAL:-}" == yes ]]
+}
+
+lan_networks() {
+	local tool="$1"
+	if [[ "${tool}" == ip6tables ]]; then
+		printf '%s\n' 'fc00::/7' 'fe80::/10'
+	else
+		printf '%s\n' '10.0.0.0/8' '172.16.0.0/12' '192.168.0.0/16'
+	fi
 }
 
 fail() {
@@ -98,12 +118,15 @@ activate_chain() {
 	local tool="$1"
 	local parent="$2"
 	local candidate="$3"
-	local legacy="$4"
+	shift 3
+	local stale
 	# Insere a nova cadeia completa primeiro. Falha posterior mantem as duas protecoes.
 	"${tool}" -w -C "${parent}" -j "${candidate}" >/dev/null 2>&1 || \
 		"${tool}" -w -I "${parent}" 1 -j "${candidate}"
-	while "${tool}" -w -C "${parent}" -j "${legacy}" >/dev/null 2>&1; do
-		"${tool}" -w -D "${parent}" -j "${legacy}"
+	for stale in "$@"; do
+		while "${tool}" -w -C "${parent}" -j "${stale}" >/dev/null 2>&1; do
+			"${tool}" -w -D "${parent}" -j "${stale}"
+		done
 	done
 }
 
@@ -111,44 +134,72 @@ configure_rules() {
 	local tool="$1"
 	local cf_set="$2"
 	local -a ports
+	local chain
+	local stale_chain
+	if is_dev_local; then
+		chain="${forward_chain_local}"
+		stale_chain="${forward_chain}"
+	else
+		chain="${forward_chain}"
+		stale_chain="${forward_chain_local}"
+	fi
 	ensure_forward_parent "${tool}"
-	if ! chain_is_referenced "${tool}" "${forward_chain}"; then
-		reset_unreferenced_generation "${tool}" "${forward_chain}"
-		"${tool}" -w -A "${forward_chain}" -i lo -j ACCEPT
+	if ! chain_is_referenced "${tool}" "${chain}"; then
+		reset_unreferenced_generation "${tool}" "${chain}"
+		"${tool}" -w -A "${chain}" -i lo -j ACCEPT
+		if is_dev_local; then
+			for lan_net in $(lan_networks "${tool}"); do
+				"${tool}" -w -A "${chain}" -s "${lan_net}" -j ACCEPT
+			done
+		fi
 		IFS=',' read -r -a ports <<<"${admin_ports}"
 		for port in "${ports[@]}"; do
-			"${tool}" -w -A "${forward_chain}" -p tcp -m conntrack \
+			"${tool}" -w -A "${chain}" -p tcp -m conntrack \
 				--ctdir ORIGINAL --ctorigdstport "${port}" -j DROP
 		done
-		"${tool}" -w -A "${forward_chain}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p tcp -m multiport --dports 80,443 \
+		"${tool}" -w -A "${chain}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+		"${tool}" -w -A "${chain}" -i "${public_iface}" -p tcp -m multiport --dports 80,443 \
 			-m set --match-set "${cf_set}" src -j ACCEPT
-		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p tcp -m multiport --dports 80,443 -j DROP
-		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p udp --dport 443 \
+		"${tool}" -w -A "${chain}" -i "${public_iface}" -p tcp -m multiport --dports 80,443 -j DROP
+		"${tool}" -w -A "${chain}" -i "${public_iface}" -p udp --dport 443 \
 			-m set --match-set "${cf_set}" src -j ACCEPT
-		"${tool}" -w -A "${forward_chain}" -i "${public_iface}" -p udp --dport 443 -j DROP
-		"${tool}" -w -A "${forward_chain}" -j RETURN
+		"${tool}" -w -A "${chain}" -i "${public_iface}" -p udp --dport 443 -j DROP
+		"${tool}" -w -A "${chain}" -j RETURN
 	fi
-	activate_chain "${tool}" DOCKER-USER "${forward_chain}" "${filter_chain}"
+	activate_chain "${tool}" DOCKER-USER "${chain}" "${stale_chain}" "${filter_chain}"
 }
 
 configure_input_rules() {
 	local tool="$1"
 	local cf_set="$2"
-	if ! chain_is_referenced "${tool}" "${input_chain}"; then
-		reset_unreferenced_generation "${tool}" "${input_chain}"
-		"${tool}" -w -A "${input_chain}" -i lo -j ACCEPT
-		"${tool}" -w -A "${input_chain}" -p tcp -m multiport --dports "${admin_ports}" -j DROP
-		"${tool}" -w -A "${input_chain}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-		"${tool}" -w -A "${input_chain}" -p tcp -m multiport --dports 80,443 \
-			-m set --match-set "${cf_set}" src -j ACCEPT
-		"${tool}" -w -A "${input_chain}" -p tcp -m multiport --dports 80,443 -j DROP
-		"${tool}" -w -A "${input_chain}" -p udp --dport 443 \
-			-m set --match-set "${cf_set}" src -j ACCEPT
-		"${tool}" -w -A "${input_chain}" -p udp --dport 443 -j DROP
-		"${tool}" -w -A "${input_chain}" -j RETURN
+	local chain
+	local stale_chain
+	if is_dev_local; then
+		chain="${input_chain_local}"
+		stale_chain="${input_chain}"
+	else
+		chain="${input_chain}"
+		stale_chain="${input_chain_local}"
 	fi
-	activate_chain "${tool}" INPUT "${input_chain}" "${legacy_input_chain}"
+	if ! chain_is_referenced "${tool}" "${chain}"; then
+		reset_unreferenced_generation "${tool}" "${chain}"
+		"${tool}" -w -A "${chain}" -i lo -j ACCEPT
+		if is_dev_local; then
+			for lan_net in $(lan_networks "${tool}"); do
+				"${tool}" -w -A "${chain}" -s "${lan_net}" -j ACCEPT
+			done
+		fi
+		"${tool}" -w -A "${chain}" -p tcp -m multiport --dports "${admin_ports}" -j DROP
+		"${tool}" -w -A "${chain}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+		"${tool}" -w -A "${chain}" -p tcp -m multiport --dports 80,443 \
+			-m set --match-set "${cf_set}" src -j ACCEPT
+		"${tool}" -w -A "${chain}" -p tcp -m multiport --dports 80,443 -j DROP
+		"${tool}" -w -A "${chain}" -p udp --dport 443 \
+			-m set --match-set "${cf_set}" src -j ACCEPT
+		"${tool}" -w -A "${chain}" -p udp --dport 443 -j DROP
+		"${tool}" -w -A "${chain}" -j RETURN
+	fi
+	activate_chain "${tool}" INPUT "${chain}" "${stale_chain}" "${legacy_input_chain}"
 }
 
 configure_fail_closed_rules() {
@@ -199,6 +250,7 @@ save_cache() {
 
 refresh_firewall() {
 	local tmp_dir
+	is_dev_local && log 'AVISO: modo dev-local ativo — aceitando origens RFC1918/ULA (somente testes locais)'
 	restore_cache
 	tmp_dir="$(mktemp -d)"
 	trap 'rm -rf "${tmp_dir:-}"' EXIT
@@ -285,6 +337,12 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 		--apply|--refresh)
 			refresh_firewall
 			;;
+		--dev-local)
+			TABUAMARE_DEV_LOCAL=yes refresh_firewall
+			;;
+		--remove-dev-local)
+			refresh_firewall
+			;;
 		--restore-cache)
 			restore_cache
 			;;
@@ -292,7 +350,7 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 			install_systemd
 			;;
 		*)
-			fail 'uso: cloudflare-origin-firewall.sh [--restore-cache|--refresh|--install-systemd]'
+			fail 'uso: cloudflare-origin-firewall.sh [--apply|--refresh|--dev-local|--remove-dev-local|--restore-cache|--install-systemd]'
 			;;
 	esac
 fi

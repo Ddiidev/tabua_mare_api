@@ -136,8 +136,14 @@ fi
 # Arquivo padrao do sistema alvo.
 # shellcheck disable=SC1091
 source /etc/os-release
-[[ "${ID}" == ubuntu && "${VERSION_ID}" == 24.04 ]] || \
-	fail "Ubuntu 24.04 obrigatorio; encontrado ${ID} ${VERSION_ID}"
+os_supported=false
+if [[ "${ID}" == ubuntu && "${VERSION_ID}" == 24.04 ]]; then
+	os_supported=true
+elif [[ "${ID}" == debian && "${VERSION_ID}" =~ ^(12|13)$ ]]; then
+	os_supported=true
+fi
+[[ "${os_supported}" == true ]] || \
+	fail "Ubuntu 24.04 ou Debian 12/13 obrigatorios; encontrado ${ID} ${VERSION_ID}"
 
 export DEBIAN_FRONTEND=noninteractive
 log 'Atualizando Ubuntu e instalando dependencias'
@@ -151,6 +157,13 @@ firewall_source="${script_dir}/cloudflare-origin-firewall.sh"
 [[ -f "${firewall_source}" ]] || fail 'cloudflare-origin-firewall.sh ausente ao lado do bootstrap'
 install -m 0755 "${firewall_source}" /usr/local/sbin/tabuamare-cloudflare-firewall
 /usr/local/sbin/tabuamare-cloudflare-firewall --install-systemd
+
+if [[ "${TABUAMARE_DEV_LOCAL:-}" == yes ]]; then
+	# WSL/máquina local: rede mirrored bloqueia loopback/LAN nas cadeias de
+	# produção. Reaplica as regras aceitando origens RFC1918 (somente testes).
+	TABUAMARE_DEV_LOCAL=yes /usr/local/sbin/tabuamare-cloudflare-firewall --dev-local
+	log 'AVISO: TABUAMARE_DEV_LOCAL=yes — firewall em modo local, aceita origens RFC1918'
+fi
 
 timedatectl set-timezone America/Sao_Paulo
 
@@ -215,4 +228,4 @@ current_image="$(docker inspect coolify --format '{{.Config.Image}}')"
 	fail "versao Coolify inesperada: ${current_image}"
 
 log "Coolify ${COOLIFY_VERSION} pronto; cadastro inicial somente via tunnel SSH localhost:8000"
-log 'Proximo: criar admin, token Cloudflare e duas aplicacoes; nao endurecer SSH antes de validar nova conexao por chave'
+log 'Proximo: criar admin, token Cloudflare, as aplicacoes API A/B e o blog; nao endurecer SSH antes de validar nova conexao por chave'
