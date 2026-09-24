@@ -2,6 +2,7 @@ name: CI e imagem Alpine
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
@@ -71,45 +72,6 @@ jobs:
             exit 1
           fi
 
-      - name: Dependencias nativas do V
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential libgc-dev libpq-dev libssl-dev libsqlite3-dev
-
-      - name: V 0.5.2, VC e modulos fixados
-        run: |
-          set -euo pipefail
-          git clone https://github.com/vlang/v.git /tmp/v
-          git -C /tmp/v checkout --detach "$V_COMMIT"
-          git clone https://github.com/vlang/vc.git /tmp/v/vc
-          git -C /tmp/v/vc checkout --detach "$VC_COMMIT"
-          make -C /tmp/v fresh_tcc
-          make -C /tmp/v local=1
-          test "$(git -C /tmp/v rev-parse HEAD)" = "$V_COMMIT"
-          test "$(git -C /tmp/v/vc rev-parse HEAD)" = "$VC_COMMIT"
-          /tmp/v/v version | grep -F 'V 0.5.2'
-
-          mkdir -p "$HOME/.vmodules/leafscale" "$HOME/.vmodules/ken0x0a"
-          git clone https://github.com/leafscale/veemarker.git "$HOME/.vmodules/leafscale/veemarker"
-          git -C "$HOME/.vmodules/leafscale/veemarker" checkout --detach "$VEEMARKER_COMMIT"
-          git clone https://github.com/ken0x0a/v-dotenv.git "$HOME/.vmodules/ken0x0a/dotenv"
-          git -C "$HOME/.vmodules/ken0x0a/dotenv" checkout --detach "$DOTENV_COMMIT"
-          git clone https://github.com/Ddiidev/v-stripe.git "$HOME/.vmodules/v_stripe"
-          git -C "$HOME/.vmodules/v_stripe" checkout --detach "$V_STRIPE_COMMIT"
-          echo '/tmp/v' >> "$GITHUB_PATH"
-
-      - name: Testes V com PostgreSQL efemero
-        run: /tmp/v/v test tests/
-
-      - name: Contratos shell e ciclo de vida
-        run: |
-          set -euo pipefail
-          bash ./scripts/test_seed_sqlite.sh
-          bash ./scripts/test_alpine_image_static.sh
-          bash ./scripts/test_coolify_deploy.sh
-          bash ./scripts/test_health_lifecycle.sh
-
       - name: Node.js e build dos assets CSS
         uses: actions/setup-node@v4
         with:
@@ -124,14 +86,91 @@ jobs:
       - name: Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build unico linux/amd64
+      - name: Cache do toolchain V fixado
+        uses: actions/cache@v4
+        with:
+          path: /tmp/v
+          key: v-toolchain-${{ runner.os }}-${{ env.V_COMMIT }}-${{ env.VC_COMMIT }}
+
+      - name: Testes nativos e build da imagem em paralelo
         run: |
+          set -euo pipefail
+          # As duas trilhas sao independentes: o build da imagem compila o V dentro do
+          # Alpine (musl, /root/.vmodules) e nao usa nada do toolchain do runner (glibc,
+          # ~/.vmodules). Rodar a trilha nativa em segundo plano esconde os 30-110s dela
+          # (conforme o cache do toolchain) dentro dos ~280-350s do build, sem duplicar
+          # checkout, servico ou pinos.
+          tests_log="$RUNNER_TEMP/testes-nativos.log"
+          (
+            set -euo pipefail
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends \
+              build-essential libgc-dev libpq-dev libssl-dev libsqlite3-dev
+
+            if [[ -x /tmp/v/v ]]; then
+              echo "Toolchain V restaurada do cache: $(/tmp/v/v version)"
+            else
+              # Buscar somente o commit pinado: um clone completo de vlang/vc baixa
+              # ~1,8 GB de historico (o repo versiona o v.c gerado inteiro a cada commit)
+              # e levava ~4 min; a busca sem historico leva segundos e traz os 3 arquivos
+              # usados pelo bootstrap (v.c, v_win.c, README.md).
+              git init -q /tmp/v
+              git -C /tmp/v remote add origin https://github.com/vlang/v.git
+              git -C /tmp/v fetch --depth 1 --quiet origin "$V_COMMIT"
+              git -C /tmp/v checkout --detach --quiet FETCH_HEAD
+              git init -q /tmp/v/vc
+              git -C /tmp/v/vc remote add origin https://github.com/vlang/vc.git
+              git -C /tmp/v/vc fetch --depth 1 --quiet origin "$VC_COMMIT"
+              git -C /tmp/v/vc checkout --detach --quiet FETCH_HEAD
+              make -C /tmp/v fresh_tcc
+              make -C /tmp/v local=1
+            fi
+            test "$(git -C /tmp/v rev-parse HEAD)" = "$V_COMMIT"
+            test "$(git -C /tmp/v/vc rev-parse HEAD)" = "$VC_COMMIT"
+            /tmp/v/v version | grep -F 'V 0.5.2'
+            # Os contratos chamam `v` direto. O append em GITHUB_PATH so vale para os
+            # passos seguintes, entao a trilha precisa do PATH aqui dentro tambem.
+            export PATH="/tmp/v:$PATH"
+
+            mkdir -p "$HOME/.vmodules/leafscale" "$HOME/.vmodules/ken0x0a"
+            git clone https://github.com/leafscale/veemarker.git "$HOME/.vmodules/leafscale/veemarker"
+            git -C "$HOME/.vmodules/leafscale/veemarker" checkout --detach "$VEEMARKER_COMMIT"
+            git clone https://github.com/ken0x0a/v-dotenv.git "$HOME/.vmodules/ken0x0a/dotenv"
+            git -C "$HOME/.vmodules/ken0x0a/dotenv" checkout --detach "$DOTENV_COMMIT"
+            git clone https://github.com/Ddiidev/v-stripe.git "$HOME/.vmodules/v_stripe"
+            git -C "$HOME/.vmodules/v_stripe" checkout --detach "$V_STRIPE_COMMIT"
+            echo '/tmp/v' >> "$GITHUB_PATH"
+
+            /tmp/v/v test tests/
+
+            bash ./scripts/test_seed_sqlite.sh
+            bash ./scripts/test_alpine_image_static.sh
+            bash ./scripts/test_coolify_deploy.sh
+            bash ./scripts/test_health_lifecycle.sh
+          ) > "$tests_log" 2>&1 &
+          tests_pid=$!
+
+          build_rc=0
           docker buildx build \
             --platform linux/amd64 \
             --load \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
             --tag "$LOCAL_IMAGE" \
             --tag "$GHCR_IMAGE" \
-            .
+            . || build_rc=$?
+
+          # Só publica se as duas trilhas passarem: a espera acontece antes do passo de
+          # push, entao um teste quebrado continua impedindo a publicacao da imagem.
+          tests_rc=0
+          wait "$tests_pid" || tests_rc=$?
+
+          echo "::group::Trilha nativa (testes e contratos)"
+          cat "$tests_log"
+          echo "::endgroup::"
+          [[ "$build_rc" -eq 0 ]] || echo "::error::build da imagem falhou (rc=$build_rc)"
+          [[ "$tests_rc" -eq 0 ]] || echo "::error::trilha de testes falhou (rc=$tests_rc)"
+          [[ "$build_rc" -eq 0 && "$tests_rc" -eq 0 ]]
 
       - name: Verificar Alpine, arquitetura e bibliotecas
         run: |
