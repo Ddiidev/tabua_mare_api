@@ -2,6 +2,7 @@ name: CI e imagem Alpine
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
