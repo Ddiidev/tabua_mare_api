@@ -1,0 +1,81 @@
+# Observabilidade fora da aplicacao (padrao do edge: compose proprio, sem Coolify).
+#
+#   - netdata:        metricas de host + POR CONTAINER (RAM/CPU/rede/disco), UI em 127.0.0.1:19999
+#   - goaccess:      servidor WebSocket em 127.0.0.1:7890 (dados ao vivo)
+#   - goaccess-web:   nginx leve servindo o dashboard HTML em 127.0.0.1:7891
+#
+# Sem exposicao publica: acesso via tunnel SSH, igual ao painel do Coolify:
+#   ssh -N -L 19999:127.0.0.1:19999 -L 7890:127.0.0.1:7890 -L 7891:127.0.0.1:7891 root@SEU_IP
+#   -> http://localhost:19999 (netdata) e http://localhost:7891 (goaccess)
+#
+# Remocao completa:
+#   cd /root/tabuamare-ops/observability && docker compose down
+#   rm -rf /root/tabuamare-ops/observability
+#
+# GoAccess nao agrupa por slot=A/B; para isso usar grep/awk no access log
+# (secao de observabilidade do ops/README.md).
+
+services:
+  netdata:
+    image: netdata/netdata:stable
+    container_name: tabuamare-netdata
+    restart: unless-stopped
+    hostname: tabua-mare-vps
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    ports:
+      - "127.0.0.1:19999:19999"
+    environment:
+      - DO_NOT_TRACK=1
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - ./netdata/config:/etc/netdata
+      - ./netdata/lib:/var/lib/netdata
+      - ./netdata/cache:/var/cache/netdata
+      - ./netdata/log:/var/log/netdata
+
+  goaccess:
+    image: allinurl/goaccess:latest
+    container_name: tabuamare-goaccess
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7890:7890"
+    volumes:
+      - /var/log/nginx:/var/log/nginx:ro
+      - goaccess_out:/srv
+    # log-format casado com o log_format "upstream" do ops/nginx/nginx.conf
+    # (rt=%T serve como tempo de resposta; uht/uc/urt/us/uaddr/slot descartados).
+    # No GoAccess 1.12 o servidor embutido aceita apenas WebSocket (GET -> 400);
+    # o HTML e' servido pelo goaccess-web (:7891). O ws-url fica fixo em
+    # localhost:7890, portanto o tunnel SSH precisa incluir a porta 7890.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        exec goaccess /var/log/nginx/access.log
+        --log-format='%h %^ %^ [%d:%t %^] "%r" %s %b "%R" "%u" rt=%T %^ %^ %^ %^ %^ %^'
+        --date-format=%d/%b/%Y
+        --time-format=%H:%M:%S
+        --real-time-html
+        --output=/srv/index.html
+        --ws-url=ws://localhost:7890
+        --addr=0.0.0.0
+        --port=7890
+
+  goaccess-web:
+    image: nginx:1.30.4-alpine
+    container_name: tabuamare-goaccess-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7891:80"
+    volumes:
+      - goaccess_out:/usr/share/nginx/html:ro
+
+volumes:
+  goaccess_out:

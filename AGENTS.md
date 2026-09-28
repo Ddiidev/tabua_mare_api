@@ -167,6 +167,7 @@ tests/             — integration tests (_test.v files, require DB)
 - **Produção** — duas aplicações regulares Coolify usando `ghcr.io/ddiidev/tabua-mare-api:sha-<commit>`, balanceadas pelo Nginx próprio. O repositório não usa Compose para as aplicações de produção nem CI.
 - **Blog** — aplicação separada (`Ddiidev/tabua-mare-api-blog`, app C no Nginx) servida em `/blog`, com `BLOG_BASE_PATH=/blog`. O blog publica o próprio `/blog/sitemap.xml` (dinâmico, um URL por post) e esse sitemap é declarado no `robots.txt` da borda (`pages/static/robots.txt`), junto com a entrada `/blog` do `pages/static/sitemap.xml`.
 - **Fluxo público** — Cloudflare proxy → Nginx → A ou B; `coolify-admin` passa pelo `coolify-proxy` interno. Sem Cloudflare Tunnel ou Swarm.
+- **Observabilidade de requests** — o Nginx de borda grava access log por request em `/var/log/nginx/access.log` (IP real pós-Cloudflare, rota, status, `rt/uc/urt` latências, `uaddr` instância, `slot=` rótulo do header `X-Tabuamare-Slot`; env `TABUAMARE_SLOT` distinta por app no Coolify). Rotação diária em `/etc/logrotate.d/tabuamare-nginx`. UIs de monitoramento via compose próprio em `ops/observability/`: **Netdata** (RAM/CPU/rede por container, `:19999`) e **GoAccess** (dashboard do access log, `:7891`, WebSocket `:7890`), loopback-only (acesso por túnel SSH; no Sign-in do Netdata, usar "Skip and use the dashboard anonymously").
 - **Operação** — scripts e runbook em `ops/`; deploy manual sequencial em `.github/workflows/deploy-production.yml`.
 
 Production binary:

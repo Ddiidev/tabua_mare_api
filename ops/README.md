@@ -76,6 +76,12 @@ GOOGLE_REDIRECT_URI=https://tabuamare.api.br/auth/google/callback
 DB_SQLITE_PATH=/app/data/taubinha.sqlite
 ```
 
+Variavel distinta por app (observabilidade): `TABUAMARE_SLOT=a` na app A e
+`TABUAMARE_SLOT=b` na app B. A API marca as respostas de `/api/v2` e `/auth` com
+`X-Tabuamare-Slot` e o Nginx de borda grava o valor no access log (campo `slot=`).
+Sem a variavel, o rotulo cai no hostname do container (id curto do Docker, muda a
+cada deploy).
+
 Produção bloqueada com `sk_test_*`. Usar `sk_live_*`, prices live e webhook live em `https://tabuamare.api.br/auth/webhook`.
 
 ### Blog (app C)
@@ -157,6 +163,52 @@ Logs do Nginx:
 ```bash
 ssh root@SEU_IP 'docker logs tabuamare-nginx --tail 100 -f'
 ```
+
+Observabilidade por requisicao (access log no host):
+
+- `/var/log/nginx/access.log` grava cada request: IP real do cliente
+  (pos-Cloudflare), rota e status, `rt=` tempo total, `uc=` conexao ao upstream,
+  `urt=` tempo da app, `uaddr=` instancia que atendeu (em failover, lista as
+  duas) e `slot=` rotulo A/B (`TABUAMARE_SLOT` por app; header `X-Tabuamare-Slot`).
+- Rotacao diaria, 14 copias comprimidas, em `/etc/logrotate.d/tabuamare-nginx`.
+
+Consultas rapidas:
+
+```bash
+awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head
+awk '$9>=500{print $7}' /var/log/nginx/access.log | sort | uniq -c | sort -rn
+grep -oE 'rt=[0-9.]+' /var/log/nginx/access.log | sort -t= -k2 -rn | head
+```
+
+Edicoes posteriores no `nginx.conf`: o bind mount e de arquivo unico `:ro`, entao
+`sed -i` no host troca o inode e o container continua lendo o arquivo antigo. Para
+aplicar mudancas no `nginx.conf`, recrie o container com
+`docker compose -f /root/tabuamare-ops/nginx/docker-compose.yml up -d --force-recreate`
+(interrompe a borda por poucos segundos). Alteracoes em `conf.d/` propagam ao vivo
+(bind de diretorio): edite no host e recarregue com
+`docker exec tabuamare-nginx nginx -s reload`.
+
+UIs de monitoramento (Netdata + GoAccess), fora da aplicacao, via compose em
+`/root/tabuamare-ops/observability` (espelhado em `ops/observability/`):
+
+- **Netdata** (`127.0.0.1:19999`): RAM/CPU/rede/disco do host e POR CONTAINER
+  (A, B, blog, nginx, Coolify), graficos em tempo real e historico. ~110 MiB.
+  Na primeira tela (Sign-in), clicar em "Skip and use the dashboard anonymously"
+  para usar o dashboard local sem conta Netdata Cloud.
+- **GoAccess** (`127.0.0.1:7891`, dados ao vivo via WebSocket em `:7890`):
+  dashboard HTML do access log — top IPs, rotas mais lentas, latencia media por
+  rota (`rt`), status codes, bandwidth. Nao agrupa por slot A/B (para isso, usar
+  as consultas `awk`/`grep` acima).
+
+Acesso somente via tunnel SSH (sem exposicao publica):
+
+```bash
+ssh -N -L 19999:127.0.0.1:19999 -L 7891:127.0.0.1:7891 -L 7890:127.0.0.1:7890 root@SEU_IP
+# netdata: http://localhost:19999 | goaccess: http://localhost:7891
+```
+
+Remocao: `cd /root/tabuamare-ops/observability && docker compose down`
+(e `rm -rf /root/tabuamare-ops/observability`, se quiser apagar os dados tambem).
 
 O Nginx consulta o DNS embutido do Docker a cada poucos segundos. Assim, um
 deploy/restart que troca o IP de A ou B nao exige reiniciar manualmente o Nginx.
