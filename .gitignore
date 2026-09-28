@@ -49,5 +49,6 @@ node_modules/
 
 # SSH operacional local (nunca versionar)
 /run_ssh.sh
+/connet.bat
 __pycache__/
 tunnel.sh
