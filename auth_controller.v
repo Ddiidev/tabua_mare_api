@@ -8,6 +8,7 @@ import shareds.types
 import v_stripe.stripe
 import shareds.web_ctx
 import shareds.conf_env
+import shareds.instance
 import domain.auth_user
 import shareds.infradb_pg
 import shareds.rate_limit
@@ -31,6 +32,12 @@ fn (ac &AuthController) db_conn() !&pg.DB {
 		return error('PostgreSQL indisponivel')
 	}
 	return ac.pg_holder.db()
+}
+
+// init_instance_header marca toda resposta de /auth com X-Tabuamare-Slot
+// (slot=A|B do env TABUAMARE_SLOT); o Nginx de borda grava no access log.
+fn (mut ac AuthController) init_instance_header() {
+	ac.use(instance.middleware(ac.env.tabuamare_slot))
 }
 
 // safe_redirect_path permite apenas destinos locais do proprio aplicativo.

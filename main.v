@@ -114,7 +114,9 @@ fn main() {
 	}
 
 	api_controller_v2.init_cors()
+	api_controller_v2.init_instance_header(env)
 	api_controller_v2.init_rate_limit(env, pg_holder)
+	auth_controller.init_instance_header()
 
 	app.register_controller[APIControllerV2, web_ctx.WsCtx]('/api/v2', mut api_controller_v2)!
 	app.register_controller[AuthController, web_ctx.WsCtx]('/auth', mut auth_controller)!

@@ -17,6 +17,7 @@ pub:
 	url_env                   string
 	new_relic_key             string
 	current_port              string
+	tabuamare_slot            string
 	google_client_id          string
 	google_client_secret      string
 	google_redirect_uri       string
@@ -77,6 +78,7 @@ pub fn load_env() EnvConfig {
 		postgresql_conn_str:       get_env_or('POSTGRESQL_CONN_STR', env_map, '').trim_space()
 		new_relic_key:             get_env_or('NEW_RELIC_KEY', env_map, '').trim_space()
 		url_env:                   get_env_or('URL_ENV', env_map, '').trim_space()
+		tabuamare_slot:            get_env_or('TABUAMARE_SLOT', env_map, '').trim_space()
 		google_client_id:          get_env_or('GOOGLE_CLIENT_ID', env_map, '').trim_space()
 		google_client_secret:      get_env_or('GOOGLE_CLIENT_SECRET', env_map, '').trim_space()
 		google_redirect_uri:       get_env_or('GOOGLE_REDIRECT_URI', env_map, '').trim_space()

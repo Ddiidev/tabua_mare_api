@@ -5,6 +5,7 @@ import pool
 import shareds.types
 import shareds.web_ctx
 import shareds.conf_env
+import shareds.instance
 import shareds.rate_limit
 import shareds.infradb_pg
 import repository.rate_limit as rl
@@ -43,6 +44,13 @@ fn (mut api APIControllerV2) init_rate_limit(env conf_env.EnvConfig, pg_holder &
 		env:       env
 		pg_holder: pg_holder
 	}))
+}
+
+// init_instance_header marca toda resposta com X-Tabuamare-Slot (slot=A|B do
+// env TABUAMARE_SLOT). O Nginx de borda grava o valor no access log (campo
+// slot=). Registrar antes do rate-limit para que 429/503 tambem o carreguem.
+fn (mut api APIControllerV2) init_instance_header(env conf_env.EnvConfig) {
+	api.use(instance.middleware(env.tabuamare_slot))
 }
 
 // list_states Lista todos os estados brasileiros
