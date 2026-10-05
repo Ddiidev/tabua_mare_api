@@ -70,7 +70,7 @@ Rate-limit variables are optional and default to the values shown. `plan70` uses
 
 - **`main.v`** — starts the `veb` server, registers V2 and auth controllers, static assets, and health routes. `App` serves `/`, `/docs`, `/playground`, `/apoiar`, `/privacidade`, `/termos`, `/rate-limit-test`, and `/dashboard`; `/` negotiates HTML or Markdown from `Accept`.
 - **`api_v2.v`** — `APIControllerV2` for `/api/v2` (current; harbor IDs are strings like `pb01`, and `/usage` reports monthly usage for an API key). Rate-limit middleware is applied to this controller.
-- **`auth_controller.v`** — `AuthController` for `/auth` (Google OAuth login/callback/logout, `/me`, `/avatar`, API-key list/create/revoke, `/checkout`, `/webhook`, `/billing-portal`, `/cancel-subscription`, and `/rate-limit-status`). `PgHolder` uses `POSTGRESQL_CONN_STR`; local/non-production can also use `DB_*`. `db_conn()` errors when the holder is unavailable.
+- **`auth_controller*.v`** — root-level files in module `main` implement `AuthController` and its `/auth` routes. `auth_controller.v` owns the shared controller, session, Google OAuth, logout, profile, and avatar flow; `auth_controller_api_keys.v`, `auth_controller_billing.v`, `auth_controller_stripe_webhook.v`, and `auth_controller_rate_limit.v` own the matching route groups. `PgHolder` uses `POSTGRESQL_CONN_STR`; local/non-production can also use `DB_*`. `db_conn()` errors when the holder is unavailable.
 - **Machine-readable docs** — `/openapi.json` (OpenAPI 3.1.1) and `/llms.txt` are served from `pages/static/`.
 - **Health routes** — `/ping`, `/health/live`, `/health/ready`, and `/health/debug`; readiness requires healthy SQLite and PostgreSQL. Nginx only forwards `/health/debug` when the deploy-slot secret matches.
 
