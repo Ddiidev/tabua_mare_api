@@ -14,6 +14,20 @@ import shareds.infradb_pg
 import leafscale.veemarker
 import shareds.components_view
 
+// O V3 omite o prefixo `orm__` em algumas chamadas de métodos genéricos.
+// Estes aliases mantêm as chamadas geradas resolvíveis no C até a correção do compilador.
+#flag -DQueryBuilder_entities__DataMare__select=orm__QueryBuilder_entities__DataMare__select
+#flag -DQueryBuilder_entities__DataMare__query=orm__QueryBuilder_entities__DataMare__query
+#flag -DQueryBuilder_entities__DataMareWithoutFK__select=orm__QueryBuilder_entities__DataMareWithoutFK__select
+#flag -DQueryBuilder_entities__DataMareWithoutFK__query=orm__QueryBuilder_entities__DataMareWithoutFK__query
+#flag -DQueryBuilder_entities__MonthDataWithoutFK__select=orm__QueryBuilder_entities__MonthDataWithoutFK__select
+#flag -DQueryBuilder_entities__MonthDataWithoutFK__query=orm__QueryBuilder_entities__MonthDataWithoutFK__query
+#flag -DQueryBuilder_entities__DayDataWithoutFK__order=orm__QueryBuilder_entities__DayDataWithoutFK__order
+#flag -DQueryBuilder_entities__DayDataWithoutFK__select=orm__QueryBuilder_entities__DayDataWithoutFK__select
+#flag -DQueryBuilder_entities__DayDataWithoutFK__query=orm__QueryBuilder_entities__DayDataWithoutFK__query
+#flag -DQueryBuilder_entities__HourData__select=orm__QueryBuilder_entities__HourData__select
+#flag -DQueryBuilder_entities__HourData__query=orm__QueryBuilder_entities__HourData__query
+
 const shutdown_requested = stdatomic.new_atomic[bool](false)
 
 const agent_home_markdown = '# Tábua de Maré API\n\n> API REST pública para consultar estados costeiros, portos e tábuas de maré brasileiras em JSON.\n\nUse esta API quando precisar de horários e alturas de maré, descobrir o porto mais próximo ou integrar dados de maré do litoral brasileiro. Comece por `GET /api/v2/states`; a API aceita chamadas anônimas com limite por IP.\n\n## Recursos para agentes\n\n- [Documentação da API](/docs): visão geral, autenticação e exemplos.\n- [Especificação OpenAPI](/openapi.json): contrato legível por ferramentas.\n- [Instruções de integração](/llms.txt): quando usar, limites e links de recuperação.\n- [Playground](/playground): chamadas reais no navegador.\n'

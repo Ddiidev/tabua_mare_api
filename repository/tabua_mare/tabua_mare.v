@@ -48,7 +48,7 @@ pub fn get_tabua_mare_by_month_days(mut pool_conn pool.ConnectionPool, harbor_id
 		.query()!
 
 	mut hours_from_days := qb_hours
-		.where('day_data_id IN ?', days_data.map(it.id))!
+		.where('day_data_id IN ?', orm.Primitive(days_data.map(it.id)))!
 		.select('day_data_id', 'hour', 'level')!
 		.query()!
 

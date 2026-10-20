@@ -33,6 +33,8 @@ node_modules/
 # Ignore files
 *.txt
 *.json
+*.pdb
+*.o
 !package.json
 !package-lock.json
 !pages/static/llms.txt
@@ -44,6 +46,7 @@ node_modules/
 /docs/
 /out
 /TASKS
+/TASK/
 /v-compiler-bug-repro
 .playwright-mcp/
 

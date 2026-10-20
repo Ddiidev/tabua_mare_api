@@ -63,8 +63,12 @@ pub fn (mut api APIControllerV2) list_states(mut ctx web_ctx.WsCtx) veb.Result {
 
 	// return ctx.json(types.success(res.data))
 
-	ctx.res.header.add_custom('Content-Type', 'application/json') or {}
-	return ctx.text('{"data":["al","ap","ba","ce","es","ma","pa","pb","pe","pi","pr","rj","rn","rs","sc","se","sp"],"total":17}')
+	states := ['al', 'ap', 'ba', 'ce', 'es', 'ma', 'pa', 'pb', 'pe', 'pi', 'pr', 'rj', 'rn', 'rs',
+		'sc', 'se', 'sp']
+	return ctx.json(types.ResultValues[string]{
+		data:  states
+		total: states.len
+	})
 }
 
 // list_harbor_name_by_states Lista todos os nomes de portos de um estado específico

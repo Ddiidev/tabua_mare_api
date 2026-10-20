@@ -1,7 +1,6 @@
 module web_ctx
 
 import veb
-import veb.request_id
 import domain.auth_user
 import shareds.types
 
@@ -19,7 +18,6 @@ struct MediaPreference {
 
 pub struct WsCtx {
 	veb.Context
-	request_id.RequestIdContext
 pub mut:
 	current_user ?auth_user.JwtClaims
 	api_key      string
@@ -44,33 +42,34 @@ pub fn select_page_representation(accept string) PageRepresentation {
 		return if html_preference.quality > 0 { .html } else { .not_acceptable }
 	}
 	if html == none {
-		markdown_preference := markdown
-		return if markdown_preference.quality > 0 { .markdown } else { .not_acceptable }
+		return if markdown.quality > 0 { .markdown } else { .not_acceptable }
 	}
 
-	markdown_preference := markdown
-	html_preference := html
-	if markdown_preference.quality <= 0 && html_preference.quality <= 0 {
+	if markdown.quality <= 0 && html.quality <= 0 {
 		return .not_acceptable
 	}
-	if markdown_preference.quality != html_preference.quality {
-		return if markdown_preference.quality > html_preference.quality { .markdown } else { .html }
+	if markdown.quality != html.quality {
+		return if markdown.quality > html.quality { .markdown } else { .html }
 	}
-	if markdown_preference.specificity != html_preference.specificity {
-		return if markdown_preference.specificity > html_preference.specificity {
+	if markdown.specificity != html.specificity {
+		return if markdown.specificity > html.specificity {
 			.markdown
 		} else {
 			.html
 		}
 	}
-	return if markdown_preference.position < html_preference.position { .markdown } else { .html }
+	return if markdown.position < html.position {
+		.markdown
+	} else {
+		.html
+	}
 }
 
 fn best_media_preference(accept string, target string) ?MediaPreference {
 	mut best := MediaPreference{
-		quality: -1
+		quality:     -1
 		specificity: -1
-		position: accept.len
+		position:    accept.len
 	}
 	for position, raw_range in accept.split(',') {
 		parts := raw_range.split(';')
@@ -80,9 +79,9 @@ fn best_media_preference(accept string, target string) ?MediaPreference {
 			continue
 		}
 		candidate := MediaPreference{
-			quality: media_range_quality(parts)
+			quality:     media_range_quality(parts)
 			specificity: specificity
-			position: position
+			position:    position
 		}
 		if candidate.specificity > best.specificity
 			|| (candidate.specificity == best.specificity && candidate.position < best.position) {
@@ -124,8 +123,10 @@ fn media_range_quality(parts []string) f64 {
 pub fn (mut ctx WsCtx) not_found() veb.Result {
 	ctx.res.set_status(.not_found)
 	if ctx.req.url.starts_with('/api/') {
-		return ctx.json(types.failure_with_resolution[string](404, 'Endpoint nao encontrado', 'Consulte /openapi.json ou /docs para localizar uma rota e parametros validos.'))
+		return ctx.json(types.failure_with_resolution[string](404, 'Endpoint nao encontrado',
+			'Consulte /openapi.json ou /docs para localizar uma rota e parametros validos.'))
 	}
 	ctx.res.header.set(.vary, 'Accept, Accept-Encoding')
-	return ctx.send_response_to_client('text/markdown; charset=utf-8', '# Recurso nao encontrado\n\n- [Documentacao da Tábua de Maré API](/docs)\n- [OpenAPI](/openapi.json)\n- [Instrucoes para agentes](/llms.txt)\n- [Mapa do site](/sitemap.xml)\n')
+	return ctx.send_response_to_client('text/markdown; charset=utf-8',
+		'# Recurso nao encontrado\n\n- [Documentacao da Tábua de Maré API](/docs)\n- [OpenAPI](/openapi.json)\n- [Instrucoes para agentes](/llms.txt)\n- [Mapa do site](/sitemap.xml)\n')
 }

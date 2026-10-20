@@ -13,6 +13,8 @@ logs
 temp
 bin
 node_modules
+/out
+/TASK
 
 .env
 .env.*
