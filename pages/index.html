@@ -194,14 +194,14 @@
             <article class="price-card price-card--featured">
               <span class="price-card__tag">Mais espaço</span>
               <p class="price-card__name">Pro</p>
-              <p class="price-card__price"><small>R$</small> {{ billing === 'annual' ? '69,99' : '14,99' }}</p>
-              <p class="price-card__period">{{ billing === 'annual' ? 'por ano' : 'por mês' }}</p>
+              <p class="price-card__price"><small>R$</small> <span v-text="billing === 'annual' ? '69,99' : '14,99'">14,99</span></p>
+              <p class="price-card__period" v-text="billing === 'annual' ? 'por ano' : 'por mês'">por mês</p>
               <ul>
                 <li>512 req/min</li>
                 <li>256 mil req/mês</li>
               </ul>
               <label class="billing-switch" :class="{ 'is-annual': billing === 'annual' }">
-                <input type="checkbox" :checked="billing === 'annual'"
+                <input type="checkbox" disabled :disabled="false" :checked="billing === 'annual'"
                   @change="billing = $event.target.checked ? 'annual' : 'monthly'"
                   aria-label="Cobrança anual do plano Pro" />
                 <span class="billing-switch__track" aria-hidden="true">
@@ -213,16 +213,16 @@
               <a href="/auth/google?next=/dashboard" role="button" class="button-sun">Começar</a>
             </article>
             <article class="price-card price-card--featured">
-              <span class="price-card__tag" v-if="billing === 'annual'">Economize R$ 209/ano</span>
+              <span class="price-card__tag" v-cloak v-if="billing === 'annual'">Economize R$ 209/ano</span>
               <p class="price-card__name">Ultra</p>
-              <p class="price-card__price"><small>R$</small> {{ billing === 'annual' ? '149,99' : '29,99' }}</p>
-              <p class="price-card__period">{{ billing === 'annual' ? 'por ano' : 'por mês' }}</p>
+              <p class="price-card__price"><small>R$</small> <span v-text="billing === 'annual' ? '149,99' : '29,99'">29,99</span></p>
+              <p class="price-card__period" v-text="billing === 'annual' ? 'por ano' : 'por mês'">por mês</p>
               <ul>
                 <li>2.048 req/min</li>
                 <li>Mensal ilimitado</li>
               </ul>
               <label class="billing-switch" :class="{ 'is-annual': billing === 'annual' }">
-                <input type="checkbox" :checked="billing === 'annual'"
+                <input type="checkbox" disabled :disabled="false" :checked="billing === 'annual'"
                   @change="billing = $event.target.checked ? 'annual' : 'monthly'"
                   aria-label="Cobrança anual do plano Ultra" />
                 <span class="billing-switch__track" aria-hidden="true">
