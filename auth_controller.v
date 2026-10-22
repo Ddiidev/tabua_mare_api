@@ -11,6 +11,7 @@ import shareds.instance
 import domain.auth_user
 import shareds.infradb_pg
 import repository.auth as repo_auth
+import shareds.email.resend
 
 // AuthController trata das rotas de autenticacao (login Google, logout, /me, avatar).
 pub struct AuthController {
@@ -191,9 +192,31 @@ pub fn (mut ac AuthController) google_callback(mut ctx web_ctx.WsCtx) veb.Result
 		max_age: -1
 	})
 
+	// O envio nao aguarda o provedor e nao pode impedir a sessao ou o redirect.
+	if upsert.is_new_user && ac.env.email_resend != '' {
+		if content := resend.welcome_email(upsert.email, ac.env.resend_from,
+			ac.env.resend_reply_to, ac.env.url_env)
+		{
+			client := resend.Client{
+				api_key: ac.env.email_resend
+			}
+			spawn send_welcome_email(client, content, upsert.user_id)
+		} else {
+			eprintln('[email] boas-vindas nao preparado user_id=${upsert.user_id}: ${err}')
+		}
+	}
+
 	eprintln('[oauth] callback completed')
 	next := safe_redirect_path(ctx.query['next'] or { '/dashboard' })
 	return ctx.redirect(next, veb.RedirectParams{ typ: .found })
+}
+
+fn send_welcome_email(client resend.Client, content resend.ContentEmail, user_id int) {
+	id := client.send(content, 'welcome-user/${user_id}') or {
+		eprintln('[email] boas-vindas falhou user_id=${user_id}: ${err}')
+		return
+	}
+	eprintln('[email] boas-vindas aceito user_id=${user_id} resend_id=${id}')
 }
 
 // logout invalida a sessao limpando o cookie. (JWT e stateless; nao ha tabela
