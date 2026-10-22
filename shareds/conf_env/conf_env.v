@@ -45,6 +45,9 @@ pub:
 	stripe_price_plan150      string
 	stripe_timeout_ms         int
 	stripe_max_retries        int
+	email_resend              string
+	resend_from               string
+	resend_reply_to           string
 }
 
 pub struct StripePriceIds {
@@ -66,6 +69,7 @@ pub fn load_env() EnvConfig {
 	}
 
 	prices := stripe_price_ids(env_map)
+	resend_key := get_env_or('RESEND_API_KEY', env_map, '').trim_space()
 
 	// Create and populate the config struct
 	return EnvConfig{
@@ -109,6 +113,15 @@ pub fn load_env() EnvConfig {
 		stripe_price_plan150:      prices.plan150
 		stripe_timeout_ms:         get_env_or('STRIPE_TIMEOUT_MS', env_map, '8000').int()
 		stripe_max_retries:        get_env_or('STRIPE_MAX_RETRIES', env_map, '1').int()
+		email_resend:              if resend_key != '' {
+			resend_key
+		} else {
+			get_env_or('EMAIL_RESEND', env_map, '').trim_space()
+		}
+		resend_from:               get_env_or('RESEND_FROM', env_map,
+			'Tábua de Marés API <contato@tabuamare.api.br>').trim_space()
+		resend_reply_to:           get_env_or('RESEND_REPLY_TO', env_map,
+			'contato@tabuamare.api.br').trim_space()
 	}
 }
 

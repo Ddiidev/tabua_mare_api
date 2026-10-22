@@ -6,20 +6,31 @@ import repository.auth.dto
 // UpsertResult eh o resultado do upsert por provider.
 pub struct UpsertResult {
 pub:
-	user_id    int
-	email      string
-	name       string
-	avatar_url string
-	plan       string
-	provider   string
+	user_id     int
+	email       string
+	name        string
+	avatar_url  string
+	plan        string
+	provider    string
+	is_new_user bool
 }
 
 // upsert_by_provider cria ou atualiza um usuario a partir de uma identidade provider.
 // Se (provider, provider_uid) existe, atualiza name/email/avatar e retorna o user.
 // Se nao, cria user + user_identity e retorna.
 pub fn upsert_by_provider(mut db pg.DB, provider string, provider_uid string, email string, name string, avatar_url string, raw_json string) !UpsertResult {
+	mut tx := db.begin()!
+	defer {
+		tx.rollback() or {}
+	}
+	// Serializa callbacks da mesma identidade, inclusive entre slots A/B.
+	tx.exec_param_many('SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))', [
+		provider,
+		provider_uid,
+	])!
+
 	// tenta buscar identidade existente
-	rows := db.exec_param_many('SELECT user_id FROM user_identities WHERE provider = ($1) AND provider_uid = ($2) LIMIT 1', [
+	rows := tx.exec_param_many('SELECT user_id FROM user_identities WHERE provider = ($1) AND provider_uid = ($2) LIMIT 1', [
 		provider,
 		provider_uid,
 	])!
@@ -27,7 +38,7 @@ pub fn upsert_by_provider(mut db pg.DB, provider string, provider_uid string, em
 	if rows.len > 0 {
 		// existe: atualiza identity e user
 		user_id := int_from_row(rows[0], 0)
-		db.exec_param_many('UPDATE user_identities SET email = ($1), name = ($2), avatar_url = ($3), raw_json = ($4), updated_at = now() WHERE provider = ($5) AND provider_uid = ($6)', [
+		tx.exec_param_many('UPDATE user_identities SET email = ($1), name = ($2), avatar_url = ($3), raw_json = ($4), updated_at = now() WHERE provider = ($5) AND provider_uid = ($6)', [
 			email,
 			name,
 			avatar_url,
@@ -35,35 +46,34 @@ pub fn upsert_by_provider(mut db pg.DB, provider string, provider_uid string, em
 			provider,
 			provider_uid,
 		])!
-		db.exec_param_many('UPDATE users SET email = ($1), name = ($2), avatar_url = ($3), updated_at = now() WHERE id = ($4)', [
+		tx.exec_param_many('UPDATE users SET email = ($1), name = ($2), avatar_url = ($3), updated_at = now() WHERE id = ($4)', [
 			email,
 			name,
 			avatar_url,
 			user_id.str(),
 		])!
 
-		user_rows := db.exec_param('SELECT email, name, avatar_url, plan FROM users WHERE id = ($1) LIMIT 1',
+		user_rows := tx.exec_param('SELECT email, name, avatar_url, plan FROM users WHERE id = ($1) LIMIT 1',
 			user_id.str())!
 		if user_rows.len == 0 {
 			return error('usuario nao encontrado apos upsert')
 		}
+		tx.commit()!
 		return row_to_upsert(user_rows[0], user_id, provider)
 	}
 
 	// nao existe: cria user + identity
-	db.exec_param_many('INSERT INTO users (email, name, avatar_url, plan) VALUES (($1), ($2), ($3), ($4)) RETURNING id', [
+	created := tx.exec_param_many('INSERT INTO users (email, name, avatar_url, plan) VALUES (($1), ($2), ($3), ($4)) RETURNING id', [
 		email,
 		name,
 		avatar_url,
 		'free',
 	])!
-	// busca o id recem criado pelo email
-	created := db.exec_param('SELECT id FROM users WHERE email = ($1) LIMIT 1', email)!
 	if created.len == 0 {
 		return error('falha ao criar usuario')
 	}
 	user_id := int_from_row(created[0], 0)
-	db.exec_param_many('INSERT INTO user_identities (user_id, provider, provider_uid, email, name, avatar_url, raw_json) VALUES (($1), ($2), ($3), ($4), ($5), ($6), ($7))', [
+	tx.exec_param_many('INSERT INTO user_identities (user_id, provider, provider_uid, email, name, avatar_url, raw_json) VALUES (($1), ($2), ($3), ($4), ($5), ($6), ($7))', [
 		user_id.str(),
 		provider,
 		provider_uid,
@@ -73,13 +83,15 @@ pub fn upsert_by_provider(mut db pg.DB, provider string, provider_uid string, em
 		raw_json,
 	])!
 
+	tx.commit()!
 	return UpsertResult{
-		user_id:    user_id
-		email:      email
-		name:       name
-		avatar_url: avatar_url
-		plan:       'free'
-		provider:   provider
+		user_id:     user_id
+		email:       email
+		name:        name
+		avatar_url:  avatar_url
+		plan:        'free'
+		provider:    provider
+		is_new_user: true
 	}
 }
 
